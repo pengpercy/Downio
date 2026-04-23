@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+	<id>com.Downio.app</id>
+	<metadata_license>MIT</metadata_license>
+	<project_license>MIT</project_license>
+	<name>Downio</name>
+	<summary>Open-source Downloader</summary>
+	<description>
+		<p>Open-source Downloader</p>
+	</description>
+  <url type="homepage">https://github.com/percy/Downio</url>
+	<launchable type="desktop-id">com.Downio.app.desktop</launchable>
+	<provides>
+		<id>com.Downio.app.desktop</id>
+	</provides>
+</component>

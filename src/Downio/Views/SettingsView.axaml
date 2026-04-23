@@ -1,0 +1,151 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:Downio.ViewModels"
+             xmlns:localConv="using:Downio.Converters"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="Downio.Views.SettingsView"
+             x:DataType="vm:MainWindowViewModel">
+    
+    <UserControl.Resources>
+        <localConv:ResourceKeyToTextConverter x:Key="ResourceKeyToTextConverter" />
+    </UserControl.Resources>
+
+    <UserControl.Styles>
+        <Style Selector="TextBlock.settingsHeader">
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundAccentBrush}"/>
+        </Style>
+
+        <Style Selector="PathIcon.spin">
+            <Style.Animations>
+                <Animation Duration="0:0:1" IterationCount="Infinite">
+                    <KeyFrame Cue="0%">
+                        <Setter Property="RotateTransform.Angle" Value="0" />
+                    </KeyFrame>
+                    <KeyFrame Cue="100%">
+                        <Setter Property="RotateTransform.Angle" Value="360" />
+                    </KeyFrame>
+                </Animation>
+            </Style.Animations>
+        </Style>
+    </UserControl.Styles>
+
+    <ScrollViewer Margin="30,20,0,30">
+        <StackPanel Spacing="20" Margin="0,0,30,0">
+            <!-- General Settings -->
+            <Border Classes="taskCard" Padding="20" CornerRadius="8" Background="{DynamicResource CardBackgroundBrush}" BoxShadow="{DynamicResource CardShadow}">
+                <StackPanel Spacing="15">
+                    <TextBlock Text="{DynamicResource GroupGeneral}" Classes="settingsHeader"/>
+                    
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="{DynamicResource LabelTheme}" FontWeight="Medium"/>
+                        <ComboBox ItemsSource="{Binding ThemeOptions}" SelectedItem="{Binding SelectedTheme}" HorizontalAlignment="Stretch">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Key, Converter={StaticResource ResourceKeyToTextConverter}}"/>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </StackPanel>
+
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="{DynamicResource LabelLanguage}" FontWeight="Medium"/>
+                        <ComboBox ItemsSource="{Binding LanguageOptions}" SelectedItem="{Binding SelectedLanguage}" HorizontalAlignment="Stretch">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Key, Converter={StaticResource ResourceKeyToTextConverter}}"/>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </StackPanel>
+
+                    <StackPanel Spacing="8" Margin="0,5,0,0">
+                         <CheckBox IsChecked="{Binding IsAutoStartEnabled}" Content="{DynamicResource LabelAutoStart}" />
+                    </StackPanel>
+
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="{DynamicResource LabelDefaultSavePath}" FontWeight="Medium"/>
+                        <Grid ColumnDefinitions="*, Auto">
+                            <TextBox Grid.Column="0" Text="{Binding DefaultSavePath}" IsReadOnly="True"/>
+                            <Button Grid.Column="1" Command="{Binding ChooseDefaultSavePathCommand}" Margin="10,0,0,0">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <PathIcon Data="{StaticResource IconFolder}" Width="16" Height="16" Opacity="0.7"/>
+                                    <TextBlock Text="{DynamicResource BtnBrowse}"/>
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Network Settings -->
+            <Border Classes="taskCard" Padding="20" CornerRadius="8" Background="{DynamicResource CardBackgroundBrush}" BoxShadow="{DynamicResource CardShadow}">
+                <StackPanel Spacing="15">
+                    <TextBlock Text="{DynamicResource GroupNetwork}" Classes="settingsHeader"/>
+                    
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="{DynamicResource LabelProxy}" FontWeight="Medium"/>
+                        <Grid ColumnDefinitions="90, 10, *, 10, 70">
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="{DynamicResource LabelProxyType}" FontSize="12" Opacity="0.7"/>
+                                <ComboBox ItemsSource="{Binding ProxyTypes}" SelectedIndex="{Binding ProxyTypeIndex}" HorizontalAlignment="Stretch"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="{DynamicResource LabelProxyAddress}" FontSize="12" Opacity="0.7"/>
+                                <TextBox Text="{Binding ProxyAddress}" Watermark="127.0.0.1"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="4">
+                                <TextBlock Text="{DynamicResource LabelProxyPort}" FontSize="12" Opacity="0.7"/>
+                                <TextBox Text="{Binding ProxyPort}"/>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- About -->
+            <Border Classes="taskCard" Padding="20" CornerRadius="8" Background="{DynamicResource CardBackgroundBrush}" BoxShadow="{DynamicResource CardShadow}">
+                <StackPanel Spacing="15">
+                    <TextBlock Text="{DynamicResource GroupAbout}" Classes="settingsHeader"/>
+                    
+                    <StackPanel Spacing="12">
+                        <StackPanel Orientation="Horizontal" Spacing="16">
+                            <Image Source="/Assets/Branding/app_icon.png" Width="64" Height="64" VerticalAlignment="Top"/>
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="Downio" FontWeight="Bold" FontSize="18"/>
+                                <StackPanel Orientation="Horizontal" Spacing="5" Opacity="0.7">
+                                    <TextBlock Text="{DynamicResource LabelVersion}"/>
+                                    <TextBlock Text="{Binding AppVersion}"/>
+                                </StackPanel>
+                                <TextBlock Text="{DynamicResource LabelDescription}" TextWrapping="Wrap" Opacity="0.8" MaxWidth="500"/>
+                                
+                                <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,4,0,0">
+                                    <PathIcon Data="{StaticResource IconGitHub}" Width="16" Height="16" Opacity="0.75"/>
+                                    <Button Classes="linkButton" Command="{Binding OpenRepoUrlCommand}">
+                                        <TextBlock Text="{Binding RepositoryUrl}" FontSize="12"/>
+                                    </Button>
+                                </StackPanel>
+
+                                <TextBlock Text="{DynamicResource LabelCopyright}" FontSize="12" Opacity="0.5" Margin="0,4,0,0"/>
+                            </StackPanel>
+                        </StackPanel>
+                        
+                        <Button IsEnabled="{Binding !IsCheckingForUpdates}"
+                                Command="{Binding CheckForUpdatesCommand}" 
+                                Margin="80,10,0,0" HorizontalAlignment="Left">
+                             <StackPanel Orientation="Horizontal" Spacing="8">
+                                 <PathIcon Data="{StaticResource IconRefresh}" Width="16" Height="16" 
+                                           Classes.spin="{Binding IsCheckingForUpdates}"
+                                           IsVisible="{Binding IsCheckingForUpdates}"/>
+                                 <TextBlock Text="{Binding CheckUpdateButtonKey, Converter={StaticResource ResourceKeyToTextConverter}}"/>
+                             </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

@@ -1,0 +1,23 @@
+<views:DialogWindow xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:views="using:Downio.Views"
+        xmlns:controls="using:Downio.Controls"
+        mc:Ignorable="d" d:DesignWidth="420" d:DesignHeight="200"
+        x:Class="Downio.Views.InfoDialog"
+        Classes="dialog"
+        Width="420" SizeToContent="Height"
+        >
+    <controls:DialogHost Title="{Binding $parent[Window].Title}">
+        <Grid RowDefinitions="Auto, Auto">
+            <TextBlock x:Name="MessageText" Grid.Row="0" TextWrapping="Wrap" FontSize="14" LineHeight="20"
+                       Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"
+                       Margin="0,0,0,20"/>
+            <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
+                <Button Content="{DynamicResource ButtonClose}" Click="OnCloseClick"
+                        Classes="dialogButton" IsCancel="True" IsDefault="True"/>
+            </StackPanel>
+        </Grid>
+    </controls:DialogHost>
+</views:DialogWindow>

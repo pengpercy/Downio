@@ -1,0 +1,238 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:Downio.ViewModels"
+             xmlns:models="using:Downio.Models"
+             xmlns:conv="using:Avalonia.Data.Converters"
+             xmlns:localConv="using:Downio.Converters"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="Downio.Views.TaskListView"
+             x:DataType="vm:MainWindowViewModel">
+
+    <UserControl.Resources>
+        <localConv:ResourceKeyToTextConverter x:Key="ResourceKeyToTextConverter" />
+        <localConv:StatusColorConverter x:Key="StatusColorConverter" />
+        <localConv:StatusToIconConverter x:Key="StatusToIconConverter" />
+        <localConv:CollectionIsEmptyConverter x:Key="CollectionIsEmptyConverter" />
+    </UserControl.Resources>
+
+    <UserControl.Styles>
+        <Style Selector="MenuItem">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="CornerRadius" Value="4" />
+        </Style>
+        
+        <!-- Task Card Selection Styles -->
+        <Style Selector="ListBoxItem:selected Border.taskCard">
+            <Setter Property="BorderBrush" Value="{DynamicResource SystemAccentColorBrush}" />
+            <Setter Property="BorderThickness" Value="2" />
+        </Style>
+        
+        <Style Selector="ListBoxItem:not(:selected) Border.taskCard">
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="2" />
+        </Style>
+
+        <!-- Override default ListBoxItem selection styles to avoid blue background -->
+        <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="ListBoxItem:selected:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="ListBoxItem:selected:focus /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+    </UserControl.Styles>
+
+    <Grid>
+        <ListBox x:Name="TasksListBox"
+                  ItemsSource="{Binding Tasks}"
+                  SelectedItem="{Binding SelectedTask}"
+                  Margin="20,10,20,20"
+                  Background="Transparent"
+                   SelectionMode="Multiple"
+                   PointerPressed="OnPointerPressed"
+                   KeyDown="OnKeyDown"
+                  SelectionChanged="OnSelectionChanged"
+                  IsVisible="{Binding Tasks.Count, Converter={StaticResource CollectionIsEmptyConverter}, ConverterParameter=not}">
+            <ListBox.ItemTemplate>
+                <DataTemplate DataType="models:DownloadTask">
+                    <!-- Use CardBackgroundBrush for high contrast card effect -->
+                    <Border Classes="taskCard" Padding="15,10" CornerRadius="8"
+                            Background="{DynamicResource CardBackgroundBrush}" Margin="0,3"
+                            BoxShadow="{DynamicResource CardShadow}">
+                        <Border.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="{DynamicResource MenuDelete}"
+                                          Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).DeleteTaskCommand}"
+                                          CommandParameter="{Binding}">
+                                    <MenuItem.Icon>
+                                        <PathIcon Data="{StaticResource IconTrash}" Width="12" Height="12" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <Separator />
+                                <MenuItem Header="{DynamicResource MenuDetails}"
+                                          Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ShowTaskDetailsCommand}"
+                                          CommandParameter="{Binding}">
+                                    <MenuItem.Icon>
+                                        <PathIcon Data="{StaticResource IconInfo}" Width="12" Height="12" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                            </ContextMenu>
+                        </Border.ContextMenu>
+                        
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Left Content -->
+                            <StackPanel Grid.Column="0" Spacing="6" VerticalAlignment="Center" Margin="0,0,10,0">
+                                <!-- Filename and Action Bar Row -->
+                                <Grid ColumnDefinitions="*, Auto">
+                                    <TextBlock Grid.Column="0" Text="{Binding Name}" FontWeight="Medium" TextWrapping="Wrap" Margin="0,0,10,2" VerticalAlignment="Center"/>
+                                    
+                                    <!-- Right Action Pill (Moved inside first row) -->
+                                    <Border Grid.Column="1" VerticalAlignment="Top" CornerRadius="5" 
+                                            Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
+                                            Padding="4,2">
+                                        <StackPanel Orientation="Horizontal" Spacing="4">
+                                            <!-- Pause/Resume -->
+                                            <Button Background="Transparent" BorderThickness="0" Padding="6"
+                                                    Command="{Binding $parent[UserControl].((vm:MainWindowViewModel)DataContext).ToggleTaskStateCommand}"
+                                                    CommandParameter="{Binding}">
+                                                <PathIcon Data="{Binding Status, Converter={StaticResource StatusToIconConverter}}"
+                                                          Width="12" Height="12" Opacity="0.7" />
+                                            </Button>
+                                            
+                                            <!-- Cancel/Remove -->
+                                            <Button Background="Transparent" BorderThickness="0" Padding="6"
+                                                    Command="{Binding $parent[UserControl].((vm:MainWindowViewModel)DataContext).DeleteTaskCommand}"
+                                                    CommandParameter="{Binding}">
+                                                <PathIcon Data="{StaticResource IconTrash}" Width="12" Height="12" Opacity="0.7" />
+                                            </Button>
+                                            
+                                            <!-- Open Folder -->
+                                            <Button Background="Transparent" BorderThickness="0" Padding="6"
+                                                    Command="{Binding $parent[UserControl].((vm:MainWindowViewModel)DataContext).OpenFolderCommand}"
+                                                    CommandParameter="{Binding}">
+                                                <PathIcon Data="{StaticResource IconFolder}" Width="12" Height="12" Opacity="0.7" />
+                                            </Button>
+                                            
+                                            <!-- Copy Link -->
+                                            <Button Background="Transparent" BorderThickness="0" Padding="6"
+                                                    Command="{Binding $parent[UserControl].((vm:MainWindowViewModel)DataContext).CopyLinkCommand}"
+                                                    CommandParameter="{Binding}">
+                                                <PathIcon Data="{StaticResource IconLink}" Width="12" Height="12" Opacity="0.7" />
+                                            </Button>
+                                            
+                                            <!-- Details -->
+                                            <Button Background="Transparent" BorderThickness="0" Padding="6"
+                                                    Command="{Binding $parent[UserControl].((vm:MainWindowViewModel)DataContext).ShowTaskDetailsCommand}"
+                                                    CommandParameter="{Binding}">
+                                                <PathIcon Data="{StaticResource IconInfo}" Width="12" Height="12" Opacity="0.7" />
+                                            </Button>
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+
+                                <!-- Progress Bar (Second Row) -->
+                                <ProgressBar Value="{Binding Progress}" Maximum="1.0" Height="4"
+                                             MinHeight="4" CornerRadius="2" Margin="0,4,0,0"/>
+
+                                <!-- Info Bar (Third Row) -->
+                                <Grid ColumnDefinitions="*, Auto" Margin="0,6,0,0">
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10">
+                                        <TextBlock Text="{Binding SizeInfo}" FontSize="12"
+                                                   Opacity="0.6" />
+                                    </StackPanel>
+                                    
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" IsVisible="{Binding IsActive}">
+                                        <!-- ↓ Speed -->
+                                        <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z" 
+                                                  Width="12" Height="12" Opacity="0.6" IsVisible="False"/> <!-- Placeholder for down arrow -->
+                                        <TextBlock Text="↓" FontSize="12" Opacity="0.6" Margin="0,0,-4,0"/>
+                                        <TextBlock Text="{Binding Speed}" FontSize="12" Opacity="0.6" Margin="-4,0,0,0"/>
+                                        
+                                        <!-- Time Left -->
+                                        <TextBlock Text="{DynamicResource LabelTimeRemaining}" FontSize="12" Opacity="0.6" IsVisible="{Binding TimeLeft, Converter={x:Static conv:StringConverters.IsNotNullOrEmpty}}" Margin="6,0,0,0"/>
+                                        <TextBlock Text="{Binding TimeLeft}" FontSize="12" Opacity="0.6" Margin="-4,0,0,0"/>
+                                        
+                                        <!-- Connections (Split) -->
+                                        <Grid ColumnDefinitions="Auto, Auto" Opacity="0.6" Margin="10,0,0,0">
+                                            <PathIcon Grid.Column="0"
+                                                      Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-1.07 3.97-2.74 5.27z"
+                                                      Width="12" Height="12"
+                                                      VerticalAlignment="Center" />
+                                            <TextBlock Grid.Column="1"
+                                                       Text="{Binding Split}" FontSize="12" Margin="4,0,0,0"
+                                                       VerticalAlignment="Center" />
+                                        </Grid>
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <Border IsHitTestVisible="True"
+                Margin="20,10,20,20"
+                Background="Transparent"
+                IsVisible="{Binding Tasks.Count, Converter={StaticResource CollectionIsEmptyConverter}}">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="14" Width="420">
+                <Border Background="{DynamicResource CardBackgroundBrush}" CornerRadius="10"
+                        BorderThickness="1" BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                        Padding="28"
+                        BoxShadow="{DynamicResource CardShadow}">
+                    <StackPanel Spacing="14">
+                        <Border Width="56" Height="56" CornerRadius="28"
+                                Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
+                                HorizontalAlignment="Center">
+                            <PathIcon Data="{StaticResource IconAdd}" Width="18" Height="18"
+                                      Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"
+                                      Opacity="0.75"
+                                      VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        </Border>
+
+                        <TextBlock Text="{DynamicResource EmptyStateTitleNoTasks}"
+                                   FontSize="18" FontWeight="SemiBold"
+                                   HorizontalAlignment="Center" />
+
+                        <TextBlock Text="{Binding EmptyStateSubtitleDownloadingText}"
+                                   FontSize="13" Opacity="0.7"
+                                   TextAlignment="Center"
+                                   TextWrapping="Wrap"
+                                   IsVisible="{Binding IsDownloading}" />
+                        <TextBlock Text="{DynamicResource EmptyStateSubtitleWaiting}"
+                                   FontSize="13" Opacity="0.7"
+                                   TextAlignment="Center"
+                                   TextWrapping="Wrap"
+                                   IsVisible="{Binding IsWaiting}" />
+                        <TextBlock Text="{DynamicResource EmptyStateSubtitleStopped}"
+                                   FontSize="13" Opacity="0.7"
+                                   TextAlignment="Center"
+                                   TextWrapping="Wrap"
+                                   IsVisible="{Binding IsStopped}" />
+
+                        <Button Content="{DynamicResource BtnNewTask}"
+                                Command="{Binding ShowAddTaskCommand}"
+                                Classes="accent"
+                                CornerRadius="5"
+                                HorizontalAlignment="Center"
+                                Padding="16,8"
+                                Margin="0,4,0,0"
+                                />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

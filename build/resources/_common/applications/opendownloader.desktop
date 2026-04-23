@@ -1,9 +1,0 @@
-[Desktop Entry]
-Name=OpenDownloader
-Comment=Open-source Downloader
-Exec=/opt/opendownloader/opendownloader
-Icon=/usr/share/icons/opendownloader.png
-Terminal=false
-Type=Application
-Categories=Network;FileTransfer;
-MimeType=x-scheme-handler/magnet;application/x-bittorrent;

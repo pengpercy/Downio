@@ -1,4 +1,4 @@
-Package: opendownloader
+Package: Downio
 Version: 1.0.0
 Priority: optional
 Depends: libx11-6, libice6, libsm6, libicu | libicu76 | libicu74 | libicu72 | libicu71 | libicu70 | libicu69 | libicu68 | libicu67 | libicu66 | libicu65 | libicu63 | libicu60 | libicu57 | libicu55 | libicu52, xdg-utils

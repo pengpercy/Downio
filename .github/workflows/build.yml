@@ -66,17 +66,17 @@ jobs:
         run: dotnet build -c Release
       - name: Publish
         run: |
-          dotnet publish src/OpenDownloader/OpenDownloader.csproj -c Release -o publish -r ${{ matrix.runtime }} --self-contained -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true
+          dotnet publish src/Downio/Downio.csproj -c Release -o publish -r ${{ matrix.runtime }} --self-contained -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true
 
       - name: Tar artifact
         if: startsWith(matrix.runtime, 'linux-') || startsWith(matrix.runtime, 'osx-')
         run: |
-          tar -cvf "opendownloader.${{ matrix.runtime }}.tar" -C publish .
+          tar -cvf "downio.${{ matrix.runtime }}.tar" -C publish .
           rm -r publish/*
-          mv "opendownloader.${{ matrix.runtime }}.tar" publish
+          mv "downio.${{ matrix.runtime }}.tar" publish
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: opendownloader.${{ matrix.runtime }}
+          name: downio.${{ matrix.runtime }}
           path: publish/*

@@ -3,7 +3,7 @@ on:
   workflow_call:
     inputs:
       version:
-        description: OpenDownloader package version
+        description: Downio package version
         required: true
         type: string
     secrets:
@@ -34,8 +34,8 @@ jobs:
       - name: Download build
         uses: actions/download-artifact@v4
         with:
-          name: opendownloader.${{ matrix.runtime }}
-          path: build/OpenDownloader
+          name: downio.${{ matrix.runtime }}
+          path: build/Downio
       - name: Package
         shell: pwsh
         env:
@@ -46,11 +46,11 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: package.${{ matrix.runtime }}
-          path: build/opendownloader_*.zip
+          path: build/Downio_*.zip
       - name: Delete temp artifacts
         uses: geekyeggo/delete-artifact@v5
         with:
-          name: opendownloader.${{ matrix.runtime }}
+          name: downio.${{ matrix.runtime }}
 
   osx-app:
     name: Package macOS
@@ -84,7 +84,7 @@ jobs:
       - name: Download build
         uses: actions/download-artifact@v4
         with:
-          name: opendownloader.${{ matrix.runtime }}
+          name: downio.${{ matrix.runtime }}
           path: build
       - name: Package
         env:
@@ -92,8 +92,8 @@ jobs:
           RUNTIME: ${{ matrix.runtime }}
           CODESIGN_IDENTITY: ${{ env.MACOS_CODESIGN_IDENTITY }}
         run: |
-          mkdir -p build/OpenDownloader
-          tar -xf "build/opendownloader.${{ matrix.runtime }}.tar" -C build/OpenDownloader
+          mkdir -p build/Downio
+          tar -xf "build/downio.${{ matrix.runtime }}.tar" -C build/Downio
           ./build/scripts/package.osx-app.sh
       - name: Notarize and staple DMG
         if: ${{ env.APPLE_ID != '' && env.APPLE_APP_SPECIFIC_PASSWORD != '' && env.APPLE_TEAM_ID != '' }}
@@ -104,7 +104,7 @@ jobs:
           VERSION: ${{ inputs.version }}
           RUNTIME: ${{ matrix.runtime }}
         run: |
-          DMG="build/opendownloader_${VERSION}.${RUNTIME}.dmg"
+          DMG="build/Downio_${VERSION}.${RUNTIME}.dmg"
           xcrun notarytool submit "$DMG" --apple-id "$APPLE_ID" --team-id "$APPLE_TEAM_ID" --password "$APPLE_APP_SPECIFIC_PASSWORD" --wait
           xcrun stapler staple "$DMG"
       - name: Upload package artifact
@@ -112,12 +112,12 @@ jobs:
         with:
           name: package.${{ matrix.runtime }}
           path: |
-            build/opendownloader_*.zip
-            build/opendownloader_*.dmg
+            build/Downio_*.zip
+            build/Downio_*.dmg
       - name: Delete temp artifacts
         uses: geekyeggo/delete-artifact@v5
         with:
-          name: opendownloader.${{ matrix.runtime }}
+          name: downio.${{ matrix.runtime }}
 
   linux:
     name: Package Linux
@@ -134,11 +134,11 @@ jobs:
           export DEBIAN_FRONTEND=noninteractive
           ln -fs /usr/share/zoneinfo/Etc/UTC /etc/localtime
           apt-get update
-          apt-get install -y curl wget git dpkg-dev fakeroot tzdata zip unzip desktop-file-utils rpm libfuse2 file build-essential binutils
+          apt-get install -y curl wget git dpkg-dev fakeroot tzdata zip unzip desktop-file-utils rpm libfuse2 file build-essential binutils ffmpeg
       - name: Download build
         uses: actions/download-artifact@v4
         with:
-          name: opendownloader.${{ matrix.runtime }}
+          name: downio.${{ matrix.runtime }}
           path: build
       - name: Package
         env:
@@ -146,18 +146,18 @@ jobs:
           RUNTIME: ${{ matrix.runtime }}
           APPIMAGE_EXTRACT_AND_RUN: 1
         run: |
-          mkdir -p build/OpenDownloader
-          tar -xf "build/opendownloader.${{ matrix.runtime }}.tar" -C build/OpenDownloader
+          mkdir -p build/Downio
+          tar -xf "build/downio.${{ matrix.runtime }}.tar" -C build/Downio
           ./build/scripts/package.linux.sh
       - name: Upload package artifacts
         uses: actions/upload-artifact@v4
         with:
           name: package.${{ matrix.runtime }}
           path: |
-            build/opendownloader-*.AppImage
-            build/opendownloader_*.deb
-            build/opendownloader-*.rpm
+            build/Downio-*.AppImage
+            build/Downio_*.deb
+            build/Downio-*.rpm
       - name: Delete temp artifacts
         uses: geekyeggo/delete-artifact@v5
         with:
-          name: opendownloader.${{ matrix.runtime }}
+          name: downio.${{ matrix.runtime }}

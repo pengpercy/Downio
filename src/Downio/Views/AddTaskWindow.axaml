@@ -1,0 +1,134 @@
+<views:DialogWindow xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="using:Downio.ViewModels"
+        xmlns:views="using:Downio.Views"
+        xmlns:controls="using:Downio.Controls"
+        mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="400"
+        x:Class="Downio.Views.AddTaskWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Classes="dialog"
+        Title="{DynamicResource TitleNewTask}"
+        Width="500" SizeToContent="Height"
+        >
+
+    <controls:DialogHost Title="{Binding $parent[Window].Title}">
+        <Grid RowDefinitions="Auto, Auto">
+            <!-- Content -->
+            <StackPanel Grid.Row="0" Spacing="16">
+                
+                <StackPanel Spacing="12">
+                    <TabControl SelectedIndex="{Binding NewTaskInputModeIndex}" Margin="-8,0,-8,4" Padding="0">
+                        <TabControl.Styles>
+                            <Style Selector="TabItem">
+                                <Setter Property="FontSize" Value="14"/>
+                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                <Setter Property="MinHeight" Value="32"/>
+                                <Setter Property="Padding" Value="12,6"/>
+                            </Style>
+                            <Style Selector="TabItem > StackPanel">
+                                <Setter Property="Margin" Value="0,8,0,0"/>
+                            </Style>
+                            <Style Selector="TabControl /template/ TransitioningContentControl">
+                                <Setter Property="PageTransition">
+                                    <CrossFade Duration="0:00:00.180" />
+                                </Setter>
+                            </Style>
+                        </TabControl.Styles>
+
+                        <TabItem Header="{DynamicResource TabLinkTask}">
+                            <StackPanel Spacing="8" Margin="8,8,8,0">
+                                <TextBox Text="{Binding NewTaskUrl}"
+                                         Watermark="{DynamicResource PlaceholderMultiLinks}"
+                                         Height="100"
+                                         AcceptsReturn="True"
+                                         TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </TabItem>
+                        <TabItem Header="{DynamicResource TabTorrentTask}">
+                            <StackPanel Spacing="8" Margin="8,8,8,0">
+                                <Border CornerRadius="8"
+                                        BorderThickness="1"
+                                        BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                                        Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
+                                        Height="100"
+                                        Padding="12"
+                                        DragDrop.AllowDrop="True"
+                                        DragDrop.DragOver="OnTorrentDragOver"
+                                        DragDrop.Drop="OnTorrentDrop"
+                                        PointerPressed="OnTorrentPick">
+                                    <StackPanel Orientation="Vertical" Spacing="8" VerticalAlignment="Center" HorizontalAlignment="Center">
+                                        <PathIcon Data="{StaticResource IconUpload}" Width="24" Height="24" Opacity="0.6" HorizontalAlignment="Center"/>
+                                        <StackPanel Spacing="4">
+                                            <TextBlock Text="{DynamicResource TorrentDropHint}" HorizontalAlignment="Center" TextAlignment="Center"/>
+                                            <TextBlock Text="{Binding NewTaskTorrentFileName}" Opacity="0.7" TextTrimming="CharacterEllipsis" 
+                                                       HorizontalAlignment="Center" TextAlignment="Center" FontSize="12" MaxWidth="350"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </TabItem>
+                    </TabControl>
+
+                    <Grid ColumnDefinitions="*, 120" RowDefinitions="Auto, Auto">
+                            <StackPanel Grid.Column="0" Spacing="8" Margin="0,0,10,0">
+                            <TextBlock Text="{DynamicResource LabelFileName}" Opacity="0.7"/>
+                            <TextBox Text="{Binding NewTaskName}" Watermark="{DynamicResource PlaceholderAutoDetected}"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="0" Grid.Column="1" Spacing="8">
+                            <TextBlock Text="{DynamicResource LabelChunks}" Opacity="0.7"/>
+                            <NumericUpDown Value="{Binding NewTaskChunks}" Minimum="1" Maximum="32" FormatString="0"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="{DynamicResource LabelSavePath}" Opacity="0.7"/>
+                        <Grid ColumnDefinitions="*, Auto">
+                            <TextBox Grid.Column="0" Text="{Binding NewTaskSavePath}" IsReadOnly="True"/>
+                            <Button Grid.Column="1" Command="{Binding ChooseSavePathCommand}" Margin="10,0,0,0">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <PathIcon Data="{StaticResource IconFolder}" Width="16" Height="16" Opacity="0.7"/>
+                                    <TextBlock Text="{DynamicResource BtnBrowse}"/>
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+                    </StackPanel>
+
+                    <StackPanel Spacing="10" IsVisible="{Binding NewTaskShowAdvanced}">
+                        <Grid ColumnDefinitions="140, *" RowDefinitions="Auto, Auto, Auto, Auto, Auto" RowSpacing="10">
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="{DynamicResource LabelUserAgent}" Opacity="0.7" VerticalAlignment="Center"/>
+                            <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding NewTaskUserAgent}" Watermark="Mozilla/5.0" />
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="{DynamicResource LabelAuthorization}" Opacity="0.7" VerticalAlignment="Center"/>
+                            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding NewTaskAuthorization}" Watermark="Bearer ..." />
+
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="{DynamicResource LabelReferer}" Opacity="0.7" VerticalAlignment="Center"/>
+                            <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding NewTaskReferer}" Watermark="https://..." />
+
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="{DynamicResource LabelCookie}" Opacity="0.7" VerticalAlignment="Center"/>
+                            <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding NewTaskCookie}" Watermark="key=value; ..." />
+
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="{DynamicResource LabelTaskProxy}" Opacity="0.7" VerticalAlignment="Center"/>
+                            <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding NewTaskProxy}" Watermark="http://127.0.0.1:7890" />
+                        </Grid>
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
+
+            <!-- Footer -->
+            <Grid Grid.Row="1" ColumnDefinitions="*, Auto" Margin="0,24,0,0">
+                <CheckBox Grid.Column="0" VerticalAlignment="Center"
+                          Content="{DynamicResource LabelAdvancedOptions}"
+                          IsChecked="{Binding NewTaskShowAdvanced}" />
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12" HorizontalAlignment="Right">
+                    <Button Content="{DynamicResource BtnCancel}" Click="OnCancelClick"
+                            Classes="dialogButton" IsCancel="True"/>
+                    <Button Content="{DynamicResource BtnDownload}" Click="OnDownloadClick"
+                            Classes="dialogButton accent" IsDefault="True"/>
+                </StackPanel>
+            </Grid>
+        </Grid>
+    </controls:DialogHost>
+</views:DialogWindow>

@@ -1,6 +1,7 @@
 .DS_Store
 .idea/
 .vscode/
+.trae/
 *.user
 *.suo
 *.userprefs
@@ -31,3 +32,8 @@ artifacts/
 aria2.conf
 aria2.session
 aria2.log
+
+# Local release tools
+tools/local/*
+!tools/local/release.sh
+tools/README.md

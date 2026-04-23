@@ -1,14 +1,14 @@
-## OpenDownloader
+## Downio
 
 <div align="center">
 
-<img src="src/OpenDownloader/Assets/app_icon.png" width="128" height="128" alt="Logo">
+<img src="src/Downio/Assets/Branding/app_icon.png" width="128" height="128" alt="Logo">
 
 ### 适用于 macOS、Windows 和 Linux 的现代化下载管理器
 
-[![Release](https://img.shields.io/github/v/release/pengpercy/OpenDownloader?style=flat-square)](https://github.com/pengpercy/OpenDownloader/releases)
-[![License](https://img.shields.io/github/license/pengpercy/OpenDownloader?style=flat-square)](LICENSE)
-[![Build Status](https://img.shields.io/github/actions/workflow/status/pengpercy/OpenDownloader/release.yml?style=flat-square)](https://github.com/pengpercy/OpenDownloader/actions)
+[![Release](https://img.shields.io/github/v/release/pengpercy/Downio?style=flat-square)](https://github.com/pengpercy/Downio/releases)
+[![License](https://img.shields.io/github/license/pengpercy/Downio?style=flat-square)](LICENSE)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/pengpercy/Downio/release.yml?style=flat-square)](https://github.com/pengpercy/Downio/actions)
 
 [English](README.md) | [简体中文](README_zh-CN.md)
 
@@ -34,21 +34,21 @@
 ## 📥 安装指南
 
 ### macOS
-从 [Releases](https://github.com/pengpercy/OpenDownloader/releases) 下载 `.dmg` 文件，将应用拖入“应用程序”文件夹即可。
+从 [Releases](https://github.com/pengpercy/Downio/releases) 下载 `.dmg` 文件，将应用拖入“应用程序”文件夹即可。
 
-如果出现 “OpenDownloader 已损坏，无法打开。你应该将它移到废纸篓。”：
+如果出现 “Downio 已损坏，无法打开。你应该将它移到废纸篓。”：
 - 右键点击应用 → “打开”（首次需要这样做一次）
 - 或进入 “系统设置” → “隐私与安全性”，在底部找到被拦截的提示，点 “仍要打开”
-- 仍不行时（高级方式）：在终端执行 `xattr -dr com.apple.quarantine /Applications/OpenDownloader.app`
+- 仍不行时（高级方式）：在终端执行 `xattr -dr com.apple.quarantine /Applications/Downio.app`
 
 ### Windows
-下载 `.zip` 压缩包，解压后运行 `OpenDownloader.exe`。
+下载 `.zip` 压缩包，解压后运行 `Downio.exe`。
 
 ### Linux
 优先下载 `.AppImage`（最简单），赋予执行权限后运行：
 ```bash
-chmod +x OpenDownloader*.AppImage
-./OpenDownloader*.AppImage
+chmod +x Downio*.AppImage
+./Downio*.AppImage
 ```
 也可以使用发行版对应的 `.deb` / `.rpm` 包安装。
 
@@ -60,12 +60,12 @@ chmod +x OpenDownloader*.AppImage
 
 **构建项目：**
 ```bash
-dotnet build src/OpenDownloader/OpenDownloader.csproj
+dotnet build src/Downio/Downio.csproj
 ```
 
 **运行项目：**
 ```bash
-dotnet run --project src/OpenDownloader/OpenDownloader.csproj
+dotnet run --project src/Downio/Downio.csproj
 ```
 
 ### 📦 macOS 打包

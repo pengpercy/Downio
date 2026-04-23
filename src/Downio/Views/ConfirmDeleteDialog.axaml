@@ -1,0 +1,32 @@
+<views:DialogWindow xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:views="using:Downio.Views"
+        xmlns:controls="using:Downio.Controls"
+        mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="180"
+        x:Class="Downio.Views.ConfirmDeleteDialog"
+        Classes="dialog"
+        Title="{DynamicResource MenuDelete}"
+        Width="400" SizeToContent="Height"
+        >
+
+    <controls:DialogHost Title="{Binding $parent[Window].Title}">
+        <Grid RowDefinitions="Auto, Auto, Auto">
+            <!-- Message -->
+            <TextBlock Grid.Row="0" x:Name="MessageText" TextWrapping="Wrap" Margin="0,0,0,20"
+                       VerticalAlignment="Top" FontSize="14" LineHeight="20"
+                       Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+
+            <!-- Checkbox -->
+            <CheckBox Grid.Row="1" x:Name="DeleteFileCheckBox" Content="{DynamicResource LabelDeleteFile}" 
+                      Margin="0,0,0,24" FontSize="13"/>
+
+            <!-- Buttons -->
+            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
+                <Button Classes="dialogButton" Content="{DynamicResource ButtonCancel}" Click="OnCancelClick" IsCancel="True"/>
+                <Button Classes="dialogButton accent" Content="{DynamicResource ButtonConfirm}" Click="OnConfirmClick" IsDefault="True"/>
+            </StackPanel>
+        </Grid>
+    </controls:DialogHost>
+</views:DialogWindow>

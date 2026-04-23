@@ -1,14 +1,14 @@
-## OpenDownloader
+## Downio
 
 <div align="center">
 
-<img src="src/OpenDownloader/Assets/app_icon.png" width="128" height="128" alt="Logo">
+<img src="src/Downio/Assets/Branding/app_icon.png" width="128" height="128" alt="Logo">
 
 ### A Modern Download Manager for macOS, Windows, and Linux
 
-[![Release](https://img.shields.io/github/v/release/pengpercy/OpenDownloader?style=flat-square)](https://github.com/pengpercy/OpenDownloader/releases)
-[![License](https://img.shields.io/github/license/pengpercy/OpenDownloader?style=flat-square)](LICENSE)
-[![Build Status](https://img.shields.io/github/actions/workflow/status/pengpercy/OpenDownloader/release.yml?style=flat-square)](https://github.com/pengpercy/OpenDownloader/actions)
+[![Release](https://img.shields.io/github/v/release/pengpercy/Downio?style=flat-square)](https://github.com/pengpercy/Downio/releases)
+[![License](https://img.shields.io/github/license/pengpercy/Downio?style=flat-square)](LICENSE)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/pengpercy/Downio/release.yml?style=flat-square)](https://github.com/pengpercy/Downio/actions)
 
 [简体中文](README_zh-CN.md) | [English](README.md)
 
@@ -34,16 +34,16 @@
 ## Installation
 
 ### macOS
-Download the `.dmg` file from [Releases](https://github.com/pengpercy/OpenDownloader/releases), drag and drop to Applications folder.
+Download the `.dmg` file from [Releases](https://github.com/pengpercy/Downio/releases), drag and drop to Applications folder.
 
 ### Windows
-Download the `.zip` file, extract and run `OpenDownloader.exe`.
+Download the `.zip` file, extract and run `Downio.exe`.
 
 ### Linux
 Prefer the `.AppImage` (easiest). Make it executable and run:
 ```bash
-chmod +x OpenDownloader*.AppImage
-./OpenDownloader*.AppImage
+chmod +x Downio*.AppImage
+./Downio*.AppImage
 ```
 You can also install via `.deb` / `.rpm` for your distro.
 
@@ -55,12 +55,12 @@ You can also install via `.deb` / `.rpm` for your distro.
 
 **Build:**
 ```bash
-dotnet build src/OpenDownloader/OpenDownloader.csproj
+dotnet build src/Downio/Downio.csproj
 ```
 
 **Run:**
 ```bash
-dotnet run --project src/OpenDownloader/OpenDownloader.csproj
+dotnet run --project src/Downio/Downio.csproj
 ```
 
 ### Building for macOS

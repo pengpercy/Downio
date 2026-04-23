@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Downio
+Comment=Open-source Downloader
+Exec=/opt/Downio/Downio
+Icon=/usr/share/icons/Downio.png
+Terminal=false
+Type=Application
+Categories=Network;FileTransfer;
+MimeType=x-scheme-handler/magnet;x-scheme-handler/thunder;application/x-bittorrent;

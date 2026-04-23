@@ -1,0 +1,8 @@
+<linker>
+<!--  <assembly fullname="Downio">-->
+<!--    <type fullname="Downio.App" preserve="all" />-->
+<!--    <type fullname="Downio.Services.LocalizationService" preserve="all" />-->
+<!--  </assembly>-->
+<!--  <assembly fullname="Avalonia.Markup.Xaml" preserve="all" />-->
+<!--  <assembly fullname="Avalonia.Controls.DataGrid" preserve="all" />-->
+</linker>

@@ -1,8 +1,0 @@
-<linker>
-<!--  <assembly fullname="OpenDownloader">-->
-<!--    <type fullname="OpenDownloader.App" preserve="all" />-->
-<!--    <type fullname="OpenDownloader.Services.LocalizationService" preserve="all" />-->
-<!--  </assembly>-->
-<!--  <assembly fullname="Avalonia.Markup.Xaml" preserve="all" />-->
-<!--  <assembly fullname="Avalonia.Controls.DataGrid" preserve="all" />-->
-</linker>

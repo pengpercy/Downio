@@ -2,18 +2,18 @@
 set -e
 
 # Usage: ./package_linux.sh <rid> <version> <output_dir> <publish_dir>
-# Example: ./package_linux.sh linux-x64 1.0.0 build_output src/OpenDownloader/bin/Release/net10.0/linux-x64/publish
+# Example: ./package_linux.sh linux-x64 1.0.0 build_output src/Downio/bin/Release/net10.0/linux-x64/publish
 
 RID=$1
 VERSION=$2
 OUTPUT_DIR=$3
 PUBLISH_DIR=$4
-APP_NAME="OpenDownloader"
-BIN_NAME="OpenDownloader"
+APP_NAME="Downio"
+BIN_NAME="Downio"
 DESC="A modern, open-source download manager."
-MAINTAINER="OpenDownloader Contributors"
+MAINTAINER="Downio Contributors"
 LICENSE="MIT"
-URL="https://github.com/pengpercy/OpenDownloader"
+URL="https://github.com/pengpercy/Downio"
 
 mkdir -p "$OUTPUT_DIR"
 
@@ -63,7 +63,7 @@ EOF
 
 # Copy Icon (Assuming icon exists in source)
 # We need to find the icon. It should be in the repo.
-ICON_SRC="src/OpenDownloader/Assets/app_ico.png"
+ICON_SRC="src/Downio/Assets/app_ico.png"
 if [ -f "$ICON_SRC" ]; then
     cp "$ICON_SRC" "$PKG_ROOT/usr/share/icons/hicolor/128x128/apps/$APP_NAME.png"
 else
