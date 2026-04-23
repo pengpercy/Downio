@@ -15,17 +15,17 @@ public static class WindowDragHelper
         var control = e.Source as Control;
         while (control != null)
         {
-            if (control is Button
-                || control is TextBox
-                || control is CheckBox
-                || control is ToggleSwitch
-                || control is ComboBox
-                || control is Slider
-                || control is ScrollBar
-                || control is ScrollViewer
-                || control is MenuItem
-                || control is ListBox
-                || control is ListBoxItem)
+            if (control is Button 
+                or TextBox 
+                or CheckBox 
+                or ToggleSwitch 
+                or ComboBox 
+                or Slider 
+                or ScrollBar 
+                or ScrollViewer 
+                or MenuItem 
+                or ListBox 
+                or ListBoxItem)
             {
                 return;
             }
