@@ -19,9 +19,9 @@
     <Design.DataContext>
         <views:UpdateViewModel>
             <views:UpdateViewModel.Release>
-                <services:ReleaseInfo TagName="v1.0.61" Body="🚀 版本发布 v1.0.61&#x0a;&#x0a;✨ 优化：&#x0a;- 将 Windows 原生通知实现切换到底层 WinRT Toast API，减少发布环境兼容性差异。&#x0a;- 继续保持通知为进程内调用，不再依赖命令行脚本。&#x0a;&#x0a;🐛 修复：&#x0a;- 修复上一版 Windows 原生通知在 CI 和发布构建中的工具包兼容问题。" />
+                <services:ReleaseInfo TagName="v1.0.62" Body="🚀 版本发布 v1.0.62&#x0a;&#x0a;✨ 优化：&#x0a;- Windows 通知改为编译期直接调用原生 Toast API，不使用反射，兼容 Native AOT 发布。&#x0a;- Windows 构建切换到 Windows 专用目标框架，保留跨平台发布能力。&#x0a;&#x0a;🐛 修复：&#x0a;- 修复上一版 Windows 通知实现中反射调用对 AOT 发布不友好的问题。" />
             </views:UpdateViewModel.Release>
-            <views:UpdateViewModel.CurrentVersion>1.0.60</views:UpdateViewModel.CurrentVersion>
+            <views:UpdateViewModel.CurrentVersion>1.0.61</views:UpdateViewModel.CurrentVersion>
         </views:UpdateViewModel>
     </Design.DataContext>
 

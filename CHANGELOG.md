@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.62 - 2026-04-25
+
+- Removed reflection from the Windows notification path to keep Native AOT publishing safe.
+- Switched Windows builds to a Windows-specific target framework so native toast APIs can be called directly at compile time.
+
 ## 1.0.61 - 2026-04-25
 
 - Switched the Windows native notification path to the underlying WinRT toast APIs for a more reliable release-build implementation.
