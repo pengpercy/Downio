@@ -15,6 +15,7 @@ namespace Downio.Services.Aria2;
 
 public class Aria2Service : IAria2Service, IDisposable
 {
+    private const long MinSplitSizeBytes = 1024 * 1024;
     private Process? _aria2Process;
     private JsonRpcClient? _rpcClient;
     private int _rpcPort = 16800;
@@ -362,7 +363,7 @@ public class Aria2Service : IAria2Service, IDisposable
         return standardPath;
     }
 
-    public async Task<string> AddUriAsync(string url, string filename, string savePath, int split = 4, IDictionary<string, string>? extraOptions = null)
+    public async Task<string> AddUriAsync(string url, string filename, string savePath, int split = 16, IDictionary<string, string>? extraOptions = null)
     {
         if (_rpcClient == null) return string.Empty;
 
@@ -370,7 +371,7 @@ public class Aria2Service : IAria2Service, IDisposable
         {
             { "dir", savePath },
             { "split", split.ToString() },
-            { "max-connection-per-server", "16" }, // Usually we want max connections to be higher or equal to split
+            { "max-connection-per-server", Math.Max(16, split).ToString() },
             { "min-split-size", "1M" }
         };
         
@@ -580,6 +581,11 @@ public class Aria2Service : IAria2Service, IDisposable
             "removed" => "StatusStopped",
             _ => "StatusStopped"
         };
+        if (taskStatus == "StatusError")
+        {
+            var message = string.IsNullOrWhiteSpace(status.ErrorMessage) ? "Unknown error" : status.ErrorMessage;
+            AppLog.Warn($"aria2 task error: {status.Gid}, code={status.ErrorCode}, message={message}");
+        }
 
         // Name, Path, Url
         var name = "Unknown";
@@ -661,9 +667,9 @@ public class Aria2Service : IAria2Service, IDisposable
         }
 
         var split = connections > 0 ? connections : 1;
-        if (_splitCache.TryGetValue(status.Gid, out var cachedSplit) && cachedSplit > 0)
+        if (split <= 1 && _splitCache.TryGetValue(status.Gid, out var configuredSplit) && configuredSplit > 1)
         {
-            split = cachedSplit;
+            split = EstimateActiveSplits(configuredSplit, total, completed, taskStatus);
         }
 
         return new DownloadTask
@@ -706,6 +712,19 @@ public class Aria2Service : IAria2Service, IDisposable
             {
             }
         }
+    }
+
+    private static int EstimateActiveSplits(int configuredSplit, long total, long completed, string taskStatus)
+    {
+        if (taskStatus != "StatusDownloading") return 1;
+        if (configuredSplit <= 1) return 1;
+        if (total <= 0) return configuredSplit;
+
+        var remaining = Math.Max(0, total - completed);
+        if (remaining <= 0) return 1;
+
+        var remainingSplits = (int)Math.Ceiling(remaining / (double)MinSplitSizeBytes);
+        return Math.Clamp(remainingSplits, 1, configuredSplit);
     }
 
     private string FormatSpeed(long bytesPerSec)
@@ -756,6 +775,8 @@ public class Aria2TaskStatus
     public string CompletedLength { get; set; } = "0";
     public string DownloadSpeed { get; set; } = "0";
     public string NumConnections { get; set; } = "0";
+    public string ErrorCode { get; set; } = "";
+    public string ErrorMessage { get; set; } = "";
     public List<Aria2File> Files { get; set; } = new();
 }
 

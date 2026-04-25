@@ -372,7 +372,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private string _newTaskName = string.Empty;
 
     [ObservableProperty]
-    private int _newTaskChunks = 4;
+    private int _newTaskChunks = 16;
 
     [ObservableProperty]
     private string _newTaskSavePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
@@ -807,6 +807,7 @@ public partial class MainWindowViewModel : ViewModelBase
             DefaultSavePath = string.IsNullOrWhiteSpace(_settingsService.Settings.DefaultSavePath)
                 ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads")
                 : _settingsService.Settings.DefaultSavePath;
+            DefaultDownloadSplit = _settingsService.Settings.DefaultDownloadSplit;
 
             ProxyAddress = _settingsService.Settings.ProxyAddress;
             ProxyPort = _settingsService.Settings.ProxyPort;
@@ -832,6 +833,9 @@ public partial class MainWindowViewModel : ViewModelBase
     // Settings Properties
     [ObservableProperty]
     private string _defaultSavePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
+
+    [ObservableProperty]
+    private int _defaultDownloadSplit = 16;
 
     [ObservableProperty]
     private string _proxyAddress = string.Empty;
@@ -1104,6 +1108,7 @@ public partial class MainWindowViewModel : ViewModelBase
             _settingsService.Settings.DefaultSavePath = DefaultSavePath;
             _settingsService.Save();
         }
+        DefaultDownloadSplit = _settingsService.Settings.DefaultDownloadSplit;
 
         ProxyAddress = _settingsService.Settings.ProxyAddress;
         ProxyPort = _settingsService.Settings.ProxyPort;
@@ -1318,6 +1323,19 @@ public partial class MainWindowViewModel : ViewModelBase
     partial void OnDefaultSavePathChanged(string value)
     {
         _settingsService.Settings.DefaultSavePath = value;
+        _settingsService.Save();
+    }
+
+    partial void OnDefaultDownloadSplitChanged(int value)
+    {
+        var normalized = Math.Clamp(value, 1, 32);
+        if (normalized != value)
+        {
+            DefaultDownloadSplit = normalized;
+            return;
+        }
+
+        _settingsService.Settings.DefaultDownloadSplit = normalized;
         _settingsService.Save();
     }
 

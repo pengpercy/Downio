@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.63 - 2026-04-26
+
+- Added a configurable default split count in Settings so new downloads can use the user's preferred chunk count.
+- Changed new task creation to appear in the downloading list immediately while aria2 resolves the final task metadata.
+- Improved split display behavior so the task list can show changing active split counts instead of a permanently fixed configured value.
+- Avoided passing automatically guessed filenames to aria2, preventing dynamic or redirected downloads from failing because of unreliable local filename guesses.
+- Logged aria2 error code and message details for failed tasks to make future download failures easier to diagnose.
+
 ## 1.0.62 - 2026-04-25
 
 - Removed reflection from the Windows notification path to keep Native AOT publishing safe.

@@ -46,6 +46,7 @@
 
     <!-- Settings Items -->
     <x:String x:Key="LabelDefaultSavePath">默认存储路径</x:String>
+    <x:String x:Key="LabelDefaultDownloadSplit">默认分片数</x:String>
     <x:String x:Key="LabelProxy">代理服务器</x:String>
     <x:String x:Key="LabelProxyType">协议</x:String>
     <x:String x:Key="LabelProxyAddress">地址</x:String>

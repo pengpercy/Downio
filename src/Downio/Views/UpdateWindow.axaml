@@ -19,9 +19,9 @@
     <Design.DataContext>
         <views:UpdateViewModel>
             <views:UpdateViewModel.Release>
-                <services:ReleaseInfo TagName="v1.0.62" Body="🚀 版本发布 v1.0.62&#x0a;&#x0a;✨ 优化：&#x0a;- Windows 通知改为编译期直接调用原生 Toast API，不使用反射，兼容 Native AOT 发布。&#x0a;- Windows 构建切换到 Windows 专用目标框架，保留跨平台发布能力。&#x0a;&#x0a;🐛 修复：&#x0a;- 修复上一版 Windows 通知实现中反射调用对 AOT 发布不友好的问题。" />
+                <services:ReleaseInfo TagName="v1.0.63" Body="🚀 版本发布 v1.0.63&#x0a;&#x0a;✨ 优化：&#x0a;- 设置中新增默认分片数，新建下载任务会使用用户配置的分片数。&#x0a;- 添加任务后会立即出现在下载中列表，随后由 aria2 的真实状态刷新覆盖。&#x0a;- 优化 Split 显示逻辑，避免一直固定为配置值。&#x0a;&#x0a;🐛 修复：&#x0a;- 修复自动猜测文件名传给 aria2 后，部分重定向或动态下载链接会失败的问题。&#x0a;- 下载失败时记录 aria2 错误码和错误信息，便于诊断。" />
             </views:UpdateViewModel.Release>
-            <views:UpdateViewModel.CurrentVersion>1.0.61</views:UpdateViewModel.CurrentVersion>
+            <views:UpdateViewModel.CurrentVersion>1.0.62</views:UpdateViewModel.CurrentVersion>
         </views:UpdateViewModel>
     </Design.DataContext>
 

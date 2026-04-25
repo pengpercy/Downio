@@ -152,7 +152,7 @@ public partial class MainWindowViewModel
         NewTaskUrl = string.Empty;
         NewTaskTorrentFilePath = string.Empty;
         NewTaskName = string.Empty;
-        NewTaskChunks = 4;
+        NewTaskChunks = DefaultDownloadSplit;
         if (string.IsNullOrEmpty(NewTaskSavePath))
         {
             NewTaskSavePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
@@ -343,7 +343,8 @@ public partial class MainWindowViewModel
 
             if (isTorrent)
             {
-                await _aria2Service.AddTorrentAsync(NewTaskTorrentFilePath, NewTaskSavePath, extraOptions);
+                var gid = await _aria2Service.AddTorrentAsync(NewTaskTorrentFilePath, NewTaskSavePath, extraOptions);
+                AddPendingTask(gid, Path.GetFileNameWithoutExtension(NewTaskTorrentFilePath), NewTaskSavePath, string.Empty, NewTaskChunks);
             }
             else
             {
@@ -355,13 +356,15 @@ public partial class MainWindowViewModel
 
                 foreach (var url in urls)
                 {
-                    var name = urls.Count == 1 ? NewTaskName?.Trim() ?? string.Empty : string.Empty;
-                    if (string.IsNullOrWhiteSpace(name))
+                    var outputName = urls.Count == 1 ? NewTaskName?.Trim() ?? string.Empty : string.Empty;
+                    var displayName = outputName;
+                    if (string.IsNullOrWhiteSpace(displayName))
                     {
-                        name = await TryDetectDownloadFileNameAsync(url, extraOptions);
+                        displayName = TryGetSafeFileNameFromUri(Uri.TryCreate(url, UriKind.Absolute, out var uri) ? uri : null);
                     }
 
-                    await _aria2Service.AddUriAsync(url, name, NewTaskSavePath, NewTaskChunks, extraOptions);
+                    var gid = await _aria2Service.AddUriAsync(url, outputName, NewTaskSavePath, NewTaskChunks, extraOptions);
+                    AddPendingTask(gid, displayName, NewTaskSavePath, url, NewTaskChunks);
                 }
             }
 
@@ -381,14 +384,40 @@ public partial class MainWindowViewModel
                 ShowDownloading();
             }
 
-            await Task.Delay(200);
-            await RefreshTaskListAsync();
+            _ = RefreshTaskListSoonAsync();
         }
         catch (Exception ex)
         {
             Debug.WriteLine($"Add Task Failed: {ex.Message}");
             AppLog.Error(ex, "Add task failed");
         }
+    }
+
+    private void AddPendingTask(string gid, string name, string savePath, string url, int split)
+    {
+        if (string.IsNullOrWhiteSpace(gid)) return;
+        if (!IsDownloading) return;
+        if (Tasks.Any(t => t.Id == gid)) return;
+
+        var displayName = string.IsNullOrWhiteSpace(name) ? "Unknown" : name;
+        Tasks.Add(new DownloadTask
+        {
+            Id = gid,
+            Name = displayName,
+            Status = "StatusWaiting",
+            Speed = "0 B/s",
+            TimeLeft = "--",
+            Split = Math.Clamp(split, 1, 32),
+            Connections = 0,
+            Url = url,
+            FilePath = string.IsNullOrWhiteSpace(name) ? string.Empty : Path.Combine(savePath, name)
+        });
+    }
+
+    private async Task RefreshTaskListSoonAsync()
+    {
+        await Task.Delay(800);
+        await RefreshTaskListAsync();
     }
 
     private async Task<string> TryDetectDownloadFileNameAsync(string url, IDictionary<string, string>? extraOptions)

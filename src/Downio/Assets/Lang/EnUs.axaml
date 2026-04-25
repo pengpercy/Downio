@@ -46,6 +46,7 @@
 
     <!-- Settings Items -->
     <x:String x:Key="LabelDefaultSavePath">Default Save Path</x:String>
+    <x:String x:Key="LabelDefaultDownloadSplit">Default Splits</x:String>
     <x:String x:Key="LabelProxy">Proxy Server</x:String>
     <x:String x:Key="LabelProxyType">Protocol</x:String>
     <x:String x:Key="LabelProxyAddress">Address</x:String>

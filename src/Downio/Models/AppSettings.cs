@@ -6,6 +6,7 @@ public class AppSettings
     public string Language { get; set; } = "System";
     public bool AutoStart { get; set; } = false;
     public string DefaultSavePath { get; set; } = string.Empty;
+    public int DefaultDownloadSplit { get; set; } = 16;
     public string AccentMode { get; set; } = "System";
     public string CustomAccentColor { get; set; } = string.Empty;
     public bool ExitOnClose { get; set; } = false;
