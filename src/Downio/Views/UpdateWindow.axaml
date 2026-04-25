@@ -19,9 +19,9 @@
     <Design.DataContext>
         <views:UpdateViewModel>
             <views:UpdateViewModel.Release>
-                <services:ReleaseInfo TagName="v1.0.60" Body="🚀 版本发布 v1.0.60&#x0a;&#x0a;✨ 优化：&#x0a;- 继续完善 Windows 原生通知实现，保持无命令行脚本的通知路径。&#x0a;- 对齐发布环境中的通知工具包 API 兼容面。&#x0a;&#x0a;🐛 修复：&#x0a;- 修复上一版 Windows 原生通知在 CI 和发布构建中的兼容性问题。" />
+                <services:ReleaseInfo TagName="v1.0.61" Body="🚀 版本发布 v1.0.61&#x0a;&#x0a;✨ 优化：&#x0a;- 将 Windows 原生通知实现切换到底层 WinRT Toast API，减少发布环境兼容性差异。&#x0a;- 继续保持通知为进程内调用，不再依赖命令行脚本。&#x0a;&#x0a;🐛 修复：&#x0a;- 修复上一版 Windows 原生通知在 CI 和发布构建中的工具包兼容问题。" />
             </views:UpdateViewModel.Release>
-            <views:UpdateViewModel.CurrentVersion>1.0.59</views:UpdateViewModel.CurrentVersion>
+            <views:UpdateViewModel.CurrentVersion>1.0.60</views:UpdateViewModel.CurrentVersion>
         </views:UpdateViewModel>
     </Design.DataContext>
 

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.61 - 2026-04-25
+
+- Switched the Windows native notification path to the underlying WinRT toast APIs for a more reliable release-build implementation.
+- Removed dependence on the notification toolkit wrapper for toast delivery while keeping notifications in-process and script-free.
+
 ## 1.0.60 - 2026-04-25
 
 - Fixed the Windows native notification implementation to use the toolkit API surface available in release builds.

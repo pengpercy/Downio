@@ -2,7 +2,9 @@
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
-using Microsoft.Toolkit.Uwp.Notifications;
+using System.Security;
+using Windows.Data.Xml.Dom;
+using Windows.UI.Notifications;
 
 namespace Downio.Services.Notifications;
 
@@ -22,7 +24,6 @@ internal static class WindowsSystemNotification
             }
 
             EnsureStartMenuShortcut();
-            ToastNotificationManagerCompat.OnActivated += _ => { };
             _initialized = true;
         }
     }
@@ -31,18 +32,28 @@ internal static class WindowsSystemNotification
     {
         Initialize();
 
-        var builder = new ToastContentBuilder()
-            .AddArgument("action", "view")
-            .AddText(title)
-            .AddText(message);
-
         var appLogoPath = Path.Combine(AppContext.BaseDirectory, "Assets", "Branding", "app_icon.png");
-        if (File.Exists(appLogoPath))
-        {
-            builder.AddAppLogoOverride(new Uri(appLogoPath));
-        }
+        var imageXml = File.Exists(appLogoPath)
+            ? $@"<image placement=""appLogoOverride"" hint-crop=""circle"" src=""{EscapeXml(new Uri(appLogoPath).AbsoluteUri)}"" alt=""Downio""/>"
+            : string.Empty;
 
-        builder.Show();
+        var xml = $"""
+                   <toast>
+                     <visual>
+                       <binding template="ToastGeneric">
+                         {imageXml}
+                         <text>{EscapeXml(title)}</text>
+                         <text>{EscapeXml(message)}</text>
+                       </binding>
+                     </visual>
+                   </toast>
+                   """;
+
+        var document = new XmlDocument();
+        document.LoadXml(xml);
+
+        var toast = new ToastNotification(document);
+        ToastNotificationManager.CreateToastNotifier(AppUserModelId).Show(toast);
     }
 
     private static void EnsureStartMenuShortcut()
@@ -92,6 +103,9 @@ internal static class WindowsSystemNotification
             Marshal.ReleaseComObject(shellLink);
         }
     }
+
+    private static string EscapeXml(string value) =>
+        SecurityElement.Escape(value) ?? string.Empty;
 
     [StructLayout(LayoutKind.Sequential, Pack = 4)]
     private struct PropertyKey(Guid formatId, int propertyId)
