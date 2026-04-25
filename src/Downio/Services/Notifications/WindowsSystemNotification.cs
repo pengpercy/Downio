@@ -2,7 +2,7 @@
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
-using CommunityToolkit.WinUI.Notifications;
+using Microsoft.Toolkit.Uwp.Notifications;
 
 namespace Downio.Services.Notifications;
 
@@ -80,7 +80,8 @@ internal static class WindowsSystemNotification
 
             var propertyStore = (IPropertyStore)shellLink;
             using var appId = new PropVariant(AppUserModelId);
-            Marshal.ThrowExceptionForHR(propertyStore.SetValue(ref PropertyKeys.AppUserModelId, appId));
+            var appUserModelIdKey = PropertyKeys.AppUserModelId;
+            Marshal.ThrowExceptionForHR(propertyStore.SetValue(ref appUserModelIdKey, appId));
             Marshal.ThrowExceptionForHR(propertyStore.Commit());
 
             var persistFile = (IPersistFile)shellLink;

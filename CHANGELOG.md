@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.60 - 2026-04-25
+
+- Fixed the Windows native notification implementation to use the toolkit API surface available in release builds.
+- Corrected the Windows shortcut property-store call path so the release pipeline can compile and package successfully.
+
 ## 1.0.59 - 2026-04-25
 
 - Finalized the Windows native notification migration with a packaging-safe implementation that no longer depends on command-line scripts.
