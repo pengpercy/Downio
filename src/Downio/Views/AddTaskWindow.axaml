@@ -40,7 +40,7 @@
                         <TabItem Header="{DynamicResource TabLinkTask}">
                             <StackPanel Spacing="8" Margin="8,8,8,0">
                                 <TextBox Text="{Binding NewTaskUrl}"
-                                         Watermark="{DynamicResource PlaceholderMultiLinks}"
+                                         PlaceholderText="{DynamicResource PlaceholderMultiLinks}"
                                          Height="100"
                                          AcceptsReturn="True"
                                          TextWrapping="Wrap"/>
@@ -74,7 +74,7 @@
                     <Grid ColumnDefinitions="*, 120" RowDefinitions="Auto, Auto">
                             <StackPanel Grid.Column="0" Spacing="8" Margin="0,0,10,0">
                             <TextBlock Text="{DynamicResource LabelFileName}" Opacity="0.7"/>
-                            <TextBox Text="{Binding NewTaskName}" Watermark="{DynamicResource PlaceholderAutoDetected}"/>
+                            <TextBox Text="{Binding NewTaskName}" PlaceholderText="{DynamicResource PlaceholderAutoDetected}"/>
                         </StackPanel>
 
                         <StackPanel Grid.Row="0" Grid.Column="1" Spacing="8">
@@ -99,19 +99,19 @@
                     <StackPanel Spacing="10" IsVisible="{Binding NewTaskShowAdvanced}">
                         <Grid ColumnDefinitions="140, *" RowDefinitions="Auto, Auto, Auto, Auto, Auto" RowSpacing="10">
                             <TextBlock Grid.Row="0" Grid.Column="0" Text="{DynamicResource LabelUserAgent}" Opacity="0.7" VerticalAlignment="Center"/>
-                            <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding NewTaskUserAgent}" Watermark="Mozilla/5.0" />
+                            <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding NewTaskUserAgent}" PlaceholderText="Mozilla/5.0" />
 
                             <TextBlock Grid.Row="1" Grid.Column="0" Text="{DynamicResource LabelAuthorization}" Opacity="0.7" VerticalAlignment="Center"/>
-                            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding NewTaskAuthorization}" Watermark="Bearer ..." />
+                            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding NewTaskAuthorization}" PlaceholderText="Bearer ..." />
 
                             <TextBlock Grid.Row="2" Grid.Column="0" Text="{DynamicResource LabelReferer}" Opacity="0.7" VerticalAlignment="Center"/>
-                            <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding NewTaskReferer}" Watermark="https://..." />
+                            <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding NewTaskReferer}" PlaceholderText="https://..." />
 
                             <TextBlock Grid.Row="3" Grid.Column="0" Text="{DynamicResource LabelCookie}" Opacity="0.7" VerticalAlignment="Center"/>
-                            <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding NewTaskCookie}" Watermark="key=value; ..." />
+                            <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding NewTaskCookie}" PlaceholderText="key=value; ..." />
 
                             <TextBlock Grid.Row="4" Grid.Column="0" Text="{DynamicResource LabelTaskProxy}" Opacity="0.7" VerticalAlignment="Center"/>
-                            <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding NewTaskProxy}" Watermark="http://127.0.0.1:7890" />
+                            <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding NewTaskProxy}" PlaceholderText="http://127.0.0.1:7890" />
                         </Grid>
                     </StackPanel>
                 </StackPanel>

@@ -12,6 +12,8 @@ using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Input;
+using Avalonia.Input.Platform;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using Avalonia.Styling;
@@ -300,7 +302,9 @@ public partial class MainWindowViewModel : ViewModelBase
                 var clipboard = mainWindow.Clipboard;
                 if (clipboard != null)
                 {
-                    await clipboard.SetTextAsync(task.Url);
+                    var data = new DataTransfer();
+                    data.Add(DataTransferItem.CreateText(task.Url));
+                    await clipboard.SetDataAsync(data);
                 }
             }
         }
@@ -397,6 +401,26 @@ public partial class MainWindowViewModel : ViewModelBase
     public ObservableCollection<TrackerSourceOption> TrackerSourceOptions { get; } = new();
 
     public ObservableCollection<TrackerSourceOption> SelectedTrackerSourceOptions { get; } = new();
+
+    public string SelectedTrackerSourceSummary
+    {
+        get
+        {
+            var selected = SelectedTrackerSourceOptions.ToList();
+            var selectedFormat = "{0} tracker sources selected";
+            if (Application.Current?.TryGetResource("LabelTrackerSourcesSelectedFormat", out var resource) == true && resource is string text)
+            {
+                selectedFormat = text;
+            }
+
+            return selected.Count switch
+            {
+                0 => "-",
+                1 => selected[0].Url,
+                _ => string.Format(CultureInfo.CurrentCulture, selectedFormat, selected.Count)
+            };
+        }
+    }
 
     [ObservableProperty]
     private bool _isSyncingTrackers;
@@ -634,6 +658,8 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             SelectedTrackerSourceOptions.Add(item);
         }
+
+        OnPropertyChanged(nameof(SelectedTrackerSourceSummary));
 
         _settingsService.Settings.TrackerSources = selected.Select(x => x.Url).ToList();
         _settingsService.Save();
@@ -1035,6 +1061,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
         OnPropertyChanged(nameof(EmptyStateSubtitleDownloadingText));
         OnPropertyChanged(nameof(CheckUpdateButtonKey));
+        OnPropertyChanged(nameof(SelectedTrackerSourceSummary));
     }
 
     public MainWindowViewModel()

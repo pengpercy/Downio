@@ -19,9 +19,9 @@
     <Design.DataContext>
         <views:UpdateViewModel>
             <views:UpdateViewModel.Release>
-                <services:ReleaseInfo TagName="v1.0.55" Body="🚀 版本发布 v1.0.32&#x0a;&#x0a;🐛 修复：&#x0a;- 🪟 Windows CI 构建失败：修正 CommunityToolkit.WinUI.Notifications 的 NuGet 版本号，确保 Windows ARM64 等平台可正常还原与构建。&#x0a;&#x0a;✨ 保持：&#x0a;- 其他功能与界面改动与 v1.0.31 一致。" />
+                <services:ReleaseInfo TagName="v1.0.56" Body="🚀 版本发布 v1.0.56&#x0a;&#x0a;✨ 优化：&#x0a;- 升级 Avalonia 到 12.x，并同步升级兼容的 Markdown 渲染依赖。&#x0a;- 调整设置窗口右侧控件对齐与分隔线，界面更整洁。&#x0a;- 重做 Tracker 源选择器，改为更接近原生下拉框的交互与样式。&#x0a;&#x0a;🐛 修复：&#x0a;- 修复部分下载链接文件名无法正确嗅探的问题。&#x0a;- 修复升级 Avalonia 后的运行时兼容问题。" />
             </views:UpdateViewModel.Release>
-            <views:UpdateViewModel.CurrentVersion>1.0.54</views:UpdateViewModel.CurrentVersion>
+            <views:UpdateViewModel.CurrentVersion>1.0.55</views:UpdateViewModel.CurrentVersion>
         </views:UpdateViewModel>
     </Design.DataContext>
 

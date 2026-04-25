@@ -95,7 +95,7 @@
                             </StackPanel>
                             <StackPanel Grid.Column="2">
                                 <TextBlock Text="{DynamicResource LabelProxyAddress}" FontSize="12" Opacity="0.7"/>
-                                <TextBox Text="{Binding ProxyAddress}" Watermark="127.0.0.1"/>
+                                <TextBox Text="{Binding ProxyAddress}" PlaceholderText="127.0.0.1"/>
                             </StackPanel>
                             <StackPanel Grid.Column="4">
                                 <TextBlock Text="{DynamicResource LabelProxyPort}" FontSize="12" Opacity="0.7"/>
