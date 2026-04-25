@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.59 - 2026-04-25
+
+- Finalized the Windows native notification migration with a packaging-safe implementation that no longer depends on command-line scripts.
+- Simplified the Windows toast registration path to keep CI and release builds compatible across platforms.
+
 ## 1.0.58 - 2026-04-25
 
 - Replaced Windows command-line toast invocation with an in-process native notification implementation to avoid antivirus false positives.

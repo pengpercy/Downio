@@ -19,9 +19,9 @@
     <Design.DataContext>
         <views:UpdateViewModel>
             <views:UpdateViewModel.Release>
-                <services:ReleaseInfo TagName="v1.0.58" Body="🚀 版本发布 v1.0.58&#x0a;&#x0a;✨ 优化：&#x0a;- 将 Windows 通知从命令行脚本切换为进程内原生调用，减少被杀毒软件误报的概率。&#x0a;- 应用启动时自动完成 Windows 原生通知注册。&#x0a;&#x0a;🐛 修复：&#x0a;- 修复 Windows 平台依赖 PowerShell 触发通知导致的安全软件告警问题。" />
+                <services:ReleaseInfo TagName="v1.0.59" Body="🚀 版本发布 v1.0.59&#x0a;&#x0a;✨ 优化：&#x0a;- 完成 Windows 原生通知迁移，继续保留无命令行脚本的实现路径。&#x0a;- 简化 Windows 通知注册逻辑，提升跨平台构建与发布兼容性。&#x0a;&#x0a;🐛 修复：&#x0a;- 修复上一版 Windows 原生通知实现导致的 CI 与发布构建失败问题。" />
             </views:UpdateViewModel.Release>
-            <views:UpdateViewModel.CurrentVersion>1.0.57</views:UpdateViewModel.CurrentVersion>
+            <views:UpdateViewModel.CurrentVersion>1.0.58</views:UpdateViewModel.CurrentVersion>
         </views:UpdateViewModel>
     </Design.DataContext>
 

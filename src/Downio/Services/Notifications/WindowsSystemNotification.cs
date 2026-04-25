@@ -9,7 +9,6 @@ namespace Downio.Services.Notifications;
 internal static class WindowsSystemNotification
 {
     private const string AppUserModelId = "pengpercy.Downio";
-    private static readonly Guid ToastActivatorId = new("2F431CEA-7F08-4A7A-A5AC-9C2CCB7B90C4");
     private static readonly object SyncRoot = new();
     private static bool _initialized;
 
@@ -22,9 +21,8 @@ internal static class WindowsSystemNotification
                 return;
             }
 
-            DesktopNotificationManagerCompat.RegisterAumidAndComServer<DownioNotificationActivator>(AppUserModelId);
-            DesktopNotificationManagerCompat.RegisterActivator<DownioNotificationActivator>();
             EnsureStartMenuShortcut();
+            ToastNotificationManagerCompat.OnActivated += _ => { };
             _initialized = true;
         }
     }
@@ -82,9 +80,7 @@ internal static class WindowsSystemNotification
 
             var propertyStore = (IPropertyStore)shellLink;
             using var appId = new PropVariant(AppUserModelId);
-            using var toastActivator = new PropVariant(ToastActivatorId);
             Marshal.ThrowExceptionForHR(propertyStore.SetValue(ref PropertyKeys.AppUserModelId, appId));
-            Marshal.ThrowExceptionForHR(propertyStore.SetValue(ref PropertyKeys.ToastActivatorClsid, toastActivator));
             Marshal.ThrowExceptionForHR(propertyStore.Commit());
 
             var persistFile = (IPersistFile)shellLink;
@@ -93,15 +89,6 @@ internal static class WindowsSystemNotification
         finally
         {
             Marshal.ReleaseComObject(shellLink);
-        }
-    }
-
-    [ComVisible(true)]
-    [Guid("2F431CEA-7F08-4A7A-A5AC-9C2CCB7B90C4")]
-    private sealed class DownioNotificationActivator : NotificationActivator
-    {
-        public override void OnActivated(string arguments, NotificationUserInput userInput, string appUserModelId)
-        {
         }
     }
 
@@ -115,7 +102,6 @@ internal static class WindowsSystemNotification
     private static class PropertyKeys
     {
         public static PropertyKey AppUserModelId => new(new Guid("9F4C2855-9F79-4B39-A8D0-E1D42DE1D5F3"), 5);
-        public static PropertyKey ToastActivatorClsid => new(new Guid("9F4C2855-9F79-4B39-A8D0-E1D42DE1D5F3"), 26);
     }
 
     [ComImport]
@@ -202,13 +188,6 @@ internal static class WindowsSystemNotification
         {
             valueType = 31;
             pointerValue = Marshal.StringToCoTaskMemUni(value);
-        }
-
-        public PropVariant(Guid value)
-        {
-            valueType = 72;
-            pointerValue = Marshal.AllocCoTaskMem(Marshal.SizeOf<Guid>());
-            Marshal.StructureToPtr(value, pointerValue, false);
         }
 
         public void Dispose()
