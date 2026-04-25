@@ -52,21 +52,37 @@ echo "Creating DMG: $DMG_NAME"
 rm -f "$DMG_NAME"
 
 # Create a temporary folder for DMG content
-DMG_SOURCE="dmg_source"
-mkdir -p "$DMG_SOURCE"
-cp -r "Downio.app" "$DMG_SOURCE/"
+DMG_SOURCE="$(mktemp -d "${TMPDIR:-/tmp}/downio-dmg-source.XXXXXX")"
+cleanup() {
+    rm -rf "$DMG_SOURCE"
+}
+trap cleanup EXIT
+
+cp -R "Downio.app" "$DMG_SOURCE/"
 ln -s /Applications "$DMG_SOURCE/Applications"
 
-# Create DMG using hdiutil
-hdiutil create -volname "Downio" \
-    -srcfolder "$DMG_SOURCE" \
-    -ov -format UDZO \
-    "$DMG_NAME"
+create_dmg() {
+    hdiutil create -volname "Downio" \
+        -srcfolder "$DMG_SOURCE" \
+        -ov -format UDZO \
+        "$DMG_NAME"
+}
+
+attempt=1
+max_attempts=3
+until create_dmg; do
+    if [ "$attempt" -ge "$max_attempts" ]; then
+        echo "Failed to create DMG after $attempt attempts."
+        exit 1
+    fi
+
+    echo "hdiutil create failed, retrying in 5 seconds ($attempt/$max_attempts)..."
+    sleep 5
+    attempt=$((attempt + 1))
+done
 
 if [[ -n "${CODESIGN_IDENTITY:-}" ]]; then
     codesign --force --timestamp --sign "$CODESIGN_IDENTITY" "$DMG_NAME"
 fi
 
-# Cleanup
-rm -rf "$DMG_SOURCE"
 echo "Done packaging for $RUNTIME. Zip and DMG created."

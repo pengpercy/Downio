@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.57 - 2026-04-25
+
+- Hardened macOS packaging by creating DMGs from an isolated temporary source directory and retrying transient `hdiutil` failures.
+- Re-ran the release flow for the Avalonia 12 upgrade, filename detection fixes, tracker selector refresh, and settings layout polish shipped in 1.0.56.
+
 ## 1.0.56 - 2026-04-25
 
 - Upgraded Avalonia to 12.x and aligned `LiveMarkdown.Avalonia` to a compatible version.

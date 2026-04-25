@@ -19,9 +19,9 @@
     <Design.DataContext>
         <views:UpdateViewModel>
             <views:UpdateViewModel.Release>
-                <services:ReleaseInfo TagName="v1.0.56" Body="🚀 版本发布 v1.0.56&#x0a;&#x0a;✨ 优化：&#x0a;- 升级 Avalonia 到 12.x，并同步升级兼容的 Markdown 渲染依赖。&#x0a;- 调整设置窗口右侧控件对齐与分隔线，界面更整洁。&#x0a;- 重做 Tracker 源选择器，改为更接近原生下拉框的交互与样式。&#x0a;&#x0a;🐛 修复：&#x0a;- 修复部分下载链接文件名无法正确嗅探的问题。&#x0a;- 修复升级 Avalonia 后的运行时兼容问题。" />
+                <services:ReleaseInfo TagName="v1.0.57" Body="🚀 版本发布 v1.0.57&#x0a;&#x0a;✨ 优化：&#x0a;- 修复 macOS Intel 发布流程中偶发的 DMG 打包失败，发布过程更稳定。&#x0a;- 保留 1.0.56 中的 Avalonia 12 升级、文件名嗅探改进与设置界面整理。&#x0a;&#x0a;🐛 修复：&#x0a;- 通过独立临时目录和重试机制规避 hdiutil 的瞬时 Resource busy 问题。" />
             </views:UpdateViewModel.Release>
-            <views:UpdateViewModel.CurrentVersion>1.0.55</views:UpdateViewModel.CurrentVersion>
+            <views:UpdateViewModel.CurrentVersion>1.0.56</views:UpdateViewModel.CurrentVersion>
         </views:UpdateViewModel>
     </Design.DataContext>
 
