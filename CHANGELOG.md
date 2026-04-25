@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.58 - 2026-04-25
+
+- Replaced Windows command-line toast invocation with an in-process native notification implementation to avoid antivirus false positives.
+- Initialized Windows toast registration during app startup and created the required shortcut metadata for native notifications.
+
 ## 1.0.57 - 2026-04-25
 
 - Hardened macOS packaging by creating DMGs from an isolated temporary source directory and retrying transient `hdiutil` failures.

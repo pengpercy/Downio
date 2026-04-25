@@ -19,9 +19,9 @@
     <Design.DataContext>
         <views:UpdateViewModel>
             <views:UpdateViewModel.Release>
-                <services:ReleaseInfo TagName="v1.0.57" Body="🚀 版本发布 v1.0.57&#x0a;&#x0a;✨ 优化：&#x0a;- 修复 macOS Intel 发布流程中偶发的 DMG 打包失败，发布过程更稳定。&#x0a;- 保留 1.0.56 中的 Avalonia 12 升级、文件名嗅探改进与设置界面整理。&#x0a;&#x0a;🐛 修复：&#x0a;- 通过独立临时目录和重试机制规避 hdiutil 的瞬时 Resource busy 问题。" />
+                <services:ReleaseInfo TagName="v1.0.58" Body="🚀 版本发布 v1.0.58&#x0a;&#x0a;✨ 优化：&#x0a;- 将 Windows 通知从命令行脚本切换为进程内原生调用，减少被杀毒软件误报的概率。&#x0a;- 应用启动时自动完成 Windows 原生通知注册。&#x0a;&#x0a;🐛 修复：&#x0a;- 修复 Windows 平台依赖 PowerShell 触发通知导致的安全软件告警问题。" />
             </views:UpdateViewModel.Release>
-            <views:UpdateViewModel.CurrentVersion>1.0.56</views:UpdateViewModel.CurrentVersion>
+            <views:UpdateViewModel.CurrentVersion>1.0.57</views:UpdateViewModel.CurrentVersion>
         </views:UpdateViewModel>
     </Design.DataContext>
 

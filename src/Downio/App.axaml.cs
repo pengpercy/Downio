@@ -23,6 +23,8 @@ public partial class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
+        NotificationService.InitializePlatformIntegration();
+
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             if (!SingleInstanceService.TryCreate("Downio", out _singleInstance))
