@@ -38,7 +38,7 @@ jobs:
       contents: write
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Create release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -50,7 +50,7 @@ jobs:
           TAG_MSG=$(git tag -l --format='%(contents)' "$TAG")
           gh release create "$TAG" -t "$VERSION" -n "$TAG_MSG" || gh release edit "$TAG" -t "$VERSION" -n "$TAG_MSG"
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           pattern: package.*
           path: packages

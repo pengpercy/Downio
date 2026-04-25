@@ -41,9 +41,9 @@ jobs:
           apt-get install -y sudo
           sudo apt-get install -y curl wget git unzip zip libicu66 tzdata clang lld zlib1g-dev libssl-dev
       - name: Checkout sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.x
 
@@ -76,7 +76,8 @@ jobs:
           mv "downio.${{ matrix.runtime }}.tar" publish
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: downio.${{ matrix.runtime }}
           path: publish/*
+          retention-days: 1

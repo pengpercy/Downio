@@ -30,9 +30,9 @@ jobs:
         runtime: [win-x64, win-arm64]
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Download build
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: downio.${{ matrix.runtime }}
           path: build/Downio
@@ -43,14 +43,11 @@ jobs:
           RUNTIME: ${{ matrix.runtime }}
         run: ./build/scripts/package.win.ps1
       - name: Upload package artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: package.${{ matrix.runtime }}
           path: build/Downio_*.zip
-      - name: Delete temp artifacts
-        uses: geekyeggo/delete-artifact@v5
-        with:
-          name: downio.${{ matrix.runtime }}
+          retention-days: 1
 
   osx-app:
     name: Package macOS
@@ -68,7 +65,7 @@ jobs:
       APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Import signing certificate
         if: ${{ env.MACOS_CERT_P12_BASE64 != '' }}
         run: |
@@ -82,7 +79,7 @@ jobs:
           security set-key-partition-list -S apple-tool:,apple: -s -k "$MACOS_KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
           security find-identity -v -p codesigning
       - name: Download build
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: downio.${{ matrix.runtime }}
           path: build
@@ -108,16 +105,13 @@ jobs:
           xcrun notarytool submit "$DMG" --apple-id "$APPLE_ID" --team-id "$APPLE_TEAM_ID" --password "$APPLE_APP_SPECIFIC_PASSWORD" --wait
           xcrun stapler staple "$DMG"
       - name: Upload package artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: package.${{ matrix.runtime }}
           path: |
             build/Downio_*.zip
             build/Downio_*.dmg
-      - name: Delete temp artifacts
-        uses: geekyeggo/delete-artifact@v5
-        with:
-          name: downio.${{ matrix.runtime }}
+          retention-days: 1
 
   linux:
     name: Package Linux
@@ -128,7 +122,7 @@ jobs:
         runtime: [linux-x64, linux-arm64]
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Download package dependencies
         run: |
           export DEBIAN_FRONTEND=noninteractive
@@ -136,7 +130,7 @@ jobs:
           apt-get update
           apt-get install -y curl wget git dpkg-dev fakeroot tzdata zip unzip desktop-file-utils rpm libfuse2 file build-essential binutils ffmpeg
       - name: Download build
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: downio.${{ matrix.runtime }}
           path: build
@@ -150,14 +144,11 @@ jobs:
           tar -xf "build/downio.${{ matrix.runtime }}.tar" -C build/Downio
           ./build/scripts/package.linux.sh
       - name: Upload package artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: package.${{ matrix.runtime }}
           path: |
             build/Downio-*.AppImage
             build/Downio_*.deb
             build/Downio-*.rpm
-      - name: Delete temp artifacts
-        uses: geekyeggo/delete-artifact@v5
-        with:
-          name: downio.${{ matrix.runtime }}
+          retention-days: 1
