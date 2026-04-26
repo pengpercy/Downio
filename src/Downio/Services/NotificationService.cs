@@ -59,13 +59,25 @@ public class NotificationService
         try
         {
 #if WINDOWS
-            WindowsSystemNotification.Show(title, message);
+            if (WindowsSystemNotification.TryShow(title, message))
+            {
+                return;
+            }
 #endif
         }
         catch (Exception ex)
         {
             AppLog.Error(ex, "Failed to show Windows notification");
         }
+
+        ShowWindowsLegacyNotification(title, message);
+    }
+
+    private static void ShowWindowsLegacyNotification(string title, string message)
+    {
+#if WINDOWS
+        WindowsSystemNotification.ShowLegacyBalloon(title, message);
+#endif
     }
 
     // --- MacOS 实现 ---

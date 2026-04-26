@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.68 - 2026-04-26
+
+- Aligned Avalonia 12 caption buttons flush to the top-right corner on non-main windows without changing their default height.
+- Restored Windows system notifications by binding the process AppUserModelID for Win10/Win11 toast delivery.
+- Added a native Win32 tray balloon fallback for older Windows versions or failed toast delivery without launching external scripts.
+
 ## 1.0.67 - 2026-04-26
 
 - Limited custom caption button height styling to the main window so other windows keep their default decoration height.

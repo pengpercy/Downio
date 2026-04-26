@@ -28,6 +28,18 @@
             <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundBaseHighBrush}" />
         </Style>
 
+        <Style Selector="Button#PART_MinimizeButton,
+                         Button#PART_MaximizeButton,
+                         Button#PART_CloseButton">
+            <Setter Property="Width" Value="46" />
+            <Setter Property="MinWidth" Value="46" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="VerticalAlignment" Value="Top" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="CornerRadius" Value="0" />
+        </Style>
+
         <Style Selector="Button#PART_FullScreenButton">
             <Setter Property="IsVisible" Value="False" />
             <Setter Property="Width" Value="0" />

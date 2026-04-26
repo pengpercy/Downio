@@ -3,6 +3,7 @@ using System;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Security;
+using System.Threading.Tasks;
 using Windows.Data.Xml.Dom;
 using Windows.UI.Notifications;
 
@@ -11,6 +12,7 @@ namespace Downio.Services.Notifications;
 internal static class WindowsSystemNotification
 {
     private const string AppUserModelId = "pengpercy.Downio";
+    private const int LegacyBalloonId = 1001;
     private static readonly object SyncRoot = new();
     private static bool _initialized;
 
@@ -23,37 +25,77 @@ internal static class WindowsSystemNotification
                 return;
             }
 
+            Marshal.ThrowExceptionForHR(SetCurrentProcessExplicitAppUserModelID(AppUserModelId));
             EnsureStartMenuShortcut();
             _initialized = true;
         }
     }
 
-    public static void Show(string title, string message)
+    public static void ShowLegacyBalloon(string title, string message)
     {
-        Initialize();
+        try
+        {
+            var data = CreateLegacyNotifyIconData(title, message);
+            Shell_NotifyIcon(NIM_DELETE, ref data);
 
-        var appLogoPath = Path.Combine(AppContext.BaseDirectory, "Assets", "Branding", "app_icon.png");
-        var imageXml = File.Exists(appLogoPath)
-            ? $@"<image placement=""appLogoOverride"" hint-crop=""circle"" src=""{EscapeXml(new Uri(appLogoPath).AbsoluteUri)}"" alt=""Downio""/>"
-            : string.Empty;
+            if (!Shell_NotifyIcon(NIM_ADD, ref data))
+            {
+                return;
+            }
 
-        var xml = $"""
-                   <toast>
-                     <visual>
-                       <binding template="ToastGeneric">
-                         {imageXml}
-                         <text>{EscapeXml(title)}</text>
-                         <text>{EscapeXml(message)}</text>
-                       </binding>
-                     </visual>
-                   </toast>
-                   """;
+            Shell_NotifyIcon(NIM_MODIFY, ref data);
 
-        var document = new XmlDocument();
-        document.LoadXml(xml);
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(6000).ConfigureAwait(false);
+                var cleanup = CreateLegacyNotifyIconData(string.Empty, string.Empty);
+                Shell_NotifyIcon(NIM_DELETE, ref cleanup);
+            });
+        }
+        catch
+        {
+        }
+    }
 
-        var toast = new ToastNotification(document);
-        ToastNotificationManager.CreateToastNotifier(AppUserModelId).Show(toast);
+    public static bool TryShow(string title, string message)
+    {
+        if (!OperatingSystem.IsWindowsVersionAtLeast(10))
+        {
+            return false;
+        }
+
+        try
+        {
+            Initialize();
+
+            var appLogoPath = Path.Combine(AppContext.BaseDirectory, "Assets", "Branding", "app_icon.png");
+            var imageXml = File.Exists(appLogoPath)
+                ? $@"<image placement=""appLogoOverride"" hint-crop=""circle"" src=""{EscapeXml(new Uri(appLogoPath).AbsoluteUri)}"" alt=""Downio""/>"
+                : string.Empty;
+
+            var xml = $"""
+                       <toast>
+                         <visual>
+                           <binding template="ToastGeneric">
+                             {imageXml}
+                             <text>{EscapeXml(title)}</text>
+                             <text>{EscapeXml(message)}</text>
+                           </binding>
+                         </visual>
+                       </toast>
+                       """;
+
+            var document = new XmlDocument();
+            document.LoadXml(xml);
+
+            var toast = new ToastNotification(document);
+            ToastNotificationManager.CreateToastNotifier(AppUserModelId).Show(toast);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     private static void EnsureStartMenuShortcut()
@@ -65,11 +107,6 @@ internal static class WindowsSystemNotification
         }
 
         var shortcutPath = Path.Combine(programsPath, "Downio.lnk");
-        if (File.Exists(shortcutPath))
-        {
-            return;
-        }
-
         var exePath = Environment.ProcessPath;
         if (string.IsNullOrWhiteSpace(exePath))
         {
@@ -106,6 +143,75 @@ internal static class WindowsSystemNotification
 
     private static string EscapeXml(string value) =>
         SecurityElement.Escape(value) ?? string.Empty;
+
+    [DllImport("shell32.dll", CharSet = CharSet.Unicode, PreserveSig = true)]
+    private static extern int SetCurrentProcessExplicitAppUserModelID(string appId);
+
+    private static NotifyIconData CreateLegacyNotifyIconData(string title, string message)
+    {
+        var data = new NotifyIconData
+        {
+            cbSize = Marshal.SizeOf<NotifyIconData>(),
+            hWnd = GetDesktopWindow(),
+            uID = LegacyBalloonId,
+            uFlags = NIF_ICON | NIF_TIP | NIF_INFO,
+            hIcon = LoadIcon(IntPtr.Zero, IDI_INFORMATION),
+            szTip = "Downio",
+            szInfoTitle = Truncate(title, 63),
+            szInfo = Truncate(message, 255),
+            dwInfoFlags = NIIF_INFO,
+            uTimeoutOrVersion = 5000
+        };
+
+        return data;
+    }
+
+    private static string Truncate(string value, int maxLength)
+    {
+        value ??= string.Empty;
+        return value.Length <= maxLength ? value : value[..maxLength];
+    }
+
+    private const uint NIM_ADD = 0x00000000;
+    private const uint NIM_MODIFY = 0x00000001;
+    private const uint NIM_DELETE = 0x00000002;
+    private const uint NIF_ICON = 0x00000002;
+    private const uint NIF_TIP = 0x00000004;
+    private const uint NIF_INFO = 0x00000010;
+    private const uint NIIF_INFO = 0x00000001;
+    private const int IDI_INFORMATION = 32516;
+
+    [DllImport("shell32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    private static extern bool Shell_NotifyIcon(uint dwMessage, ref NotifyIconData lpData);
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr GetDesktopWindow();
+
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern IntPtr LoadIcon(IntPtr hInstance, int lpIconName);
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    private struct NotifyIconData
+    {
+        public int cbSize;
+        public IntPtr hWnd;
+        public int uID;
+        public uint uFlags;
+        public uint uCallbackMessage;
+        public IntPtr hIcon;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
+        public string szTip;
+        public uint dwState;
+        public uint dwStateMask;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)]
+        public string szInfo;
+        public uint uTimeoutOrVersion;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 64)]
+        public string szInfoTitle;
+        public uint dwInfoFlags;
+        public Guid guidItem;
+        public IntPtr hBalloonIcon;
+    }
 
     [StructLayout(LayoutKind.Sequential, Pack = 4)]
     private struct PropertyKey(Guid formatId, int propertyId)
