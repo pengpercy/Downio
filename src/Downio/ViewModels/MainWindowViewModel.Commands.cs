@@ -212,6 +212,7 @@ public partial class MainWindowViewModel
     [RelayCommand]
     public async Task CheckForUpdates(object? parameter)
     {
+        if (UpdateWindowService.ActivateExisting()) return;
         if (IsCheckingForUpdates) return;
         
         var isFromAbout = parameter?.ToString() == "About";
@@ -226,12 +227,14 @@ public partial class MainWindowViewModel
         var currentVersion = AppVersion.TrimStart('v');
 
         ReleaseInfo? release = null;
+        Exception? updateError = null;
         try
         {
             release = await updateService.CheckForUpdatesAsync(currentVersion);
         }
         catch (Exception ex)
         {
+            updateError = ex;
             Debug.WriteLine($"Update check failed: {ex.Message}");
             AppLog.Error(ex, "Update check failed");
 
@@ -252,8 +255,7 @@ public partial class MainWindowViewModel
 
         if (release != null)
         {
-            var dialog = new UpdateWindow(release, _settingsService);
-            await dialog.ShowDialog(mainWindow);
+            await UpdateWindowService.ShowAsync(release, _settingsService, mainWindow);
         }
         else
         {
@@ -276,7 +278,9 @@ public partial class MainWindowViewModel
             else
             {
                 var title = GetString("TitleUpdateCheck");
-                var message = GetString("MessageNoUpdates");
+                var message = updateError is not null
+                    ? $"{GetString("MessageUpdateCheckFailed")} {updateError.Message}"
+                    : GetString("MessageNoUpdates");
                 var dialog = new InfoDialog(title, message);
                 await dialog.ShowDialog(mainWindow);
             }

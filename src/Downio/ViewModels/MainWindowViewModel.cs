@@ -41,6 +41,8 @@ public partial class MainWindowViewModel : ViewModelBase
     private bool _isShuttingDown;
     private readonly bool _windowControlsOnLeft;
 
+    public SettingsService SettingsService => _settingsService;
+
     [ObservableProperty]
     private object _currentView = null!;
 

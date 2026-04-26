@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.67 - 2026-04-26
+
+- Limited custom caption button height styling to the main window so other windows keep their default decoration height.
+- Fixed update checks to use the configured proxy, select the highest stable GitHub release by version, and report check failures instead of saying the app is up to date.
+- Reused an existing update window when an update is already open or downloading to avoid parallel update dialogs and progress flows.
+
 ## 1.0.66 - 2026-04-26
 
 - Fixed the Windows main window hamburger button so it remains clickable inside the extended title bar.

@@ -15,7 +15,7 @@ namespace Downio.Services;
 
 public class UpdateService
 {
-    private const string GitHubApiUrl = "https://api.github.com/repos/pengpercy/Downio/releases/latest";
+    private const string GitHubReleasesApiUrl = "https://api.github.com/repos/pengpercy/Downio/releases";
     private readonly HttpClient _httpClient;
 
     public UpdateService(AppSettings? settings = null)
@@ -55,20 +55,7 @@ public class UpdateService
     {
         try
         {
-            // In AOT, we need to be careful with JSON.
-            // For now, let's use a source generated context if possible or standard deserialize if not AOT-strict strict on this part.
-            // But since we are AOT, we should use source generator.
-            // Let's create a simple context for ReleaseInfo.
-            
-            var response = await _httpClient.GetAsync(GitHubApiUrl);
-            if (!response.IsSuccessStatusCode)
-            {
-                var body = await response.Content.ReadAsStringAsync();
-                throw new HttpRequestException($"HTTP {(int)response.StatusCode} {response.ReasonPhrase}: {body}");
-            }
-
-            var json = await response.Content.ReadAsStringAsync();
-            var release = JsonSerializer.Deserialize(json, GitHubJsonContext.Default.ReleaseInfo);
+            var release = await GetLatestReleaseCoreAsync();
 
             if (release != null)
             {
@@ -94,17 +81,31 @@ public class UpdateService
     {
         try
         {
-            var response = await _httpClient.GetAsync(GitHubApiUrl);
-            if (!response.IsSuccessStatusCode) return null;
-
-            var json = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize(json, GitHubJsonContext.Default.ReleaseInfo);
+            return await GetLatestReleaseCoreAsync();
         }
         catch (Exception ex)
         {
             Debug.WriteLine($"Get latest release failed: {ex.Message}");
             return null;
         }
+    }
+
+    private async Task<ReleaseInfo?> GetLatestReleaseCoreAsync()
+    {
+        var response = await _httpClient.GetAsync(GitHubReleasesApiUrl);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync();
+            throw new HttpRequestException($"HTTP {(int)response.StatusCode} {response.ReasonPhrase}: {body}");
+        }
+
+        var json = await response.Content.ReadAsStringAsync();
+        var releases = JsonSerializer.Deserialize(json, GitHubJsonContext.Default.ListReleaseInfo) ?? new List<ReleaseInfo>();
+
+        return releases
+            .Where(r => !r.Draft && !r.Prerelease && Version.TryParse(r.TagName.TrimStart('v'), out _))
+            .OrderByDescending(r => Version.Parse(r.TagName.TrimStart('v')))
+            .FirstOrDefault();
     }
 
     public async Task DownloadUpdateAsync(string downloadUrl, string destinationPath, IProgress<double> progress)
@@ -146,6 +147,12 @@ public class ReleaseInfo
     [JsonPropertyName("body")]
     public string Body { get; set; } = "";
 
+    [JsonPropertyName("draft")]
+    public bool Draft { get; set; }
+
+    [JsonPropertyName("prerelease")]
+    public bool Prerelease { get; set; }
+
     [JsonPropertyName("assets")]
     public List<ReleaseAsset> Assets { get; set; } = new();
 }
@@ -161,6 +168,7 @@ public class ReleaseAsset
 
 [JsonSourceGenerationOptions(WriteIndented = false, PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
 [JsonSerializable(typeof(ReleaseInfo))]
+[JsonSerializable(typeof(List<ReleaseInfo>))]
 public partial class GitHubJsonContext : JsonSerializerContext
 {
 }

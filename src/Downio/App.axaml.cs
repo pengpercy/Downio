@@ -113,7 +113,7 @@ public partial class App : Application
             updateChecked = true;
 
             var currentVersion = AppVersionProvider.GetCurrentVersion();
-            var updateService = new UpdateService();
+            var updateService = new UpdateService(viewModel.SettingsService.Settings);
             ReleaseInfo? release = null;
             try
             {
@@ -125,8 +125,7 @@ public partial class App : Application
             }
             if (release is null) return;
 
-            var dialog = new UpdateWindow(release);
-            await dialog.ShowDialog(mainWindow);
+            await UpdateWindowService.ShowAsync(release, viewModel.SettingsService, mainWindow);
         };
     }
 
