@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.64 - 2026-04-26
+
+- Hardened Windows startup so notification integration failures are logged instead of preventing the main window from opening.
+- Improved single-instance activation handling to avoid silently exiting when an existing background instance cannot be activated.
+- Added startup and unhandled exception logging to make Windows launch failures easier to diagnose.
+
 ## 1.0.63 - 2026-04-26
 
 - Added a configurable default split count in Settings so new downloads can use the user's preferred chunk count.

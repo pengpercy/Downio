@@ -23,82 +23,111 @@ public partial class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
-        NotificationService.InitializePlatformIntegration();
+        try
+        {
+            NotificationService.InitializePlatformIntegration();
+        }
+        catch (Exception ex)
+        {
+            AppLog.Error(ex, "Platform notification integration initialization failed");
+        }
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             if (!SingleInstanceService.TryCreate("Downio", out _singleInstance))
             {
-                SingleInstanceService.NotifyExisting("Downio");
-                desktop.Shutdown();
-                return;
-            }
-
-            var viewModel = new MainWindowViewModel();
-            DataContext = viewModel;
-
-            var mainWindow = new MainWindow
-            {
-                DataContext = viewModel,
-            };
-            
-            desktop.MainWindow = mainWindow;
-
-            _singleInstance?.SetActivateHandler(viewModel.ToggleMainWindow);
-
-            var trayIcons = TrayIcon.GetIcons(this);
-            if (trayIcons is { Count: > 0 })
-            {
-                var trayIcon = trayIcons[0];
-                var iconUri = OperatingSystem.IsMacOS()
-                    ? new Uri("avares://Downio/Assets/Branding/Tray/macos.png")
-                    : new Uri("avares://Downio/Assets/Branding/Tray/windows.png");
-                trayIcon.Icon = new WindowIcon(new Bitmap(AssetLoader.Open(iconUri)));
-            }
-
-            mainWindow.Closing += (_, e) =>
-            {
-                if (!viewModel.IsExitOnClose)
+                if (SingleInstanceService.NotifyExisting("Downio"))
                 {
-                    e.Cancel = true;
-                    mainWindow.Hide();
+                    desktop.Shutdown();
                     return;
                 }
-                
-                _ = viewModel.ShutdownServicesAsync();
-            };
 
-            desktop.Exit += (_, _) =>
+                AppLog.Warn("Existing Downio instance was detected but could not be activated; continuing startup.");
+                _singleInstance = null;
+            }
+            else
             {
-                _ = viewModel.ShutdownServicesAsync();
-                _singleInstance?.Dispose();
-            };
+                AppLog.Info("Single instance lock acquired.");
+            }
 
-            var updateChecked = false;
-            mainWindow.Opened += async (_, _) =>
+            try
             {
-                if (updateChecked) return;
-                updateChecked = true;
-
-                var currentVersion = AppVersionProvider.GetCurrentVersion();
-                var updateService = new UpdateService();
-                ReleaseInfo? release = null;
-                try
-                {
-                    release = await updateService.CheckForUpdatesAsync(currentVersion);
-                }
-                catch (Exception ex)
-                {
-                    AppLog.Error(ex, "Update check failed");
-                }
-                if (release is null) return;
-
-                var dialog = new UpdateWindow(release);
-                await dialog.ShowDialog(mainWindow);
-            };
+                InitializeDesktopApplication(desktop);
+            }
+            catch (Exception ex)
+            {
+                AppLog.Error(ex, "Desktop application initialization failed");
+                return;
+            }
         }
 
         base.OnFrameworkInitializationCompleted();
+    }
+
+    private void InitializeDesktopApplication(IClassicDesktopStyleApplicationLifetime desktop)
+    {
+        var viewModel = new MainWindowViewModel();
+        DataContext = viewModel;
+
+        var mainWindow = new MainWindow
+        {
+            DataContext = viewModel,
+        };
+        
+        desktop.MainWindow = mainWindow;
+
+        _singleInstance?.SetActivateHandler(viewModel.ToggleMainWindow);
+
+        var trayIcons = TrayIcon.GetIcons(this);
+        if (trayIcons is { Count: > 0 })
+        {
+            var trayIcon = trayIcons[0];
+            var iconUri = OperatingSystem.IsMacOS()
+                ? new Uri("avares://Downio/Assets/Branding/Tray/macos.png")
+                : new Uri("avares://Downio/Assets/Branding/Tray/windows.png");
+            trayIcon.Icon = new WindowIcon(new Bitmap(AssetLoader.Open(iconUri)));
+        }
+
+        mainWindow.Closing += (_, e) =>
+        {
+            if (!viewModel.IsExitOnClose)
+            {
+                e.Cancel = true;
+                mainWindow.Hide();
+                return;
+            }
+            
+            _ = viewModel.ShutdownServicesAsync();
+        };
+
+        desktop.Exit += (_, _) =>
+        {
+            _ = viewModel.ShutdownServicesAsync();
+            _singleInstance?.Dispose();
+        };
+
+        var updateChecked = false;
+        mainWindow.Opened += async (_, _) =>
+        {
+            if (updateChecked) return;
+            updateChecked = true;
+
+            var currentVersion = AppVersionProvider.GetCurrentVersion();
+            var updateService = new UpdateService();
+            ReleaseInfo? release = null;
+            try
+            {
+                release = await updateService.CheckForUpdatesAsync(currentVersion);
+            }
+            catch (Exception ex)
+            {
+                AppLog.Error(ex, "Update check failed");
+            }
+            if (release is null) return;
+
+            var dialog = new UpdateWindow(release);
+            await dialog.ShowDialog(mainWindow);
+        };
     }
 
     private void TrayIcon_OnClicked(object? sender, EventArgs e)
