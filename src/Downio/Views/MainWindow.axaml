@@ -11,7 +11,7 @@
         x:Class="Downio.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Icon="/Assets/Branding/app_ico.ico"
-        Title="Downio"
+        Title=""
         ExtendClientAreaToDecorationsHint="True"
         ExtendClientAreaTitleBarHeightHint="52"
         TransparencyLevelHint="AcrylicBlur"
@@ -33,6 +33,15 @@
     </Window.Resources>
 
     <Window.Styles>
+        <Style Selector="Button#PART_MinimizeButton,
+                         Button#PART_MaximizeButton,
+                         Button#PART_CloseButton">
+            <Setter Property="Height" Value="52" />
+            <Setter Property="MinHeight" Value="52" />
+            <Setter Property="VerticalAlignment" Value="Stretch" />
+            <Setter Property="CornerRadius" Value="0" />
+        </Style>
+
         <Style Selector="Button.sidebar">
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="Background" Value="Transparent" />

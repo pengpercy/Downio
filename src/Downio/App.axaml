@@ -28,6 +28,23 @@
             <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundBaseHighBrush}" />
         </Style>
 
+        <Style Selector="Button#PART_MinimizeButton,
+                         Button#PART_MaximizeButton,
+                         Button#PART_CloseButton">
+            <Setter Property="Height" Value="44" />
+            <Setter Property="MinHeight" Value="44" />
+            <Setter Property="VerticalAlignment" Value="Stretch" />
+            <Setter Property="CornerRadius" Value="0" />
+        </Style>
+
+        <Style Selector="Button#PART_FullScreenButton">
+            <Setter Property="IsVisible" Value="False" />
+        </Style>
+
+        <Style Selector="Button#PART_PopoverFullScreenButton">
+            <Setter Property="IsVisible" Value="False" />
+        </Style>
+
         <Style Selector="Border.dialogRoot">
             <Setter Property="Background" Value="{DynamicResource WorkspaceBackgroundBrush}" />
         </Style>

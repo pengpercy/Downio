@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.65 - 2026-04-26
+
+- Adjusted Avalonia 12 window decoration styling on Windows so caption button hover backgrounds fill the title bar height.
+- Removed the main window native title text from the extended title bar to avoid overlapping the hamburger button.
+- Hid the extra Avalonia 12 full-screen caption button, restoring the expected minimize, maximize, and close button set.
+
 ## 1.0.64 - 2026-04-26
 
 - Hardened Windows startup so notification integration failures are logged instead of preventing the main window from opening.
