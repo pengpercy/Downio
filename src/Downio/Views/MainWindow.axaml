@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:views="using:Downio.Views"
         xmlns:localConv="using:Downio.Converters"
+        xmlns:chrome="using:Avalonia.Controls.Chrome"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
         Width="1080" Height="720"
         MinWidth="800" MinHeight="600"
@@ -36,9 +37,14 @@
         <Style Selector="Button#PART_MinimizeButton,
                          Button#PART_MaximizeButton,
                          Button#PART_CloseButton">
+            <Setter Property="Width" Value="46" />
+            <Setter Property="MinWidth" Value="46" />
             <Setter Property="Height" Value="52" />
             <Setter Property="MinHeight" Value="52" />
             <Setter Property="VerticalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="0" />
             <Setter Property="CornerRadius" Value="0" />
         </Style>
 
@@ -230,6 +236,7 @@
                                 BorderThickness="0"
                                 Width="32"
                                 Height="32"
+                                chrome:WindowDecorationProperties.ElementRole="User"
                                 HorizontalAlignment="Left"
                                 VerticalAlignment="Center"
                                 Margin="{Binding SidebarToggleMargin}"

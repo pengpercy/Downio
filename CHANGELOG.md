@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.66 - 2026-04-26
+
+- Fixed the Windows main window hamburger button so it remains clickable inside the extended title bar.
+- Tightened the Avalonia 12 caption button layout so minimize, maximize, and close align flush to the right edge.
+- Removed the hidden full-screen caption button's remaining layout space on Windows.
+
 ## 1.0.65 - 2026-04-26
 
 - Adjusted Avalonia 12 window decoration styling on Windows so caption button hover backgrounds fill the title bar height.
