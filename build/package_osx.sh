@@ -61,6 +61,7 @@ fi
 # Create Info.plist
 echo "Creating Info.plist..."
 sed "s/Downio_VERSION/$VERSION/g" build/resources/app/App.plist > "$CONTENTS/Info.plist"
+find build/resources/app -maxdepth 1 -type d -name "*.lproj" -exec cp -R {} "$RESOURCES/" \;
 
 # Generate .icns from PNG if available
 echo "Generating App.icns..."

@@ -50,8 +50,12 @@ sealed class Program
             .LogToTrace()
             .With(new MacOSPlatformOptions
             {
-                DisableDefaultApplicationMenuItems = true,
-                DisableSetProcessName = true,
+                // Keep the standard macOS app menu entries such as Services, Hide,
+                // Hide Others and Show All in the application menu.
+                DisableDefaultApplicationMenuItems = false,
+                // Let Avalonia set the macOS process name so standard menu items
+                // use "Downio" instead of the fallback Avalonia application name.
+                DisableSetProcessName = false,
                 DisableAvaloniaAppDelegate = false 
             });
 }

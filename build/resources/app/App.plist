@@ -8,8 +8,17 @@
 	<string>com.Downio.app</string>
 	<key>CFBundleName</key>
 	<string>Downio</string>
+	<key>CFBundleDisplayName</key>
+	<string>Downio</string>
 	<key>CFBundleVersion</key>
 	<string>Downio_VERSION</string>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>en</string>
+		<string>zh-Hans</string>
+	</array>
 	<key>LSMinimumSystemVersion</key>
 	<string>10.13</string>
 	<key>CFBundleExecutable</key>

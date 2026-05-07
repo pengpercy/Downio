@@ -129,15 +129,17 @@
 
     <NativeMenu.Menu>
         <NativeMenu>
-            <NativeMenuItem Header="{DynamicResource MenuAbout}" Command="{Binding ShowAboutCommand}" />
-            <NativeMenuItemSeparator />
+            <NativeMenuItem Header="{DynamicResource MenuAbout}" Command="{Binding ShowAboutCommand}"
+                            IsVisible="{Binding ShowCustomMacApplicationMenuItems}" />
+            <NativeMenuItemSeparator IsVisible="{Binding ShowCustomMacApplicationMenuItems}" />
             <NativeMenuItem Header="{DynamicResource MenuSettings}" Gesture="Cmd+,"
                             Command="{Binding ShowSettingsCommand}" />
             <NativeMenuItem Header="{DynamicResource MenuCheckUpdate}" Command="{Binding CheckForUpdatesCommand}" />
             <NativeMenuItem Header="{DynamicResource BtnNewTask}" Gesture="Cmd+N"
                             Command="{Binding ShowAddTaskCommand}" />
-            <NativeMenuItemSeparator />
-            <NativeMenuItem Header="{DynamicResource MenuQuit}" Gesture="Cmd+Q" Command="{Binding QuitAppCommand}" />
+            <NativeMenuItemSeparator IsVisible="{Binding ShowCustomMacApplicationMenuItems}" />
+            <NativeMenuItem Header="{DynamicResource MenuQuit}" Gesture="Cmd+Q" Command="{Binding QuitAppCommand}"
+                            IsVisible="{Binding ShowCustomMacApplicationMenuItems}" />
         </NativeMenu>
     </NativeMenu.Menu>
 

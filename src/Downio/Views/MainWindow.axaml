@@ -321,11 +321,12 @@
                             Background="{DynamicResource TitleBarBackgroundBrush}"
                             BorderThickness="1,0,0,1"
                             BorderBrush="{DynamicResource SystemControlHighlightBaseLowBrush}"
-                            PointerPressed="TitleBar_PointerPressed">
+                            chrome:WindowDecorationProperties.ElementRole="TitleBar">
                         <Grid ColumnDefinitions="Auto, *">
                             <!-- Global Controls (Resume All / Pause All / Remove) -->
                             <StackPanel Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Left"
-                                        VerticalAlignment="Center" Margin="24,0,0,0">
+                                        VerticalAlignment="Center" Margin="24,0,0,0"
+                                        chrome:WindowDecorationProperties.ElementRole="User">
                                 <StackPanel Orientation="Horizontal" IsVisible="{Binding !IsSettingsVisible}"
                                             Margin="{Binding TitleBarToolsMargin}">
                                     <Button Command="{Binding ResumeAllCommand}"

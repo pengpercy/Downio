@@ -38,6 +38,7 @@ sips -z 1024 1024 "$ICON_SOURCE" --out "$ICONSET_DIR/icon_512x512@2x.png" >/dev/
 iconutil -c icns "$ICONSET_DIR" -o Downio.app/Contents/Resources/App.icns
 rm -rf "$ICONSET_DIR"
 sed "s/Downio_VERSION/$VERSION/g" resources/app/App.plist > Downio.app/Contents/Info.plist
+find resources/app -maxdepth 1 -type d -name "*.lproj" -exec cp -R {} Downio.app/Contents/Resources/ \;
 rm -rf Downio.app/Contents/MacOS/Downio.dsym
 
 if [[ -n "${CODESIGN_IDENTITY:-}" ]]; then

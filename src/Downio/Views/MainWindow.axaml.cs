@@ -28,18 +28,6 @@ public partial class MainWindow : Window
         BeginMoveDrag(e);
     }
 
-    private void TitleBar_PointerPressed(object? sender, PointerPressedEventArgs e)
-    {
-        if (e.ClickCount == 2)
-        {
-            WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
-        }
-        else
-        {
-            BeginMoveDrag(e);
-        }
-    }
-
     private void UpdateMacTitleBarInsets()
     {
         if (DataContext is not MainWindowViewModel vm) return;

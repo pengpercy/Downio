@@ -72,6 +72,7 @@ public partial class MainWindowViewModel : ViewModelBase
     public bool IsSettings => CurrentTitleKey == "MenuSettings";
 
     public bool IsMacOS => RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
+    public bool ShowCustomMacApplicationMenuItems => !IsMacOS;
     public bool IsLinux => RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
     public bool IsMacLikeLayout => IsMacOS || (IsLinux && _windowControlsOnLeft);
     public bool IsWindowsLikeLayout => !IsMacLikeLayout;

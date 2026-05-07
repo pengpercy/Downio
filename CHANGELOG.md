@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.69 - 2026-05-08
+
+- Restored the standard macOS application menu entries including Services, Hide, Hide Others, and Show All.
+- Fixed the macOS application menu to use the Downio process name and removed duplicated custom About and Quit entries.
+- Added macOS bundle localization resources for packaging and improved Windows extended title bar hit-testing so the close button hover background stays flush with the right edge.
+
 ## 1.0.68 - 2026-04-26
 
 - Aligned Avalonia 12 caption buttons flush to the top-right corner on non-main windows without changing their default height.
