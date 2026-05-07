@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.71 - 2026-05-08
+
+- Switched the macOS application menu to Avalonia's recommended setup by explicitly setting `Application.Name` to `Downio` and letting Avalonia append the standard native menu items.
+- Removed duplicated custom app-menu items so the native macOS Hide and Quit entries come from the framework-managed application menu.
+
 ## 1.0.70 - 2026-05-08
 
 - Forced the macOS process name to `Downio` so the native application menu no longer falls back to `Avalonia Application`.
