@@ -1,6 +1,7 @@
 using Avalonia;
 using System;
 using System.Threading.Tasks;
+using Downio.Helpers;
 using Downio.Services;
 
 namespace Downio;
@@ -13,6 +14,8 @@ sealed class Program
     [STAThread]
     public static void Main(string[] args)
     {
+        MacProcessName.TrySet("Downio");
+
         AppDomain.CurrentDomain.UnhandledException += (_, e) =>
         {
             if (e.ExceptionObject is Exception ex)

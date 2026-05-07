@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.70 - 2026-05-08
+
+- Forced the macOS process name to `Downio` so the native application menu no longer falls back to `Avalonia Application`.
+- Restored main-window titlebar dragging on macOS after the Avalonia 12 titlebar hit-testing changes.
+- Extended the Windows close button width by 1px so its hover background reaches the right window edge without a visible gap.
+
 ## 1.0.69 - 2026-05-08
 
 - Restored the standard macOS application menu entries including Services, Hide, Hide Others, and Show All.

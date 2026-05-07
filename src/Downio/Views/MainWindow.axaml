@@ -47,6 +47,11 @@
             <Setter Property="Margin" Value="0" />
             <Setter Property="CornerRadius" Value="0" />
         </Style>
+        
+        <Style Selector="Button#PART_CloseButton">
+            <Setter Property="Width" Value="47" />
+            <Setter Property="MinWidth" Value="47" />
+        </Style>
 
         <Style Selector="Button.sidebar">
             <Setter Property="Cursor" Value="Hand" />
@@ -321,7 +326,8 @@
                             Background="{DynamicResource TitleBarBackgroundBrush}"
                             BorderThickness="1,0,0,1"
                             BorderBrush="{DynamicResource SystemControlHighlightBaseLowBrush}"
-                            chrome:WindowDecorationProperties.ElementRole="TitleBar">
+                            chrome:WindowDecorationProperties.ElementRole="TitleBar"
+                            PointerPressed="TitleBar_PointerPressed">
                         <Grid ColumnDefinitions="Auto, *">
                             <!-- Global Controls (Resume All / Pause All / Remove) -->
                             <StackPanel Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Left"
