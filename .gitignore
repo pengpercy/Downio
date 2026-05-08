@@ -40,3 +40,8 @@ tools/README.md
 .claude-plugin
 .idea
 .trae
+config.json
+events.jsonl
+views.json
+labels/
+statuses/
