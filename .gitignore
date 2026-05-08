@@ -37,3 +37,6 @@ aria2.log
 tools/local/*
 !tools/local/release.sh
 tools/README.md
+.claude-plugin
+.idea
+.trae
