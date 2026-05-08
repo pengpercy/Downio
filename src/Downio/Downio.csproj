@@ -43,7 +43,6 @@
         <AvaloniaEnableILVerify>true</AvaloniaEnableILVerify>
         <AvaloniaSkipUnknownCLRInstrumentation>true</AvaloniaSkipUnknownCLRInstrumentation>
         <!-- <RuntimeIdentifier>osx-x64</RuntimeIdentifier> Removed to allow CLI override -->
-        <InvariantGlobalization>true</InvariantGlobalization>
         <IlcGenerateStackTraceData>false</IlcGenerateStackTraceData>
         <IlcOptimizationPreference>Size</IlcOptimizationPreference>
         <IlcFoldIdenticalMethodBodies>true</IlcFoldIdenticalMethodBodies>
@@ -88,12 +87,12 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Avalonia" Version="12.0.1" />
-        <PackageReference Include="Avalonia.Desktop" Version="12.0.1" />
-        <PackageReference Include="Avalonia.Themes.Fluent" Version="12.0.1" />
-        <PackageReference Include="Avalonia.Fonts.Inter" Version="12.0.1" />
+        <PackageReference Include="Avalonia" Version="12.0.2" />
+        <PackageReference Include="Avalonia.Desktop" Version="12.0.2" />
+        <PackageReference Include="Avalonia.Themes.Fluent" Version="12.0.2" />
+        <PackageReference Include="Avalonia.Fonts.Inter" Version="12.0.2" />
         <PackageReference Include="Avalonia.Controls.DataGrid" Version="12.0.0" />
-        <PackageReference Include="Avalonia.Controls.ColorPicker" Version="12.0.1" />
+        <PackageReference Include="Avalonia.Controls.ColorPicker" Version="12.0.2" />
         <PackageReference Include="LiveMarkdown.Avalonia" Version="2.0.0" />
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
     </ItemGroup>

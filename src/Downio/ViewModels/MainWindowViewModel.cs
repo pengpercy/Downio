@@ -38,6 +38,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly SettingsView _settingsView;
     private readonly DispatcherTimer _refreshTimer;
     private readonly Dictionary<string, string> _lastStatusByGid = new();
+    private readonly HashSet<string> _autoFilledClipboardLinks = new(StringComparer.OrdinalIgnoreCase);
     private bool _isShuttingDown;
     private readonly bool _windowControlsOnLeft;
 
@@ -397,6 +398,8 @@ public partial class MainWindowViewModel : ViewModelBase
 
     [ObservableProperty]
     private string _newTaskProxy = string.Empty;
+
+    public bool ShouldFocusNewTaskUrlOnOpen { get; set; }
 
     // Advanced Settings Properties
     private readonly System.Threading.SemaphoreSlim _aria2RecoveryLock = new(1, 1);

@@ -19,6 +19,9 @@ public partial class App : Application
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
+
+        var settings = new SettingsService();
+        LocalizationService.Initialize(settings.Settings.Language);
     }
 
     public override void OnFrameworkInitializationCompleted()

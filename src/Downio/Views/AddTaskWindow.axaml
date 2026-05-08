@@ -39,7 +39,8 @@
 
                         <TabItem Header="{DynamicResource TabLinkTask}">
                             <StackPanel Spacing="8" Margin="8,8,8,0">
-                                <TextBox Text="{Binding NewTaskUrl}"
+                                <TextBox x:Name="NewTaskUrlTextBox"
+                                         Text="{Binding NewTaskUrl}"
                                          PlaceholderText="{DynamicResource PlaceholderMultiLinks}"
                                          Height="100"
                                          AcceptsReturn="True"

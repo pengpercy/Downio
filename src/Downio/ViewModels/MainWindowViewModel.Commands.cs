@@ -146,8 +146,9 @@ public partial class MainWindowViewModel
     }
 
     [RelayCommand]
-    public void ShowAddTask()
+    public async Task ShowAddTask()
     {
+        ShouldFocusNewTaskUrlOnOpen = false;
         NewTaskInputModeIndex = 0;
         NewTaskUrl = string.Empty;
         NewTaskTorrentFilePath = string.Empty;
@@ -160,8 +161,9 @@ public partial class MainWindowViewModel
         
         if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime { MainWindow: { } mainWindow })
         {
+            await TryAutofillNewTaskFromClipboardAsync(mainWindow.Clipboard);
             var dialog = new AddTaskWindow(this);
-            dialog.ShowDialog(mainWindow);
+            await dialog.ShowDialog(mainWindow);
         }
     }
 
@@ -294,6 +296,68 @@ public partial class MainWindowViewModel
             return str;
         }
         return key;
+    }
+
+    private async Task TryAutofillNewTaskFromClipboardAsync(IClipboard? clipboard)
+    {
+        if (clipboard == null) return;
+
+        try
+        {
+            var text = await clipboard.TryGetTextAsync();
+            if (string.IsNullOrWhiteSpace(text)) return;
+
+            var links = ExtractSupportedDownloadLinks(text)
+                .Where(link => !_autoFilledClipboardLinks.Contains(link))
+                .ToList();
+
+            if (links.Count == 0) return;
+
+            NewTaskInputModeIndex = 0;
+            NewTaskUrl = string.Join(Environment.NewLine, links);
+            ShouldFocusNewTaskUrlOnOpen = true;
+
+            foreach (var link in links)
+            {
+                _autoFilledClipboardLinks.Add(link);
+            }
+        }
+        catch (Exception ex)
+        {
+            AppLog.Error(ex, "Failed to autofill add task from clipboard");
+        }
+    }
+
+    private static List<string> ExtractSupportedDownloadLinks(string text)
+    {
+        return text.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(CleanupClipboardLinkCandidate)
+            .Where(IsSupportedDownloadLink)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    private static string CleanupClipboardLinkCandidate(string value)
+    {
+        return value.Trim().Trim('"', '\'', '<', '>', '(', ')', '[', ']', '{', '}', ',', ';');
+    }
+
+    private static bool IsSupportedDownloadLink(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return false;
+        if (value.StartsWith("magnet:?", StringComparison.OrdinalIgnoreCase)) return true;
+        if (value.StartsWith("thunder://", StringComparison.OrdinalIgnoreCase)) return true;
+
+        return Uri.TryCreate(value, UriKind.Absolute, out var uri) &&
+               uri.Scheme switch
+               {
+                   "http" => true,
+                   "https" => true,
+                   "ftp" => true,
+                   "ftps" => true,
+                   "sftp" => true,
+                   _ => false
+               };
     }
 
     [RelayCommand]
@@ -669,17 +733,7 @@ public partial class MainWindowViewModel
     [RelayCommand]
     public void SetLanguage(string lang)
     {
-        if (lang == "System")
-        {
-            var culture = CultureInfo.CurrentCulture;
-            LocalizationService.SwitchLanguage(culture.Name.StartsWith("zh", StringComparison.OrdinalIgnoreCase)
-                ? "zh-CN"
-                : "en-US");
-        }
-        else
-        {
-            LocalizationService.SwitchLanguage(lang);
-        }
+        LocalizationService.SwitchLanguage(lang);
     }
 
     [RelayCommand]
