@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.72 - 2026-05-09
+
+- Upgraded Avalonia packages to the latest stable 12.0.2 line where available.
+- Fixed localization initialization so app resources and macOS native menu language follow the selected or system language reliably.
+- Auto-filled the new-task link box from supported clipboard download links and avoided repeating the same automatic fill during the current app session.
+- Focused the new-task link input automatically after clipboard autofill so pasted links can be confirmed or edited immediately.
+
 ## 1.0.71 - 2026-05-08
 
 - Switched the macOS application menu to Avalonia's recommended setup by explicitly setting `Application.Name` to `Downio` and letting Avalonia append the standard native menu items.
