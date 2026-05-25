@@ -1,19 +1,23 @@
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Downio.ViewModels;
 using Downio.Models;
 using System.Linq;
+using System.ComponentModel;
 
 namespace Downio.Views;
 
 public partial class TaskListView : UserControl
 {
     private int _anchorIndex = -1;
+    private MainWindowViewModel? _viewModel;
 
     public TaskListView()
     {
         InitializeComponent();
+        DataContextChanged += OnDataContextChanged;
     }
 
     private void OnPointerPressed(object? sender, PointerPressedEventArgs e)
@@ -154,6 +158,55 @@ public partial class TaskListView : UserControl
             var selected = listBox.SelectedItems?.Cast<DownloadTask>().ToList() ?? [];
             vm.UpdateSelectedTasks(selected);
         }
+    }
+
+    private void OnDataContextChanged(object? sender, System.EventArgs e)
+    {
+        if (_viewModel != null)
+        {
+            _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
+        }
+
+        _viewModel = DataContext as MainWindowViewModel;
+        if (_viewModel != null)
+        {
+            _viewModel.PropertyChanged += OnViewModelPropertyChanged;
+        }
+    }
+
+    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(MainWindowViewModel.SelectedTask))
+        {
+            return;
+        }
+
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (_viewModel?.SelectedTask == null)
+            {
+                return;
+            }
+
+            var listBox = this.FindControl<ListBox>("TasksListBox");
+            if (listBox == null || !listBox.Items.Contains(_viewModel.SelectedTask))
+            {
+                return;
+            }
+
+            var selectedItems = listBox.SelectedItems;
+            selectedItems?.Clear();
+            selectedItems?.Add(_viewModel.SelectedTask);
+            listBox.SelectedItem = _viewModel.SelectedTask;
+            listBox.ScrollIntoView(_viewModel.SelectedTask);
+            listBox.Focus();
+
+            var selectedIndex = listBox.Items.IndexOf(_viewModel.SelectedTask);
+            if (selectedIndex >= 0)
+            {
+                _anchorIndex = selectedIndex;
+            }
+        }, DispatcherPriority.Background);
     }
 
     private void ClearSelection(ListBox listBox)

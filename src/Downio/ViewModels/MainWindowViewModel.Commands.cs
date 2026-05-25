@@ -842,6 +842,13 @@ public partial class MainWindowViewModel
     [RelayCommand]
     public void QuitApp()
     {
+        if (Application.Current is App app)
+        {
+            app.RequestExplicitExit();
+            return;
+        }
+
+        RequestQuit();
         _ = ShutdownServicesAsync();
 
         if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)

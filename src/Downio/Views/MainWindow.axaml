@@ -24,6 +24,8 @@
         <KeyBinding Gesture="Ctrl+N" Command="{Binding ShowAddTaskCommand}" />
         <KeyBinding Gesture="Cmd+," Command="{Binding ShowSettingsCommand}" />
         <KeyBinding Gesture="Ctrl+," Command="{Binding ShowSettingsCommand}" />
+        <KeyBinding Gesture="Cmd+Q" Command="{Binding QuitAppCommand}" />
+        <KeyBinding Gesture="Ctrl+Q" Command="{Binding QuitAppCommand}" />
     </Window.KeyBindings>
 
     <Design.DataContext>

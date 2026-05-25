@@ -15,6 +15,7 @@ namespace Downio;
 public partial class App : Application
 {
     private SingleInstanceService? _singleInstance;
+    private bool _isExplicitExitRequested;
 
     public override void Initialize()
     {
@@ -93,7 +94,7 @@ public partial class App : Application
 
         mainWindow.Closing += (_, e) =>
         {
-            if (!viewModel.IsExitOnClose)
+            if (!_isExplicitExitRequested && !viewModel.IsExitOnClose)
             {
                 e.Cancel = true;
                 mainWindow.Hide();
@@ -101,6 +102,12 @@ public partial class App : Application
             }
             
             _ = viewModel.ShutdownServicesAsync();
+        };
+
+        desktop.ShutdownRequested += (_, _) =>
+        {
+            _isExplicitExitRequested = true;
+            viewModel.RequestQuit();
         };
 
         desktop.Exit += (_, _) =>
@@ -138,5 +145,28 @@ public partial class App : Application
         {
             vm.ToggleMainWindow();
         }
+    }
+
+    public void RequestExplicitExit()
+    {
+        _isExplicitExitRequested = true;
+
+        if (DataContext is MainWindowViewModel vm)
+        {
+            vm.RequestQuit();
+        }
+
+        if (ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop)
+        {
+            return;
+        }
+
+        if (desktop.MainWindow is { } mainWindow)
+        {
+            mainWindow.Close();
+            return;
+        }
+
+        desktop.Shutdown();
     }
 }

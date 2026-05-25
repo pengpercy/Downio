@@ -40,6 +40,8 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly Dictionary<string, string> _lastStatusByGid = new();
     private readonly HashSet<string> _autoFilledClipboardLinks = new(StringComparer.OrdinalIgnoreCase);
     private bool _isShuttingDown;
+    private bool _isQuitRequested;
+    private bool _suppressRefreshOnCurrentTitleChange;
     private readonly bool _windowControlsOnLeft;
 
     public SettingsService SettingsService => _settingsService;
@@ -61,7 +63,8 @@ public partial class MainWindowViewModel : ViewModelBase
         OnPropertyChanged(nameof(IsSettings));
         
         // Refresh list when switching views if needed
-        if (value == "MenuDownloading" || value == "MenuWaiting" || value == "MenuStopped")
+        if (!_suppressRefreshOnCurrentTitleChange &&
+            (value == "MenuDownloading" || value == "MenuWaiting" || value == "MenuStopped"))
         {
             _ = RefreshTaskListAsync();
         }
@@ -78,6 +81,12 @@ public partial class MainWindowViewModel : ViewModelBase
     public bool IsMacLikeLayout => IsMacOS || (IsLinux && _windowControlsOnLeft);
     public bool IsWindowsLikeLayout => !IsMacLikeLayout;
     public bool IsNotMacOS => !IsMacLikeLayout;
+    public bool IsQuitRequested => _isQuitRequested;
+
+    public void RequestQuit()
+    {
+        _isQuitRequested = true;
+    }
 
     [ObservableProperty]
     private SettingsSection _selectedSettingsSection = SettingsSection.General;
@@ -1402,6 +1411,7 @@ public partial class MainWindowViewModel : ViewModelBase
         try
         {
             var allTasks = await _aria2Service.GetGlobalStatusAsync();
+            string? completedTaskId = null;
 
             foreach (var t in allTasks)
             {
@@ -1414,11 +1424,17 @@ public partial class MainWindowViewModel : ViewModelBase
                     }
                     else if (prev != "StatusCompleted" && t.Status == "StatusCompleted")
                     {
+                        completedTaskId = t.Id;
                         _notificationService.ShowNotification(GetString("NotificationDownloadComplete"), t.Name, ToastType.Success);
                     }
                 }
 
                 _lastStatusByGid[t.Id] = t.Status;
+            }
+
+            if (completedTaskId != null)
+            {
+                NavigateToStoppedTasks();
             }
 
             var activeIds = new HashSet<string>(allTasks.Select(t => t.Id));
@@ -1470,6 +1486,16 @@ public partial class MainWindowViewModel : ViewModelBase
                     if (existing.Name != task.Name && task.Name != "Unknown") existing.Name = task.Name;
                 }
             }
+
+            if (completedTaskId != null)
+            {
+                var completedTask = Tasks.FirstOrDefault(t => t.Id == completedTaskId);
+                if (completedTask != null)
+                {
+                    SelectedTask = completedTask;
+                    UpdateSelectedTasks([completedTask]);
+                }
+            }
         }
         catch (Exception ex)
         {
@@ -1484,6 +1510,27 @@ public partial class MainWindowViewModel : ViewModelBase
                     await RefreshTaskListAsync(allowRecovery: false).ConfigureAwait(false);
                 }
             }
+        }
+    }
+
+    private void NavigateToStoppedTasks()
+    {
+        IsSettingsVisible = false;
+        CurrentView = _taskListView;
+
+        if (CurrentTitleKey == "MenuStopped")
+        {
+            return;
+        }
+
+        _suppressRefreshOnCurrentTitleChange = true;
+        try
+        {
+            CurrentTitleKey = "MenuStopped";
+        }
+        finally
+        {
+            _suppressRefreshOnCurrentTitleChange = false;
         }
     }
 

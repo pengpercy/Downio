@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.73 - 2026-05-25
+
+- Split close behavior so tray/menu quit and `Ctrl/Cmd+Q` exit the app immediately, while closing the main window still minimizes to the background.
+- Focus the newly completed download automatically by switching to the completed list, selecting the finished task, and moving keyboard focus to it.
+- Upgraded Avalonia packages to the latest stable 12.0.3 line where available while keeping `Avalonia.Controls.DataGrid` on its current latest stable 12.0.0 release.
+
 ## 1.0.72 - 2026-05-09
 
 - Upgraded Avalonia packages to the latest stable 12.0.2 line where available.
