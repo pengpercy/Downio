@@ -23,7 +23,7 @@
             <Setter Property="SizeToContent" Value="WidthAndHeight" />
             <Setter Property="ShowInTaskbar" Value="False" />
             <Setter Property="ExtendClientAreaToDecorationsHint" Value="True" />
-            <Setter Property="ExtendClientAreaChromeHints" Value="PreferSystemChrome" />
+            <Setter Property="WindowDecorations" Value="Full" />
             <Setter Property="ExtendClientAreaTitleBarHeightHint" Value="44" />
             <Setter Property="Background" Value="{DynamicResource WorkspaceBackgroundBrush}" />
             <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundBaseHighBrush}" />

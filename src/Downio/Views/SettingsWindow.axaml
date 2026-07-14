@@ -17,7 +17,7 @@
                     ShowInTaskbar="False"
                     WindowStartupLocation="CenterOwner"
                     ExtendClientAreaToDecorationsHint="True"
-                    ExtendClientAreaChromeHints="PreferSystemChrome"
+                    WindowDecorations="Full"
                     ExtendClientAreaTitleBarHeightHint="44"
                     Background="{DynamicResource WorkspaceBackgroundBrush}">
     <views:DialogWindow.Resources>
@@ -293,7 +293,7 @@
                             <Grid ColumnDefinitions="200, 100, 12, *, 12, 80" RowDefinitions="Auto, Auto, Auto" RowSpacing="14">
                                 <TextBlock Grid.Row="0" Grid.Column="0" Text="{DynamicResource LabelProxy}" VerticalAlignment="Center" Opacity="0.85" FontSize="13"/>
                                 <ComboBox Grid.Row="0" Grid.Column="1" ItemsSource="{Binding ProxyTypes}" SelectedIndex="{Binding ProxyTypeIndex}" HorizontalAlignment="Stretch" FontSize="13"/>
-                                <TextBox Grid.Row="0" Grid.Column="3" Text="{Binding ProxyAddress}" Watermark="127.0.0.1" FontSize="13"/>
+                                <TextBox Grid.Row="0" Grid.Column="3" Text="{Binding ProxyAddress}" PlaceholderText="127.0.0.1" FontSize="13"/>
                                 <TextBox Grid.Row="0" Grid.Column="5" Text="{Binding ProxyPort}" FontSize="13" TextAlignment="Right"/>
 
                                 <TextBlock Grid.Row="1" Grid.Column="0" Text="{DynamicResource LabelProxyUsername}" VerticalAlignment="Center" Opacity="0.85" FontSize="13"/>
@@ -321,7 +321,7 @@
                                                 <Grid ColumnDefinitions="*, 10, Auto">
                                                     <TextBox Grid.Column="0"
                                                              Text="{Binding NewTrackerSourceUrl}"
-                                                             Watermark="{DynamicResource PlaceholderTrackerSourceUrl}"
+                                                             PlaceholderText="{DynamicResource PlaceholderTrackerSourceUrl}"
                                                              FontSize="13"/>
                                                     <Button Grid.Column="2" Command="{Binding AddTrackerSourceCommand}">
                                                         <TextBlock Text="{DynamicResource BtnAdd}" FontSize="13"/>
@@ -409,7 +409,7 @@
                                          AcceptsReturn="True"
                                          TextWrapping="Wrap"
                                          FontSize="13"
-                                         Watermark="udp://..."/>
+                                         PlaceholderText="udp://..."/>
 
                                 <StackPanel Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3" Orientation="Horizontal" Spacing="8" Opacity="0.75">
                                     <TextBlock Text="{DynamicResource LabelTrackerRecommended}" FontSize="12" VerticalAlignment="Center"/>
@@ -441,7 +441,7 @@
                                 <TextBox Grid.Row="0" Grid.Column="1" Width="220" HorizontalAlignment="Right" TextAlignment="Right" Text="{Binding RpcPort}" FontSize="13"/>
 
                                 <TextBlock Grid.Row="1" Grid.Column="0" Text="{DynamicResource LabelRpcSecret}" VerticalAlignment="Center" Opacity="0.85" FontSize="13"/>
-                                <TextBox Grid.Row="1" Grid.Column="1" Width="220" HorizontalAlignment="Right" Text="{Binding RpcSecret}" PasswordChar="•" Watermark="" FontSize="13"/>
+                                <TextBox Grid.Row="1" Grid.Column="1" Width="220" HorizontalAlignment="Right" Text="{Binding RpcSecret}" PasswordChar="•" PlaceholderText="" FontSize="13"/>
                             </Grid>
 
                             <Border Classes="settingsDivider"/>
@@ -463,7 +463,7 @@
 
                             <!-- User Agent -->
                             <TextBlock Text="{DynamicResource LabelUserAgent}" FontSize="12" FontWeight="SemiBold" Opacity="0.7"/>
-                            <TextBox Text="{Binding GlobalUserAgent}" FontSize="13" Watermark="Mozilla/5.0..."/>
+                            <TextBox Text="{Binding GlobalUserAgent}" FontSize="13" PlaceholderText="Mozilla/5.0..."/>
 
                             <Border Classes="settingsDivider"/>
 
