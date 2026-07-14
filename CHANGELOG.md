@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.74 - 2026-07-14
+
+- Upgraded all Avalonia packages to the latest stable 12.1.0 release.
+- Upgraded LiveMarkdown.Avalonia to 2.2.0 for Avalonia 12 compatibility.
+- Updated window decoration configuration for the Avalonia 12 API.
+
 ## 1.0.73 - 2026-05-25
 
 - Split close behavior so tray/menu quit and `Ctrl/Cmd+Q` exit the app immediately, while closing the main window still minimizes to the background.
