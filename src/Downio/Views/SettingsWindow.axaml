@@ -17,6 +17,7 @@
                     ShowInTaskbar="False"
                     WindowStartupLocation="CenterOwner"
                     ExtendClientAreaToDecorationsHint="True"
+                    WindowDecorations="Full"
                     ExtendClientAreaTitleBarHeightHint="44"
                     Background="{DynamicResource WorkspaceBackgroundBrush}">
     <views:DialogWindow.Resources>
