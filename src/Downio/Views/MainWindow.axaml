@@ -36,24 +36,9 @@
     </Window.Resources>
 
     <Window.Styles>
-        <Style Selector="Button#PART_MinimizeButton,
-                         Button#PART_MaximizeButton,
-                         Button#PART_CloseButton">
-            <Setter Property="Width" Value="46" />
-            <Setter Property="MinWidth" Value="46" />
-            <Setter Property="Height" Value="52" />
-            <Setter Property="MinHeight" Value="52" />
-            <Setter Property="VerticalAlignment" Value="Stretch" />
-            <Setter Property="HorizontalAlignment" Value="Stretch" />
-            <Setter Property="Padding" Value="0" />
-            <Setter Property="Margin" Value="0" />
-            <Setter Property="CornerRadius" Value="0" />
-        </Style>
-        
-        <Style Selector="Button#PART_CloseButton">
-            <Setter Property="Width" Value="47" />
-            <Setter Property="MinWidth" Value="47" />
-        </Style>
+        <!-- Caption buttons use App.axaml styles (native height, top-aligned).
+             Do not force Height to the 52px title bar — that stretches Windows
+             minimize/maximize/close buttons taller than the platform default. -->
 
         <Style Selector="Button.sidebar">
             <Setter Property="Cursor" Value="Hand" />

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.76 - 2026-07-19
+
+- Restored native Windows caption button height for the main window by removing styles that stretched minimize/maximize/close to the full 52px title bar.
+
 ## 1.0.75 - 2026-07-18
 
 - Fixed main window title bar double-click maximize on macOS racing with the native title bar handler, which caused the window to maximize and immediately restore.
