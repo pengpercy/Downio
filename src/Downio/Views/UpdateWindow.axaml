@@ -19,9 +19,9 @@
     <Design.DataContext>
         <views:UpdateViewModel>
             <views:UpdateViewModel.Release>
-                <services:ReleaseInfo TagName="v1.0.55" Body="🚀 版本发布 v1.0.32&#x0a;&#x0a;🐛 修复：&#x0a;- 🪟 Windows CI 构建失败：修正 CommunityToolkit.WinUI.Notifications 的 NuGet 版本号，确保 Windows ARM64 等平台可正常还原与构建。&#x0a;&#x0a;✨ 保持：&#x0a;- 其他功能与界面改动与 v1.0.31 一致。" />
+                <services:ReleaseInfo TagName="v1.0.64" Body="🚀 版本发布 v1.0.64&#x0a;&#x0a;🐛 修复：&#x0a;- 修复 Windows 下启动阶段通知集成异常可能导致窗口未打开就退出的问题。&#x0a;- 优化单实例激活逻辑，避免已有后台实例无法激活时新进程静默退出。&#x0a;- 增加启动和未处理异常日志，便于诊断 Windows 启动失败。" />
             </views:UpdateViewModel.Release>
-            <views:UpdateViewModel.CurrentVersion>1.0.54</views:UpdateViewModel.CurrentVersion>
+            <views:UpdateViewModel.CurrentVersion>1.0.63</views:UpdateViewModel.CurrentVersion>
         </views:UpdateViewModel>
     </Design.DataContext>
 

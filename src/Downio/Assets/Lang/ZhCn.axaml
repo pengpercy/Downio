@@ -46,6 +46,7 @@
 
     <!-- Settings Items -->
     <x:String x:Key="LabelDefaultSavePath">默认存储路径</x:String>
+    <x:String x:Key="LabelDefaultDownloadSplit">默认分片数</x:String>
     <x:String x:Key="LabelProxy">代理服务器</x:String>
     <x:String x:Key="LabelProxyType">协议</x:String>
     <x:String x:Key="LabelProxyAddress">地址</x:String>
@@ -73,6 +74,7 @@
     <x:String x:Key="LabelBtTrackers">Tracker 服务器</x:String>
     <x:String x:Key="LabelTrackerServers">Tracker 服务器：</x:String>
     <x:String x:Key="LabelTrackerRecommended">推荐使用：</x:String>
+    <x:String x:Key="LabelTrackerSourcesSelectedFormat">已选择 {0} 个 Tracker 源</x:String>
     <x:String x:Key="LabelAutoSyncTracker">每天自动更新 Tracker 服务器列表</x:String>
     <x:String x:Key="LabelTrackerLastSync">上次同步：</x:String>
     <x:String x:Key="BtnAdd">添加</x:String>

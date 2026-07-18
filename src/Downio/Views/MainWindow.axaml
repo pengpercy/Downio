@@ -5,13 +5,14 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:views="using:Downio.Views"
         xmlns:localConv="using:Downio.Converters"
+        xmlns:chrome="using:Avalonia.Controls.Chrome"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
         Width="1080" Height="720"
         MinWidth="800" MinHeight="600"
         x:Class="Downio.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Icon="/Assets/Branding/app_ico.ico"
-        Title="Downio"
+        Title=""
         ExtendClientAreaToDecorationsHint="True"
         ExtendClientAreaTitleBarHeightHint="52"
         TransparencyLevelHint="AcrylicBlur"
@@ -23,6 +24,8 @@
         <KeyBinding Gesture="Ctrl+N" Command="{Binding ShowAddTaskCommand}" />
         <KeyBinding Gesture="Cmd+," Command="{Binding ShowSettingsCommand}" />
         <KeyBinding Gesture="Ctrl+," Command="{Binding ShowSettingsCommand}" />
+        <KeyBinding Gesture="Cmd+Q" Command="{Binding QuitAppCommand}" />
+        <KeyBinding Gesture="Ctrl+Q" Command="{Binding QuitAppCommand}" />
     </Window.KeyBindings>
 
     <Design.DataContext>
@@ -33,6 +36,25 @@
     </Window.Resources>
 
     <Window.Styles>
+        <Style Selector="Button#PART_MinimizeButton,
+                         Button#PART_MaximizeButton,
+                         Button#PART_CloseButton">
+            <Setter Property="Width" Value="46" />
+            <Setter Property="MinWidth" Value="46" />
+            <Setter Property="Height" Value="52" />
+            <Setter Property="MinHeight" Value="52" />
+            <Setter Property="VerticalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="CornerRadius" Value="0" />
+        </Style>
+        
+        <Style Selector="Button#PART_CloseButton">
+            <Setter Property="Width" Value="47" />
+            <Setter Property="MinWidth" Value="47" />
+        </Style>
+
         <Style Selector="Button.sidebar">
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="Background" Value="Transparent" />
@@ -221,6 +243,7 @@
                                 BorderThickness="0"
                                 Width="32"
                                 Height="32"
+                                chrome:WindowDecorationProperties.ElementRole="User"
                                 HorizontalAlignment="Left"
                                 VerticalAlignment="Center"
                                 Margin="{Binding SidebarToggleMargin}"
@@ -305,11 +328,13 @@
                             Background="{DynamicResource TitleBarBackgroundBrush}"
                             BorderThickness="1,0,0,1"
                             BorderBrush="{DynamicResource SystemControlHighlightBaseLowBrush}"
+                            chrome:WindowDecorationProperties.ElementRole="TitleBar"
                             PointerPressed="TitleBar_PointerPressed">
                         <Grid ColumnDefinitions="Auto, *">
                             <!-- Global Controls (Resume All / Pause All / Remove) -->
                             <StackPanel Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Left"
-                                        VerticalAlignment="Center" Margin="24,0,0,0">
+                                        VerticalAlignment="Center" Margin="24,0,0,0"
+                                        chrome:WindowDecorationProperties.ElementRole="User">
                                 <StackPanel Orientation="Horizontal" IsVisible="{Binding !IsSettingsVisible}"
                                             Margin="{Binding TitleBarToolsMargin}">
                                     <Button Command="{Binding ResumeAllCommand}"

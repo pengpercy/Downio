@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Input;
 using Avalonia.Input.Platform;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
@@ -37,8 +38,13 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly SettingsView _settingsView;
     private readonly DispatcherTimer _refreshTimer;
     private readonly Dictionary<string, string> _lastStatusByGid = new();
+    private readonly HashSet<string> _autoFilledClipboardLinks = new(StringComparer.OrdinalIgnoreCase);
     private bool _isShuttingDown;
+    private bool _isQuitRequested;
+    private bool _suppressRefreshOnCurrentTitleChange;
     private readonly bool _windowControlsOnLeft;
+
+    public SettingsService SettingsService => _settingsService;
 
     [ObservableProperty]
     private object _currentView = null!;
@@ -57,7 +63,8 @@ public partial class MainWindowViewModel : ViewModelBase
         OnPropertyChanged(nameof(IsSettings));
         
         // Refresh list when switching views if needed
-        if (value == "MenuDownloading" || value == "MenuWaiting" || value == "MenuStopped")
+        if (!_suppressRefreshOnCurrentTitleChange &&
+            (value == "MenuDownloading" || value == "MenuWaiting" || value == "MenuStopped"))
         {
             _ = RefreshTaskListAsync();
         }
@@ -69,10 +76,17 @@ public partial class MainWindowViewModel : ViewModelBase
     public bool IsSettings => CurrentTitleKey == "MenuSettings";
 
     public bool IsMacOS => RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
+    public bool ShowCustomMacApplicationMenuItems => !IsMacOS;
     public bool IsLinux => RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
     public bool IsMacLikeLayout => IsMacOS || (IsLinux && _windowControlsOnLeft);
     public bool IsWindowsLikeLayout => !IsMacLikeLayout;
     public bool IsNotMacOS => !IsMacLikeLayout;
+    public bool IsQuitRequested => _isQuitRequested;
+
+    public void RequestQuit()
+    {
+        _isQuitRequested = true;
+    }
 
     [ObservableProperty]
     private SettingsSection _selectedSettingsSection = SettingsSection.General;
@@ -301,7 +315,9 @@ public partial class MainWindowViewModel : ViewModelBase
                 var clipboard = mainWindow.Clipboard;
                 if (clipboard != null)
                 {
-                    await clipboard.SetTextAsync(task.Url);
+                    var data = new DataTransfer();
+                    data.Add(DataTransferItem.CreateText(task.Url));
+                    await clipboard.SetDataAsync(data);
                 }
             }
         }
@@ -369,7 +385,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private string _newTaskName = string.Empty;
 
     [ObservableProperty]
-    private int _newTaskChunks = 4;
+    private int _newTaskChunks = 16;
 
     [ObservableProperty]
     private string _newTaskSavePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
@@ -392,12 +408,34 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     private string _newTaskProxy = string.Empty;
 
+    public bool ShouldFocusNewTaskUrlOnOpen { get; set; }
+
     // Advanced Settings Properties
     private readonly System.Threading.SemaphoreSlim _aria2RecoveryLock = new(1, 1);
     private DateTimeOffset _lastAria2RecoveryAttempt = DateTimeOffset.MinValue;
     public ObservableCollection<TrackerSourceOption> TrackerSourceOptions { get; } = new();
 
     public ObservableCollection<TrackerSourceOption> SelectedTrackerSourceOptions { get; } = new();
+
+    public string SelectedTrackerSourceSummary
+    {
+        get
+        {
+            var selected = SelectedTrackerSourceOptions.ToList();
+            var selectedFormat = "{0} tracker sources selected";
+            if (Application.Current?.TryGetResource("LabelTrackerSourcesSelectedFormat", out var resource) == true && resource is string text)
+            {
+                selectedFormat = text;
+            }
+
+            return selected.Count switch
+            {
+                0 => "-",
+                1 => selected[0].Url,
+                _ => string.Format(CultureInfo.CurrentCulture, selectedFormat, selected.Count)
+            };
+        }
+    }
 
     [ObservableProperty]
     private bool _isSyncingTrackers;
@@ -636,6 +674,8 @@ public partial class MainWindowViewModel : ViewModelBase
             SelectedTrackerSourceOptions.Add(item);
         }
 
+        OnPropertyChanged(nameof(SelectedTrackerSourceSummary));
+
         _settingsService.Settings.TrackerSources = selected.Select(x => x.Url).ToList();
         _settingsService.Save();
     }
@@ -782,6 +822,7 @@ public partial class MainWindowViewModel : ViewModelBase
             DefaultSavePath = string.IsNullOrWhiteSpace(_settingsService.Settings.DefaultSavePath)
                 ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads")
                 : _settingsService.Settings.DefaultSavePath;
+            DefaultDownloadSplit = _settingsService.Settings.DefaultDownloadSplit;
 
             ProxyAddress = _settingsService.Settings.ProxyAddress;
             ProxyPort = _settingsService.Settings.ProxyPort;
@@ -807,6 +848,9 @@ public partial class MainWindowViewModel : ViewModelBase
     // Settings Properties
     [ObservableProperty]
     private string _defaultSavePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
+
+    [ObservableProperty]
+    private int _defaultDownloadSplit = 16;
 
     [ObservableProperty]
     private string _proxyAddress = string.Empty;
@@ -1036,6 +1080,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
         OnPropertyChanged(nameof(EmptyStateSubtitleDownloadingText));
         OnPropertyChanged(nameof(CheckUpdateButtonKey));
+        OnPropertyChanged(nameof(SelectedTrackerSourceSummary));
     }
 
     public MainWindowViewModel()
@@ -1078,6 +1123,7 @@ public partial class MainWindowViewModel : ViewModelBase
             _settingsService.Settings.DefaultSavePath = DefaultSavePath;
             _settingsService.Save();
         }
+        DefaultDownloadSplit = _settingsService.Settings.DefaultDownloadSplit;
 
         ProxyAddress = _settingsService.Settings.ProxyAddress;
         ProxyPort = _settingsService.Settings.ProxyPort;
@@ -1295,6 +1341,19 @@ public partial class MainWindowViewModel : ViewModelBase
         _settingsService.Save();
     }
 
+    partial void OnDefaultDownloadSplitChanged(int value)
+    {
+        var normalized = Math.Clamp(value, 1, 32);
+        if (normalized != value)
+        {
+            DefaultDownloadSplit = normalized;
+            return;
+        }
+
+        _settingsService.Settings.DefaultDownloadSplit = normalized;
+        _settingsService.Save();
+    }
+
     partial void OnProxyAddressChanged(string value)
     {
         _settingsService.Settings.ProxyAddress = value;
@@ -1352,6 +1411,7 @@ public partial class MainWindowViewModel : ViewModelBase
         try
         {
             var allTasks = await _aria2Service.GetGlobalStatusAsync();
+            string? completedTaskId = null;
 
             foreach (var t in allTasks)
             {
@@ -1364,11 +1424,17 @@ public partial class MainWindowViewModel : ViewModelBase
                     }
                     else if (prev != "StatusCompleted" && t.Status == "StatusCompleted")
                     {
+                        completedTaskId = t.Id;
                         _notificationService.ShowNotification(GetString("NotificationDownloadComplete"), t.Name, ToastType.Success);
                     }
                 }
 
                 _lastStatusByGid[t.Id] = t.Status;
+            }
+
+            if (completedTaskId != null)
+            {
+                NavigateToStoppedTasks();
             }
 
             var activeIds = new HashSet<string>(allTasks.Select(t => t.Id));
@@ -1420,6 +1486,16 @@ public partial class MainWindowViewModel : ViewModelBase
                     if (existing.Name != task.Name && task.Name != "Unknown") existing.Name = task.Name;
                 }
             }
+
+            if (completedTaskId != null)
+            {
+                var completedTask = Tasks.FirstOrDefault(t => t.Id == completedTaskId);
+                if (completedTask != null)
+                {
+                    SelectedTask = completedTask;
+                    UpdateSelectedTasks([completedTask]);
+                }
+            }
         }
         catch (Exception ex)
         {
@@ -1434,6 +1510,27 @@ public partial class MainWindowViewModel : ViewModelBase
                     await RefreshTaskListAsync(allowRecovery: false).ConfigureAwait(false);
                 }
             }
+        }
+    }
+
+    private void NavigateToStoppedTasks()
+    {
+        IsSettingsVisible = false;
+        CurrentView = _taskListView;
+
+        if (CurrentTitleKey == "MenuStopped")
+        {
+            return;
+        }
+
+        _suppressRefreshOnCurrentTitleChange = true;
+        try
+        {
+            CurrentTitleKey = "MenuStopped";
+        }
+        finally
+        {
+            _suppressRefreshOnCurrentTitleChange = false;
         }
     }
 

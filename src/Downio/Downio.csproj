@@ -1,7 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <OutputType>WinExe</OutputType>
-        <TargetFramework>net10.0</TargetFramework>
+        <IsWindowsTarget Condition="$([MSBuild]::IsOSPlatform('Windows')) or '$(RuntimeIdentifier)' == 'win-x64' or '$(RuntimeIdentifier)' == 'win-arm64'">true</IsWindowsTarget>
+        <IsWindowsTarget Condition="'$(IsWindowsTarget)' == ''">false</IsWindowsTarget>
+        <TargetFramework Condition="'$(IsWindowsTarget)' == 'true'">net10.0-windows10.0.19041.0</TargetFramework>
+        <TargetFramework Condition="'$(IsWindowsTarget)' != 'true'">net10.0</TargetFramework>
+        <EnableWindowsTargeting Condition="'$(IsWindowsTarget)' == 'true'">true</EnableWindowsTargeting>
         <Nullable>enable</Nullable>
         <SuppressTrimAnalysisWarnings>false</SuppressTrimAnalysisWarnings>
         <TreatAsLocalProperty>PublishAot;DisableAOT</TreatAsLocalProperty>
@@ -10,11 +14,11 @@
         <ApplicationManifest>app.manifest</ApplicationManifest>
         <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
         <ApplicationIcon>Assets/Branding/app_ico.ico</ApplicationIcon>
-        <Version>1.0.55</Version>
+        <Version>1.0.74</Version>
         <InformationalVersion>$(Version)</InformationalVersion>
     </PropertyGroup>
     
-    <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
+    <PropertyGroup Condition="'$(IsWindowsTarget)' == 'true'">
         <DefineConstants>$(DefineConstants);WINDOWS</DefineConstants>
     </PropertyGroup>
     
@@ -39,7 +43,6 @@
         <AvaloniaEnableILVerify>true</AvaloniaEnableILVerify>
         <AvaloniaSkipUnknownCLRInstrumentation>true</AvaloniaSkipUnknownCLRInstrumentation>
         <!-- <RuntimeIdentifier>osx-x64</RuntimeIdentifier> Removed to allow CLI override -->
-        <InvariantGlobalization>true</InvariantGlobalization>
         <IlcGenerateStackTraceData>false</IlcGenerateStackTraceData>
         <IlcOptimizationPreference>Size</IlcOptimizationPreference>
         <IlcFoldIdenticalMethodBodies>true</IlcFoldIdenticalMethodBodies>
@@ -92,8 +95,6 @@
         <PackageReference Include="Avalonia.Controls.ColorPicker" Version="12.1.0" />
         <PackageReference Include="LiveMarkdown.Avalonia" Version="2.2.0" />
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
-        <!-- 仅在 Windows 编译时引入通知库 -->
-        <PackageReference Include="CommunityToolkit.WinUI.Notifications" Version="7.1.2" Condition="$([MSBuild]::IsOSPlatform('Windows'))" />
     </ItemGroup>
 
   <ItemGroup>

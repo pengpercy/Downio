@@ -1,6 +1,7 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="Downio.App"
+             Name="Downio"
              xmlns:local="using:Downio"
              xmlns:controls="using:Downio.Controls"
              xmlns:vm="using:Downio.ViewModels"
@@ -27,6 +28,41 @@
             <Setter Property="ExtendClientAreaTitleBarHeightHint" Value="44" />
             <Setter Property="Background" Value="{DynamicResource WorkspaceBackgroundBrush}" />
             <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundBaseHighBrush}" />
+        </Style>
+
+        <Style Selector="Button#PART_MinimizeButton,
+                         Button#PART_MaximizeButton,
+                         Button#PART_CloseButton">
+            <Setter Property="Width" Value="46" />
+            <Setter Property="MinWidth" Value="46" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="VerticalAlignment" Value="Top" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="CornerRadius" Value="0" />
+        </Style>
+        
+        <Style Selector="Button#PART_CloseButton">
+            <Setter Property="Width" Value="47" />
+            <Setter Property="MinWidth" Value="47" />
+        </Style>
+
+        <Style Selector="Button#PART_FullScreenButton">
+            <Setter Property="IsVisible" Value="False" />
+            <Setter Property="Width" Value="0" />
+            <Setter Property="MinWidth" Value="0" />
+            <Setter Property="MaxWidth" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="0" />
+        </Style>
+
+        <Style Selector="Button#PART_PopoverFullScreenButton">
+            <Setter Property="IsVisible" Value="False" />
+            <Setter Property="Width" Value="0" />
+            <Setter Property="MinWidth" Value="0" />
+            <Setter Property="MaxWidth" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="0" />
         </Style>
 
         <Style Selector="Border.dialogRoot">
@@ -107,8 +143,6 @@
             <NativeMenuItem Header="{DynamicResource MenuCheckUpdate}" Command="{Binding CheckForUpdatesCommand}" />
             <NativeMenuItem Header="{DynamicResource BtnNewTask}" Gesture="Cmd+N"
                             Command="{Binding ShowAddTaskCommand}" />
-            <NativeMenuItemSeparator />
-            <NativeMenuItem Header="{DynamicResource MenuQuit}" Gesture="Cmd+Q" Command="{Binding QuitAppCommand}" />
         </NativeMenu>
     </NativeMenu.Menu>
 

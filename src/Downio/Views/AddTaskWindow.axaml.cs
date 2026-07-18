@@ -1,8 +1,10 @@
 using System;
 using System.Linq;
+using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
+using Avalonia.Threading;
 using Downio.ViewModels;
 
 namespace Downio.Views;
@@ -21,6 +23,23 @@ public partial class AddTaskWindow : DialogWindow
         InitializeComponent();
         _viewModel = viewModel;
         DataContext = _viewModel;
+        Opened += OnOpened;
+    }
+
+    private void OnOpened(object? sender, EventArgs e)
+    {
+        if (_viewModel?.ShouldFocusNewTaskUrlOnOpen != true) return;
+
+        _viewModel.ShouldFocusNewTaskUrlOnOpen = false;
+
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (this.FindControl<TextBox>("NewTaskUrlTextBox") is { } textBox)
+            {
+                textBox.Focus();
+                textBox.CaretIndex = textBox.Text?.Length ?? 0;
+            }
+        }, DispatcherPriority.Loaded);
     }
 
     private void OnCancelClick(object sender, RoutedEventArgs e)

@@ -4,11 +4,16 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Threading.Tasks;
 using Avalonia;
-using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Input;
 using Avalonia.Input.Platform;
+using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using Avalonia.Styling;
@@ -51,7 +56,9 @@ public partial class MainWindowViewModel
             var clipboard = mainWindow.Clipboard;
             if (clipboard == null) return;
 
-            await clipboard.SetTextAsync(text);
+            var data = new DataTransfer();
+            data.Add(DataTransferItem.CreateText(text));
+            await clipboard.SetDataAsync(data);
             _notificationService.ShowNotification(GetString("NotificationCopied"), GetString("MessageLinkCopied"), ToastType.Success);
         }
         catch (Exception ex)
@@ -139,13 +146,14 @@ public partial class MainWindowViewModel
     }
 
     [RelayCommand]
-    public void ShowAddTask()
+    public async Task ShowAddTask()
     {
+        ShouldFocusNewTaskUrlOnOpen = false;
         NewTaskInputModeIndex = 0;
         NewTaskUrl = string.Empty;
         NewTaskTorrentFilePath = string.Empty;
         NewTaskName = string.Empty;
-        NewTaskChunks = 4;
+        NewTaskChunks = DefaultDownloadSplit;
         if (string.IsNullOrEmpty(NewTaskSavePath))
         {
             NewTaskSavePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
@@ -153,8 +161,9 @@ public partial class MainWindowViewModel
         
         if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime { MainWindow: { } mainWindow })
         {
+            await TryAutofillNewTaskFromClipboardAsync(mainWindow.Clipboard);
             var dialog = new AddTaskWindow(this);
-            dialog.ShowDialog(mainWindow);
+            await dialog.ShowDialog(mainWindow);
         }
     }
 
@@ -205,6 +214,7 @@ public partial class MainWindowViewModel
     [RelayCommand]
     public async Task CheckForUpdates(object? parameter)
     {
+        if (UpdateWindowService.ActivateExisting()) return;
         if (IsCheckingForUpdates) return;
         
         var isFromAbout = parameter?.ToString() == "About";
@@ -219,12 +229,14 @@ public partial class MainWindowViewModel
         var currentVersion = AppVersion.TrimStart('v');
 
         ReleaseInfo? release = null;
+        Exception? updateError = null;
         try
         {
             release = await updateService.CheckForUpdatesAsync(currentVersion);
         }
         catch (Exception ex)
         {
+            updateError = ex;
             Debug.WriteLine($"Update check failed: {ex.Message}");
             AppLog.Error(ex, "Update check failed");
 
@@ -245,8 +257,7 @@ public partial class MainWindowViewModel
 
         if (release != null)
         {
-            var dialog = new UpdateWindow(release, _settingsService);
-            await dialog.ShowDialog(mainWindow);
+            await UpdateWindowService.ShowAsync(release, _settingsService, mainWindow);
         }
         else
         {
@@ -269,7 +280,9 @@ public partial class MainWindowViewModel
             else
             {
                 var title = GetString("TitleUpdateCheck");
-                var message = GetString("MessageNoUpdates");
+                var message = updateError is not null
+                    ? $"{GetString("MessageUpdateCheckFailed")} {updateError.Message}"
+                    : GetString("MessageNoUpdates");
                 var dialog = new InfoDialog(title, message);
                 await dialog.ShowDialog(mainWindow);
             }
@@ -283,6 +296,68 @@ public partial class MainWindowViewModel
             return str;
         }
         return key;
+    }
+
+    private async Task TryAutofillNewTaskFromClipboardAsync(IClipboard? clipboard)
+    {
+        if (clipboard == null) return;
+
+        try
+        {
+            var text = await clipboard.TryGetTextAsync();
+            if (string.IsNullOrWhiteSpace(text)) return;
+
+            var links = ExtractSupportedDownloadLinks(text)
+                .Where(link => !_autoFilledClipboardLinks.Contains(link))
+                .ToList();
+
+            if (links.Count == 0) return;
+
+            NewTaskInputModeIndex = 0;
+            NewTaskUrl = string.Join(Environment.NewLine, links);
+            ShouldFocusNewTaskUrlOnOpen = true;
+
+            foreach (var link in links)
+            {
+                _autoFilledClipboardLinks.Add(link);
+            }
+        }
+        catch (Exception ex)
+        {
+            AppLog.Error(ex, "Failed to autofill add task from clipboard");
+        }
+    }
+
+    private static List<string> ExtractSupportedDownloadLinks(string text)
+    {
+        return text.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(CleanupClipboardLinkCandidate)
+            .Where(IsSupportedDownloadLink)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    private static string CleanupClipboardLinkCandidate(string value)
+    {
+        return value.Trim().Trim('"', '\'', '<', '>', '(', ')', '[', ']', '{', '}', ',', ';');
+    }
+
+    private static bool IsSupportedDownloadLink(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return false;
+        if (value.StartsWith("magnet:?", StringComparison.OrdinalIgnoreCase)) return true;
+        if (value.StartsWith("thunder://", StringComparison.OrdinalIgnoreCase)) return true;
+
+        return Uri.TryCreate(value, UriKind.Absolute, out var uri) &&
+               uri.Scheme switch
+               {
+                   "http" => true,
+                   "https" => true,
+                   "ftp" => true,
+                   "ftps" => true,
+                   "sftp" => true,
+                   _ => false
+               };
     }
 
     [RelayCommand]
@@ -336,7 +411,8 @@ public partial class MainWindowViewModel
 
             if (isTorrent)
             {
-                await _aria2Service.AddTorrentAsync(NewTaskTorrentFilePath, NewTaskSavePath, extraOptions);
+                var gid = await _aria2Service.AddTorrentAsync(NewTaskTorrentFilePath, NewTaskSavePath, extraOptions);
+                AddPendingTask(gid, Path.GetFileNameWithoutExtension(NewTaskTorrentFilePath), NewTaskSavePath, string.Empty, NewTaskChunks);
             }
             else
             {
@@ -348,20 +424,15 @@ public partial class MainWindowViewModel
 
                 foreach (var url in urls)
                 {
-                    var name = NewTaskName;
-                    if (string.IsNullOrWhiteSpace(name) && urls.Count == 1)
+                    var outputName = urls.Count == 1 ? NewTaskName?.Trim() ?? string.Empty : string.Empty;
+                    var displayName = outputName;
+                    if (string.IsNullOrWhiteSpace(displayName))
                     {
-                        if (Uri.TryCreate(url, UriKind.Absolute, out var uri))
-                        {
-                            name = Path.GetFileName(uri.LocalPath);
-                        }
-                    }
-                    else if (urls.Count > 1)
-                    {
-                        name = string.Empty; // Let aria2 auto-detect names for multiple files
+                        displayName = TryGetSafeFileNameFromUri(Uri.TryCreate(url, UriKind.Absolute, out var uri) ? uri : null);
                     }
 
-                    await _aria2Service.AddUriAsync(url, name, NewTaskSavePath, NewTaskChunks, extraOptions);
+                    var gid = await _aria2Service.AddUriAsync(url, outputName, NewTaskSavePath, NewTaskChunks, extraOptions);
+                    AddPendingTask(gid, displayName, NewTaskSavePath, url, NewTaskChunks);
                 }
             }
 
@@ -381,14 +452,267 @@ public partial class MainWindowViewModel
                 ShowDownloading();
             }
 
-            await Task.Delay(200);
-            await RefreshTaskListAsync();
+            _ = RefreshTaskListSoonAsync();
         }
         catch (Exception ex)
         {
             Debug.WriteLine($"Add Task Failed: {ex.Message}");
             AppLog.Error(ex, "Add task failed");
         }
+    }
+
+    private void AddPendingTask(string gid, string name, string savePath, string url, int split)
+    {
+        if (string.IsNullOrWhiteSpace(gid)) return;
+        if (!IsDownloading) return;
+        if (Tasks.Any(t => t.Id == gid)) return;
+
+        var displayName = string.IsNullOrWhiteSpace(name) ? "Unknown" : name;
+        Tasks.Add(new DownloadTask
+        {
+            Id = gid,
+            Name = displayName,
+            Status = "StatusWaiting",
+            Speed = "0 B/s",
+            TimeLeft = "--",
+            Split = Math.Clamp(split, 1, 32),
+            Connections = 0,
+            Url = url,
+            FilePath = string.IsNullOrWhiteSpace(name) ? string.Empty : Path.Combine(savePath, name)
+        });
+    }
+
+    private async Task RefreshTaskListSoonAsync()
+    {
+        await Task.Delay(800);
+        await RefreshTaskListAsync();
+    }
+
+    private async Task<string> TryDetectDownloadFileNameAsync(string url, IDictionary<string, string>? extraOptions)
+    {
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
+        {
+            return string.Empty;
+        }
+
+        try
+        {
+            using var handler = CreateDownloadProbeHandler(extraOptions);
+            using var client = new HttpClient(handler)
+            {
+                Timeout = TimeSpan.FromSeconds(8)
+            };
+
+            using var head = new HttpRequestMessage(HttpMethod.Head, uri);
+            ApplyDownloadProbeHeaders(head, extraOptions);
+
+            using var headResponse = await client.SendAsync(head, HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false);
+            var fromHead = TryGetFileNameFromResponse(headResponse);
+            if (!string.IsNullOrWhiteSpace(fromHead))
+            {
+                return fromHead;
+            }
+
+            using var get = new HttpRequestMessage(HttpMethod.Get, uri);
+            get.Headers.Range = new RangeHeaderValue(0, 0);
+            ApplyDownloadProbeHeaders(get, extraOptions);
+
+            using var getResponse = await client.SendAsync(get, HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false);
+            var fromGet = TryGetFileNameFromResponse(getResponse);
+            if (!string.IsNullOrWhiteSpace(fromGet))
+            {
+                return fromGet;
+            }
+
+            return TryGetSafeFileNameFromUri(getResponse.RequestMessage?.RequestUri);
+        }
+        catch (Exception ex)
+        {
+            AppLog.Warn($"Failed to detect download filename for {url}: {ex.Message}");
+            return string.Empty;
+        }
+    }
+
+    private HttpClientHandler CreateDownloadProbeHandler(IDictionary<string, string>? extraOptions)
+    {
+        var handler = new HttpClientHandler
+        {
+            AllowAutoRedirect = true
+        };
+
+        var proxy = extraOptions != null && extraOptions.TryGetValue("all-proxy", out var taskProxy)
+            ? taskProxy
+            : string.Empty;
+
+        if (string.IsNullOrWhiteSpace(proxy))
+        {
+            var address = _settingsService.Settings.ProxyAddress?.Trim() ?? string.Empty;
+            if (!string.IsNullOrWhiteSpace(address) && _settingsService.Settings.ProxyPort > 0)
+            {
+                var scheme = string.Equals(_settingsService.Settings.ProxyType, "SOCKS5", StringComparison.OrdinalIgnoreCase) ? "socks5" : "http";
+                proxy = $"{scheme}://{address}:{_settingsService.Settings.ProxyPort}";
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(proxy) && Uri.TryCreate(proxy, UriKind.Absolute, out var proxyUri))
+        {
+            var webProxy = new WebProxy(proxyUri);
+            var user = _settingsService.Settings.ProxyUsername?.Trim() ?? string.Empty;
+            if (!string.IsNullOrWhiteSpace(user))
+            {
+                webProxy.Credentials = new NetworkCredential(user, _settingsService.Settings.ProxyPassword ?? string.Empty);
+            }
+
+            handler.UseProxy = true;
+            handler.Proxy = webProxy;
+        }
+
+        return handler;
+    }
+
+    private void ApplyDownloadProbeHeaders(HttpRequestMessage request, IDictionary<string, string>? extraOptions)
+    {
+        var userAgent = extraOptions != null && extraOptions.TryGetValue("user-agent", out var ua) && !string.IsNullOrWhiteSpace(ua)
+            ? ua
+            : "Downio/1.0";
+        request.Headers.TryAddWithoutValidation("User-Agent", userAgent);
+
+        if (extraOptions == null) return;
+
+        if (extraOptions.TryGetValue("referer", out var referer) && !string.IsNullOrWhiteSpace(referer))
+        {
+            request.Headers.TryAddWithoutValidation("Referer", referer);
+        }
+
+        if (extraOptions.TryGetValue("header", out var rawHeaders) && !string.IsNullOrWhiteSpace(rawHeaders))
+        {
+            foreach (var line in rawHeaders.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries))
+            {
+                var separator = line.IndexOf(':');
+                if (separator <= 0) continue;
+
+                var name = line[..separator].Trim();
+                var value = line[(separator + 1)..].Trim();
+                if (!string.IsNullOrWhiteSpace(name) && !string.IsNullOrWhiteSpace(value))
+                {
+                    request.Headers.TryAddWithoutValidation(name, value);
+                }
+            }
+        }
+    }
+
+    private static string TryGetFileNameFromResponse(HttpResponseMessage response)
+    {
+        if (response.Content.Headers.ContentDisposition != null)
+        {
+            var name = response.Content.Headers.ContentDisposition.FileNameStar;
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                name = response.Content.Headers.ContentDisposition.FileName;
+            }
+
+            var cleaned = SanitizeDownloadFileName(name);
+            if (!string.IsNullOrWhiteSpace(cleaned))
+            {
+                return cleaned;
+            }
+        }
+
+        if (response.Content.Headers.TryGetValues("Content-Disposition", out var values))
+        {
+            foreach (var value in values)
+            {
+                var parsed = TryParseContentDispositionFileName(value);
+                if (!string.IsNullOrWhiteSpace(parsed))
+                {
+                    return parsed;
+                }
+            }
+        }
+
+        return TryGetSafeFileNameFromUri(response.RequestMessage?.RequestUri);
+    }
+
+    private static string TryParseContentDispositionFileName(string value)
+    {
+        const string fileNameStar = "filename*=";
+        var starIndex = value.IndexOf(fileNameStar, StringComparison.OrdinalIgnoreCase);
+        if (starIndex >= 0)
+        {
+            var raw = ReadDispositionValue(value[(starIndex + fileNameStar.Length)..]);
+            var decoded = DecodeRfc5987FileName(raw);
+            var cleaned = SanitizeDownloadFileName(decoded);
+            if (!string.IsNullOrWhiteSpace(cleaned)) return cleaned;
+        }
+
+        const string fileName = "filename=";
+        var index = value.IndexOf(fileName, StringComparison.OrdinalIgnoreCase);
+        if (index >= 0)
+        {
+            var raw = ReadDispositionValue(value[(index + fileName.Length)..]);
+            return SanitizeDownloadFileName(raw);
+        }
+
+        return string.Empty;
+    }
+
+    private static string ReadDispositionValue(string value)
+    {
+        var trimmed = value.Trim();
+        if (trimmed.StartsWith('"'))
+        {
+            var end = trimmed.IndexOf('"', 1);
+            return end > 1 ? trimmed[1..end] : trimmed.Trim('"');
+        }
+
+        var separator = trimmed.IndexOf(';');
+        return separator >= 0 ? trimmed[..separator].Trim() : trimmed.Trim();
+    }
+
+    private static string DecodeRfc5987FileName(string value)
+    {
+        var parts = value.Split('\'', 3);
+        if (parts.Length == 3)
+        {
+            try
+            {
+                return Uri.UnescapeDataString(parts[2]);
+            }
+            catch
+            {
+                return parts[2];
+            }
+        }
+
+        return Uri.UnescapeDataString(value);
+    }
+
+    private static string TryGetSafeFileNameFromUri(Uri? uri)
+    {
+        if (uri == null) return string.Empty;
+
+        var name = SanitizeDownloadFileName(Path.GetFileName(uri.LocalPath));
+        if (string.IsNullOrWhiteSpace(name)) return string.Empty;
+
+        // Avoid forcing generic endpoint names like /download?id=... onto aria2.
+        return Path.HasExtension(name) ? name : string.Empty;
+    }
+
+    private static string SanitizeDownloadFileName(string? fileName)
+    {
+        if (string.IsNullOrWhiteSpace(fileName)) return string.Empty;
+
+        var decoded = WebUtility.UrlDecode(fileName.Trim().Trim('"'));
+        decoded = decoded.Replace('/', '_').Replace('\\', '_');
+
+        var invalid = Path.GetInvalidFileNameChars();
+        var builder = new StringBuilder(decoded.Length);
+        foreach (var ch in decoded)
+        {
+            builder.Append(invalid.Contains(ch) ? '_' : ch);
+        }
+
+        return builder.ToString().Trim().Trim('.');
     }
 
     [RelayCommand]
@@ -409,17 +733,7 @@ public partial class MainWindowViewModel
     [RelayCommand]
     public void SetLanguage(string lang)
     {
-        if (lang == "System")
-        {
-            var culture = CultureInfo.CurrentCulture;
-            LocalizationService.SwitchLanguage(culture.Name.StartsWith("zh", StringComparison.OrdinalIgnoreCase)
-                ? "zh-CN"
-                : "en-US");
-        }
-        else
-        {
-            LocalizationService.SwitchLanguage(lang);
-        }
+        LocalizationService.SwitchLanguage(lang);
     }
 
     [RelayCommand]
@@ -528,6 +842,13 @@ public partial class MainWindowViewModel
     [RelayCommand]
     public void QuitApp()
     {
+        if (Application.Current is App app)
+        {
+            app.RequestExplicitExit();
+            return;
+        }
+
+        RequestQuit();
         _ = ShutdownServicesAsync();
 
         if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)

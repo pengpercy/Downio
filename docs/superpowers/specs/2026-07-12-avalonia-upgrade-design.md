@@ -1,7 +1,7 @@
 # Avalonia 12.1 Upgrade Design
 
-**Date:** 2026-07-12  
-**Project:** Downio  
+**Date:** 2026-07-12
+**Project:** Downio
 **Scope:** Upgrade the Avalonia ecosystem on `master` to the latest stable compatible releases without changing the application release version.
 
 ## Goals

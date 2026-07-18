@@ -47,7 +47,7 @@ public sealed class SingleInstanceService : IDisposable
         return true;
     }
 
-    public static void NotifyExisting(string appId)
+    public static bool NotifyExisting(string appId)
     {
         var deadline = DateTimeOffset.UtcNow.AddSeconds(2);
 
@@ -59,13 +59,17 @@ public sealed class SingleInstanceService : IDisposable
                 client.Connect(150);
                 using var writer = new StreamWriter(client) { AutoFlush = true };
                 writer.WriteLine("activate");
-                return;
+                AppLog.Info("Existing Downio instance activation requested.");
+                return true;
             }
-            catch
+            catch (Exception ex)
             {
+                AppLog.Warn($"Failed to notify existing instance: {ex.Message}");
                 Thread.Sleep(100);
             }
         }
+
+        return false;
     }
 
     public void SetActivateHandler(Action onActivate)
@@ -106,8 +110,9 @@ public sealed class SingleInstanceService : IDisposable
             {
                 return;
             }
-            catch
+            catch (Exception ex)
             {
+                AppLog.Warn($"Single instance listener failed: {ex.Message}");
             }
         }
     }
@@ -128,4 +133,3 @@ public sealed class SingleInstanceService : IDisposable
         _mutex.Dispose();
     }
 }
-

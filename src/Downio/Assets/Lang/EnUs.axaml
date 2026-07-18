@@ -46,6 +46,7 @@
 
     <!-- Settings Items -->
     <x:String x:Key="LabelDefaultSavePath">Default Save Path</x:String>
+    <x:String x:Key="LabelDefaultDownloadSplit">Default Splits</x:String>
     <x:String x:Key="LabelProxy">Proxy Server</x:String>
     <x:String x:Key="LabelProxyType">Protocol</x:String>
     <x:String x:Key="LabelProxyAddress">Address</x:String>
@@ -72,6 +73,7 @@
     <x:String x:Key="LabelBtTrackers">Tracker Servers</x:String>
     <x:String x:Key="LabelTrackerServers">Tracker Servers:</x:String>
     <x:String x:Key="LabelTrackerRecommended">Recommended:</x:String>
+    <x:String x:Key="LabelTrackerSourcesSelectedFormat">{0} tracker sources selected</x:String>
     <x:String x:Key="LabelAutoSyncTracker">Auto update tracker list daily</x:String>
     <x:String x:Key="LabelTrackerLastSync">Last sync:</x:String>
     <x:String x:Key="BtnAdd">Add</x:String>
