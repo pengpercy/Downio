@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.75 - 2026-07-18
+
+- Fixed main window title bar double-click maximize on macOS racing with the native title bar handler, which caused the window to maximize and immediately restore.
+
 ## 1.0.74 - 2026-07-14
 
 - Upgraded all Avalonia packages to the latest stable 12.1.0 release.
