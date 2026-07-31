@@ -34,11 +34,11 @@ public partial class MainWindow : Window
             return;
         }
 
-        if (e.ClickCount == 2)
-        {
-            WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
-        }
-        else
+        // Double-click maximize/zoom is already handled by
+        // chrome:WindowDecorationProperties.ElementRole="TitleBar".
+        // Manually toggling WindowState here races with that native handler
+        // and briefly maximizes then restores. Only assist single-click drag.
+        if (e.ClickCount == 1 && e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
         {
             BeginMoveDrag(e);
         }
