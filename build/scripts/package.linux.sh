@@ -45,14 +45,11 @@ if [[ ! -f "appimagetool" ]]; then
     chmod +x appimagetool
 fi
 
-# Cleanup unwanted binaries from publish output (Downio)
-echo "Cleaning up binaries for $RUNTIME..."
-find Downio/Assets/Binaries -mindepth 1 -maxdepth 1 -type d -not -name "linux" -exec rm -rf {} +
-if [ "$arch" == "amd64" ]; then
-    rm -rf Downio/Assets/Binaries/linux/arm64
-elif [ "$arch" == "arm64" ]; then
-    rm -rf Downio/Assets/Binaries/linux/x64
+if [[ ! -f "Downio/aria2c" ]]; then
+    echo "Missing aria2c in the Linux publish root for $RUNTIME."
+    exit 1
 fi
+chmod +x Downio/aria2c
 
 rm -f Downio/*.dbg
 

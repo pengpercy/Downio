@@ -25,6 +25,16 @@ public class AppSettings
     public bool EnableUpnp { get; set; } = false;
     public int BtListenPort { get; set; } = 6881;
     public int DhtListenPort { get; set; } = 6881;
+    public int Ed2kListenPort { get; set; } = 4662;
+    public int Ed2kUdpListenPort { get; set; } = 4672;
+    public string Ed2kServer { get; set; } = string.Empty;
+    public string Ed2kServerMetUrl { get; set; } = "https://upd.emule-security.org/server.met";
+    public string Ed2kNodesDatUrl { get; set; } = "https://upd.emule-security.org/nodes.dat";
+    public bool Ed2kBootstrapAutoSync { get; set; } = true;
+    public int Ed2kBootstrapSyncIntervalHours { get; set; } = 24;
+    public int Ed2kUploadSlots { get; set; } = 3;
+    public int Ed2kMinSourceCount { get; set; } = 0;
+    public int Ed2kSearchTimeout { get; set; } = 20;
     public string GlobalUserAgent { get; set; } = string.Empty;
     public bool DefaultClientMagnet { get; set; } = true;
     public bool DefaultClientThunder { get; set; } = true;

@@ -35,28 +35,11 @@ mkdir -p "$RESOURCES"
 echo "Copying files from $PUBLISH_DIR..."
 cp -a "$PUBLISH_DIR/"* "$MACOS/"
 
-# Clean up unwanted binaries copied from publish dir (if they exist there)
-# The publish dir contains Assets/Binaries for ALL platforms because they are Content items in .csproj
-# We want to remove the Assets/Binaries folder entirely from the App Bundle root first
-# and then only copy the specific one we need.
-rm -rf "$MACOS/Assets/Binaries"
-
-# Copy platform-specific binaries
-echo "Copying platform-specific binaries..."
-ENGINE_DIR="$MACOS/Assets/Binaries"
-mkdir -p "$ENGINE_DIR"
-
-# Only copy the specific binary for this RID and place it in the correct structure
-# The app expects it at Assets/Binaries/darwin/{arch}/aria2c
-if [ "$RID" == "osx-x64" ]; then
-    mkdir -p "$ENGINE_DIR/darwin/x64"
-    cp "src/Downio/Assets/Binaries/darwin/x64/aria2c" "$ENGINE_DIR/darwin/x64/"
-    chmod +x "$ENGINE_DIR/darwin/x64/aria2c"
-elif [ "$RID" == "osx-arm64" ]; then
-    mkdir -p "$ENGINE_DIR/darwin/arm64"
-    cp "src/Downio/Assets/Binaries/darwin/arm64/aria2c" "$ENGINE_DIR/darwin/arm64/"
-    chmod +x "$ENGINE_DIR/darwin/arm64/aria2c"
+if [[ ! -f "$MACOS/aria2c" ]]; then
+    echo "Missing aria2c in the macOS publish root for $RID."
+    exit 1
 fi
+chmod +x "$MACOS/aria2c"
 
 # Create Info.plist
 echo "Creating Info.plist..."

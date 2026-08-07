@@ -196,6 +196,15 @@
                     </StackPanel>
                 </Button>
 
+                <Button Classes="settingsNav" Classes.active="{Binding IsSettingsEd2k}"
+                        Command="{Binding SelectSettingsSectionCommand}"
+                        CommandParameter="{x:Static vm:SettingsSection.Ed2k}">
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <PathIcon Data="{StaticResource IconSearch}" />
+                        <TextBlock Text="{DynamicResource SettingsEd2k}" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+
                 <Button Classes="settingsNav" Classes.active="{Binding IsSettingsAdvanced}"
                         Command="{Binding SelectSettingsSectionCommand}"
                         CommandParameter="{x:Static vm:SettingsSection.Advanced}">
@@ -285,8 +294,11 @@
                         </StackPanel>
                     </Border>
 
-                    <Border Classes="settingsCard" IsVisible="{Binding IsSettingsAppearance}">
-                        <StackPanel Spacing="14">
+                    <ContentControl Content="{Binding AppearanceSettingsContent}">
+                        <ContentControl.ContentTemplate>
+                            <DataTemplate x:DataType="vm:MainWindowViewModel">
+                                <Border Classes="settingsCard">
+                                    <StackPanel Spacing="14">
                             <TextBlock Text="{DynamicResource SettingsAppearance}" FontSize="13" FontWeight="SemiBold" Opacity="0.85"/>
 
                             <Border Classes="settingsDivider"/>
@@ -338,11 +350,17 @@
                                     </Button>
                                 </Grid>
                             </StackPanel>
-                        </StackPanel>
-                    </Border>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ContentControl.ContentTemplate>
+                    </ContentControl>
 
-                    <Border Classes="settingsCard" IsVisible="{Binding IsSettingsNetwork}">
-                        <StackPanel Spacing="14">
+                    <ContentControl Content="{Binding NetworkSettingsContent}">
+                        <ContentControl.ContentTemplate>
+                            <DataTemplate x:DataType="vm:MainWindowViewModel">
+                                <Border Classes="settingsCard">
+                                    <StackPanel Spacing="14">
                             <TextBlock Text="{DynamicResource SettingsNetwork}" FontSize="13" FontWeight="SemiBold" Opacity="0.85"/>
                             <Border Classes="settingsDivider"/>
 
@@ -363,11 +381,116 @@
                                 <TextBlock Grid.Row="4" Grid.Column="0" Text="{DynamicResource LabelProxyPassword}" VerticalAlignment="Center" Opacity="0.85" FontSize="13"/>
                                 <TextBox Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="5" Text="{Binding ProxyPassword}" PasswordChar="•" FontSize="13"/>
                             </Grid>
-                        </StackPanel>
-                    </Border>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ContentControl.ContentTemplate>
+                    </ContentControl>
 
-                    <Border Classes="settingsCard" IsVisible="{Binding IsSettingsAdvanced}">
-                        <StackPanel Spacing="14">
+                    <ContentControl Content="{Binding Ed2kSettingsContent}">
+                        <ContentControl.ContentTemplate>
+                            <DataTemplate x:DataType="vm:MainWindowViewModel">
+                                <Border Classes="settingsCard">
+                                    <StackPanel Spacing="14">
+                            <TextBlock Text="{DynamicResource SettingsEd2k}" FontSize="13" FontWeight="SemiBold" Opacity="0.85"/>
+                            <TextBlock Text="{DynamicResource Ed2kSettingsDescription}" FontSize="12" Opacity="0.65" TextWrapping="Wrap"/>
+
+                            <Border Classes="settingsDivider"/>
+                            <TextBlock Text="{DynamicResource Ed2kEngineSettings}" FontSize="12" FontWeight="SemiBold" Opacity="0.7"/>
+                            <Grid ColumnDefinitions="220, *" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="10">
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="{DynamicResource Ed2kListenPort}" VerticalAlignment="Center" FontSize="13" Opacity="0.85"/>
+                                <NumericUpDown Grid.Row="0" Grid.Column="1" Value="{Binding Ed2kListenPort}" Minimum="0" Maximum="65535" FormatString="0" Width="150" HorizontalAlignment="Right"/>
+                                <Border Grid.Row="1" Grid.ColumnSpan="2" Classes="settingsRowDivider"/>
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="{DynamicResource Ed2kUdpListenPort}" VerticalAlignment="Center" FontSize="13" Opacity="0.85"/>
+                                <NumericUpDown Grid.Row="2" Grid.Column="1" Value="{Binding Ed2kUdpListenPort}" Minimum="0" Maximum="65535" FormatString="0" Width="150" HorizontalAlignment="Right"/>
+                                <Border Grid.Row="3" Grid.ColumnSpan="2" Classes="settingsRowDivider"/>
+                                <TextBlock Grid.Row="4" Grid.Column="0" Text="{DynamicResource Ed2kUploadSlots}" VerticalAlignment="Center" FontSize="13" Opacity="0.85"/>
+                                <NumericUpDown Grid.Row="4" Grid.Column="1" Value="{Binding Ed2kUploadSlots}" Minimum="1" Maximum="100" FormatString="0" Width="150" HorizontalAlignment="Right"/>
+                                <Border Grid.Row="5" Grid.ColumnSpan="2" Classes="settingsRowDivider"/>
+                                <TextBlock Grid.Row="6" Grid.Column="0" Text="{DynamicResource Ed2kStaticServers}" VerticalAlignment="Top" Margin="0,7,0,0" FontSize="13" Opacity="0.85"/>
+                                <TextBox Grid.Row="6" Grid.Column="1" Text="{Binding Ed2kServer}" AcceptsReturn="True" Height="80" TextWrapping="Wrap"
+                                         PlaceholderText="{DynamicResource Ed2kStaticServersPlaceholder}" FontSize="13"/>
+                            </Grid>
+
+                            <Border Classes="settingsDivider"/>
+                            <TextBlock Text="{DynamicResource Ed2kBootstrapSettings}" FontSize="12" FontWeight="SemiBold" Opacity="0.7"/>
+                            <Grid ColumnDefinitions="220, *" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="10">
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="{DynamicResource Ed2kServerMetUrl}" VerticalAlignment="Center" FontSize="13" Opacity="0.85"/>
+                                <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Ed2kServerMetUrl}" FontSize="13"/>
+                                <Border Grid.Row="1" Grid.ColumnSpan="2" Classes="settingsRowDivider"/>
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="{DynamicResource Ed2kNodesDatUrl}" VerticalAlignment="Center" FontSize="13" Opacity="0.85"/>
+                                <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding Ed2kNodesDatUrl}" FontSize="13"/>
+                                <Border Grid.Row="3" Grid.ColumnSpan="2" Classes="settingsRowDivider"/>
+                                <TextBlock Grid.Row="4" Grid.Column="0" Text="{DynamicResource Ed2kBootstrapAutoSync}" VerticalAlignment="Center" FontSize="13" Opacity="0.85"/>
+                                <ToggleSwitch Grid.Row="4" Grid.Column="1" IsChecked="{Binding Ed2kBootstrapAutoSync}" HorizontalAlignment="Right"/>
+                                <Border Grid.Row="5" Grid.ColumnSpan="2" Classes="settingsRowDivider"/>
+                                <TextBlock Grid.Row="6" Grid.Column="0" Text="{DynamicResource Ed2kBootstrapSyncInterval}" VerticalAlignment="Center" FontSize="13" Opacity="0.85"
+                                           IsVisible="{Binding Ed2kBootstrapAutoSync}"/>
+                                <ComboBox Grid.Row="6" Grid.Column="1" ItemsSource="{Binding Ed2kSyncIntervalOptions}" SelectedItem="{Binding SelectedEd2kSyncInterval}" Width="220" HorizontalAlignment="Right"
+                                          IsVisible="{Binding Ed2kBootstrapAutoSync}">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate x:DataType="vm:Ed2kSyncIntervalOption">
+                                            <TextBlock Text="{Binding ResourceKey, Converter={StaticResource ResourceKeyToTextConverter}}" FontSize="13"/>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                            </Grid>
+
+                            <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,2,0,0">
+                                <Button Grid.Column="0" Command="{Binding SyncEd2kBootstrapCommand}" IsEnabled="{Binding !IsSyncingEd2kBootstrap}">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <Panel Width="15" Height="15">
+                                            <PathIcon Data="{StaticResource IconRefresh}" Width="15" Height="15" IsVisible="{Binding !IsSyncingEd2kBootstrap}"/>
+                                            <PathIcon Data="{StaticResource IconRefresh}" Width="15" Height="15" Classes="spin" IsVisible="{Binding IsSyncingEd2kBootstrap}"/>
+                                        </Panel>
+                                        <TextBlock Text="{DynamicResource Ed2kBootstrapSyncNow}" FontSize="13"/>
+                                    </StackPanel>
+                                </Button>
+                                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" Opacity="0.65">
+                                    <TextBlock Text="{DynamicResource Ed2kBootstrapLastSync}" FontSize="12"/>
+                                    <TextBlock Text="{Binding Ed2kBootstrapLastSyncText}" FontSize="12"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <Border Classes="settingsDivider"/>
+                            <TextBlock Text="{DynamicResource Ed2kSearchSettings}" FontSize="12" FontWeight="SemiBold" Opacity="0.7"/>
+                            <Grid ColumnDefinitions="220,*" RowDefinitions="Auto,Auto,Auto" RowSpacing="10">
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="{DynamicResource Ed2kMinSources}" VerticalAlignment="Center" FontSize="13" Opacity="0.85"/>
+                                <NumericUpDown Grid.Row="0" Grid.Column="1" Value="{Binding Ed2kMinSourceCount}" Minimum="0" Maximum="999999" FormatString="0" Width="180" HorizontalAlignment="Right"/>
+                                <Border Grid.Row="1" Grid.ColumnSpan="2" Classes="settingsRowDivider"/>
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="{DynamicResource Ed2kSearchTimeoutSetting}" VerticalAlignment="Center" FontSize="13" Opacity="0.85"/>
+                                <NumericUpDown Grid.Row="2" Grid.Column="1" Value="{Binding Ed2kSearchTimeoutSeconds}" Minimum="10" Maximum="600" FormatString="0" Width="180" HorizontalAlignment="Right"/>
+                            </Grid>
+
+                            <Border Classes="settingsDivider"/>
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Grid.Column="0" Text="{DynamicResource Ed2kRestartRequired}" IsVisible="{Binding Ed2kSettingsRestartRequired}"
+                                           VerticalAlignment="Center" FontSize="12" Opacity="0.7"/>
+                                <Button Grid.Column="1" Command="{Binding ApplyEd2kSettingsCommand}"
+                                        IsEnabled="{Binding Ed2kSettingsRestartRequired}" Classes="accent">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <Panel Width="15" Height="15">
+                                            <PathIcon Data="{StaticResource IconRefresh}" Width="15" Height="15" IsVisible="{Binding !IsApplyingEd2kSettings}"/>
+                                            <PathIcon Data="{StaticResource IconRefresh}" Width="15" Height="15" Classes="spin" IsVisible="{Binding IsApplyingEd2kSettings}"/>
+                                        </Panel>
+                                        <TextBlock Text="{DynamicResource Ed2kApplyRestartEngine}" FontSize="13"/>
+                                    </StackPanel>
+                                </Button>
+                            </Grid>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ContentControl.ContentTemplate>
+                    </ContentControl>
+
+                    <!-- Advanced settings contain the tracker editor and most of
+                         this window's controls. Keep that tree deferred until the
+                         section is actually opened. -->
+                    <ContentControl Content="{Binding AdvancedSettingsContent}">
+                        <ContentControl.ContentTemplate>
+                            <DataTemplate x:DataType="vm:MainWindowViewModel">
+                                <Border Classes="settingsCard">
+                                    <StackPanel Spacing="14">
                             <TextBlock Text="{DynamicResource SettingsAdvanced}" FontSize="13" FontWeight="SemiBold" Opacity="0.85"/>
                             <Border Classes="settingsDivider"/>
                             
@@ -571,11 +694,17 @@
                                 <Button Content="{DynamicResource BtnResetSettings}" Command="{Binding ResetSettingsCommand}" />
                                 <Button Content="{DynamicResource BtnResetSession}" Command="{Binding ResetSessionCommand}" />
                             </StackPanel>
-                        </StackPanel>
-                    </Border>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ContentControl.ContentTemplate>
+                    </ContentControl>
 
-                    <Border Classes="settingsCard" IsVisible="{Binding IsSettingsAbout}">
-                        <StackPanel Spacing="14">
+                    <ContentControl Content="{Binding AboutSettingsContent}">
+                        <ContentControl.ContentTemplate>
+                            <DataTemplate x:DataType="vm:MainWindowViewModel">
+                                <Border Classes="settingsCard">
+                                    <StackPanel Spacing="14">
                             <TextBlock Text="{DynamicResource SettingsAbout}" FontSize="13" FontWeight="SemiBold" Opacity="0.85"/>
                             <Border Classes="settingsDivider"/>
                             <StackPanel Orientation="Horizontal" Spacing="20">
@@ -622,8 +751,11 @@
                                     </StackPanel>
                                 </StackPanel>
                             </StackPanel>
-                        </StackPanel>
-                    </Border>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ContentControl.ContentTemplate>
+                    </ContentControl>
                 </StackPanel>
             </ScrollViewer>
         </Grid>

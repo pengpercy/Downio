@@ -7,15 +7,11 @@ set pipefail
 
 cd build
 
-# Cleanup binaries
-echo "Cleaning up binaries for $RUNTIME..."
-# Downio is the directory
-find Downio/Assets/Binaries -mindepth 1 -maxdepth 1 -type d -not -name "darwin" -exec rm -rf {} +
-if [ "$RUNTIME" == "osx-x64" ]; then
-    rm -rf Downio/Assets/Binaries/darwin/arm64
-elif [ "$RUNTIME" == "osx-arm64" ]; then
-    rm -rf Downio/Assets/Binaries/darwin/x64
+if [[ ! -f "Downio/aria2c" ]]; then
+    echo "Missing aria2c in the macOS publish root for $RUNTIME."
+    exit 1
 fi
+chmod +x Downio/aria2c
 
 mkdir -p Downio.app/Contents/MacOS
 mkdir -p Downio.app/Contents/Resources

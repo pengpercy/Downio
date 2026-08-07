@@ -30,9 +30,12 @@ public class Aria2Service : IAria2Service, IDisposable
     private string _rpcSecret = "DownioSecret";
     private string _configDir = string.Empty;
     private readonly ConcurrentDictionary<string, int> _splitCache = new();
+    private readonly ConcurrentDictionary<string, string> _ed2kSearchDirectories = new();
     private readonly SemaphoreSlim _lifecycleLock = new(1, 1);
     private readonly ConcurrentQueue<string> _stderrTail = new();
     private bool _usesApplicationProxy;
+    private string _ed2kServerListPath = string.Empty;
+    private string _ed2kNodeListPath = string.Empty;
 
     public async Task InitializeAsync(AppSettings settings)
     {
@@ -70,6 +73,7 @@ public class Aria2Service : IAria2Service, IDisposable
             }
 
             var logFile = Path.Combine(_configDir, "aria2.log");
+            PrepareEd2kBootstrapFiles();
 
             // 2. Locate Binary
             var binaryPath = GetBinaryPath();
@@ -112,6 +116,22 @@ public class Aria2Service : IAria2Service, IDisposable
                 $"--listen-port={settings.BtListenPort}",
                 $"--dht-listen-port={settings.DhtListenPort}"
             };
+            if (!string.IsNullOrWhiteSpace(_ed2kServerListPath))
+            {
+                args.Add($"--ed2k-server-list={_ed2kServerListPath}");
+            }
+            if (!string.IsNullOrWhiteSpace(_ed2kNodeListPath))
+            {
+                args.Add($"--ed2k-node-list={_ed2kNodeListPath}");
+            }
+            args.Add($"--ed2k-listen-port={Math.Clamp(settings.Ed2kListenPort, 0, 65535)}");
+            args.Add($"--ed2k-udp-listen-port={Math.Clamp(settings.Ed2kUdpListenPort, 0, 65535)}");
+            args.Add($"--ed2k-upload-slots={Math.Clamp(settings.Ed2kUploadSlots, 1, 100)}");
+            var ed2kServers = NormalizeEd2kServers(settings.Ed2kServer);
+            if (!string.IsNullOrWhiteSpace(ed2kServers))
+            {
+                args.Add($"--ed2k-server={ed2kServers}");
+            }
             if (!string.IsNullOrWhiteSpace(_rpcSecret))
             {
                 args.Insert(2, $"--rpc-secret={_rpcSecret}");
@@ -210,6 +230,39 @@ public class Aria2Service : IAria2Service, IDisposable
         }
     }
 
+    private void PrepareEd2kBootstrapFiles()
+    {
+        CleanupStaleEd2kSearchDirectories();
+        var sourceDirectory = Path.Combine(AppContext.BaseDirectory, "Assets", "Ed2k");
+        var targetDirectory = Path.Combine(_configDir, "ed2k");
+        Directory.CreateDirectory(targetDirectory);
+
+        _ed2kServerListPath = CopyBootstrapFileIfMissing(sourceDirectory, targetDirectory, "server.met");
+        _ed2kNodeListPath = CopyBootstrapFileIfMissing(sourceDirectory, targetDirectory, "nodes.dat");
+    }
+
+    private static void CleanupStaleEd2kSearchDirectories()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "Downio", "ed2k-search");
+        if (!Directory.Exists(root)) return;
+
+        foreach (var directory in Directory.EnumerateDirectories(root))
+        {
+            TryDeleteDirectory(directory);
+        }
+    }
+
+    private static string CopyBootstrapFileIfMissing(string sourceDirectory, string targetDirectory, string fileName)
+    {
+        var sourcePath = Path.Combine(sourceDirectory, fileName);
+        var targetPath = Path.Combine(targetDirectory, fileName);
+        if (!File.Exists(targetPath) && File.Exists(sourcePath))
+        {
+            File.Copy(sourcePath, targetPath);
+        }
+        return File.Exists(targetPath) ? targetPath : string.Empty;
+    }
+
     private static void AddAria2ProxyEnvironmentAliases(ProcessStartInfo startInfo)
     {
         // aria2 only documents the lowercase proxy variable names. .NET accepts
@@ -290,6 +343,16 @@ public class Aria2Service : IAria2Service, IDisposable
         return truncated;
     }
 
+    private static string NormalizeEd2kServers(string raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw)) return string.Empty;
+        return string.Join(',', raw
+            .Split([',', '\r', '\n', '\t', ' '], StringSplitOptions.RemoveEmptyEntries)
+            .Select(x => x.Trim())
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Distinct(StringComparer.OrdinalIgnoreCase));
+    }
+
     public Task ShutdownAsync()
     {
         if (_rpcClient != null)
@@ -326,6 +389,14 @@ public class Aria2Service : IAria2Service, IDisposable
         }
         _aria2Process = null;
 
+        foreach (var pair in _ed2kSearchDirectories.ToArray())
+        {
+            if (_ed2kSearchDirectories.TryRemove(pair.Key, out var directory))
+            {
+                TryDeleteDirectory(directory);
+            }
+        }
+
         return Task.CompletedTask;
     }
 
@@ -343,55 +414,11 @@ public class Aria2Service : IAria2Service, IDisposable
 
     private string GetBinaryPath()
     {
-        // 1. Try to find next to the app executable (for development)
         var basePath = AppContext.BaseDirectory;
-        
-        // In Debug: .../bin/Debug/net10.0/
-        // Assets is copied to .../bin/Debug/net10.0/Assets/Binaries/...
-        
-        string platform = "";
-        string arch = RuntimeInformation.ProcessArchitecture switch
-        {
-            Architecture.Arm64 => "arm64",
-            Architecture.X64 => "x64",
-            _ => "x64" // Fallback
-        };
-
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-        {
-            platform = "darwin";
-        }
-        else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-        {
-            platform = "linux";
-        }
-        else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-        {
-            platform = "win32";
-            if (arch == "x64") arch = "x64"; 
-            else arch = "ia32"; // We have ia32 and x64 for win
-        }
-
         var binaryName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "aria2c.exe" : "aria2c";
-        
-        // 2. Standard published path (Assets/Binaries/...)
-        var standardPath = Path.Combine(basePath, "Assets", "Binaries", platform, arch, binaryName);
-        if (File.Exists(standardPath)) return standardPath;
-
-        // 3. MacOS App Bundle path adjustment
-        // When running in .app bundle, BaseDirectory is .../Contents/MacOS/
-        // But our package script puts assets in .../Contents/MacOS/Assets/Binaries/darwin/{arch}/aria2c
-        // which matches the standardPath above.
-        // However, if we stripped the 'darwin/{arch}' structure in packaging to simplify, we need to check.
-        // Let's check a flattened structure too just in case.
-        
-        // 4. Try relative to executable if running as single file or special layout
-        // For macOS packaged app, sometimes we need to be explicit.
-        
-        // If the path above failed, let's log and return it anyway or try alternatives.
-        // On macOS .app, the resources might be in ../Resources? No, we put them in MacOS/Assets.
-        
-        return standardPath;
+        // AppContext.BaseDirectory resolves to Contents/MacOS inside a macOS app,
+        // the executable directory on Windows, and /opt/Downio in Linux packages.
+        return Path.Combine(basePath, binaryName);
     }
 
     public async Task<string> AddUriAsync(string url, string filename, string savePath, int split = 16, IDictionary<string, string>? extraOptions = null)
@@ -527,6 +554,86 @@ public class Aria2Service : IAria2Service, IDisposable
         }
     }
 
+    public async Task<string> StartEd2kSearchAsync(string keyword, string fileType = "", int minSourceCount = 0)
+    {
+        if (_rpcClient == null) throw new InvalidOperationException("aria2 RPC is not initialized.");
+        if (string.IsNullOrWhiteSpace(keyword)) throw new ArgumentException("Search keyword is required.", nameof(keyword));
+
+        await RefreshEnvironmentProxyAsync().ConfigureAwait(false);
+
+        var searchDirectory = Path.Combine(Path.GetTempPath(), "Downio", "ed2k-search", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(searchDirectory);
+        var options = new Dictionary<string, string>
+        {
+            ["dir"] = searchDirectory
+        };
+        if (!string.IsNullOrWhiteSpace(fileType)) options["fileType"] = fileType.Trim();
+        if (minSourceCount > 0) options["minSourceCount"] = minSourceCount.ToString();
+        if (!string.IsNullOrWhiteSpace(_ed2kServerListPath)) options["ed2k-server-list"] = _ed2kServerListPath;
+        if (!string.IsNullOrWhiteSpace(_ed2kNodeListPath)) options["ed2k-node-list"] = _ed2kNodeListPath;
+
+        try
+        {
+            var gid = await _rpcClient.InvokeAsync<string>("ed2kSearch", keyword.Trim(), options).ConfigureAwait(false);
+            if (string.IsNullOrWhiteSpace(gid)) throw new InvalidOperationException("aria2 did not return an ED2K search GID.");
+            _ed2kSearchDirectories[gid] = searchDirectory;
+            return gid;
+        }
+        catch
+        {
+            TryDeleteDirectory(searchDirectory);
+            throw;
+        }
+    }
+
+    public async Task<Ed2kSearchResults> GetEd2kSearchResultsAsync(string gid)
+    {
+        if (_rpcClient == null) throw new InvalidOperationException("aria2 RPC is not initialized.");
+        return await _rpcClient.InvokeAsync<Ed2kSearchResults>("getEd2kSearchResults", gid).ConfigureAwait(false)
+               ?? new Ed2kSearchResults { Gid = gid };
+    }
+
+    public async Task CleanupEd2kSearchAsync(string gid)
+    {
+        if (_rpcClient != null && !string.IsNullOrWhiteSpace(gid))
+        {
+            try
+            {
+                await _rpcClient.InvokeAsync<string>("forceRemove", gid).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                AppLog.Warn($"Failed to stop ED2K search task {gid}: {ex.Message}");
+            }
+
+            try
+            {
+                await _rpcClient.InvokeAsync<string>("removeDownloadResult", gid).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                AppLog.Warn($"Failed to remove ED2K search result {gid}: {ex.Message}");
+            }
+        }
+
+        if (_ed2kSearchDirectories.TryRemove(gid, out var directory))
+        {
+            TryDeleteDirectory(directory);
+        }
+    }
+
+    private static void TryDeleteDirectory(string directory)
+    {
+        try
+        {
+            if (Directory.Exists(directory)) Directory.Delete(directory, recursive: true);
+        }
+        catch (Exception ex)
+        {
+            AppLog.Warn($"Failed to clean ED2K search directory {directory}: {ex.Message}");
+        }
+    }
+
     public async Task<List<DownloadTask>> GetGlobalStatusAsync()
     {
         if (_rpcClient == null) return new List<DownloadTask>();
@@ -546,9 +653,9 @@ public class Aria2Service : IAria2Service, IDisposable
         if (stopped != null) gids = gids.Concat(stopped.Select(s => s.Gid));
         _ = WarmSplitCacheAsync(gids);
 
-        if (active != null) tasks.AddRange(active.Select(MapToDownloadTask));
-        if (waiting != null) tasks.AddRange(waiting.Select(MapToDownloadTask));
-        if (stopped != null) tasks.AddRange(stopped.Select(MapToDownloadTask));
+        if (active != null) tasks.AddRange(active.Where(x => !_ed2kSearchDirectories.ContainsKey(x.Gid)).Select(MapToDownloadTask));
+        if (waiting != null) tasks.AddRange(waiting.Where(x => !_ed2kSearchDirectories.ContainsKey(x.Gid)).Select(MapToDownloadTask));
+        if (stopped != null) tasks.AddRange(stopped.Where(x => !_ed2kSearchDirectories.ContainsKey(x.Gid)).Select(MapToDownloadTask));
 
         return tasks;
     }
