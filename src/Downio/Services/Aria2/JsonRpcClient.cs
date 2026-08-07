@@ -115,6 +115,11 @@ public class JsonRpcClient
                     return (T)(object)JsonSerializer.Deserialize(result.GetRawText(), Aria2JsonContext.Default.DictionaryStringString)!;
                 }
 
+                if (typeof(T) == typeof(Downio.Models.Ed2kSearchResults))
+                {
+                    return (T)(object)JsonSerializer.Deserialize(result.GetRawText(), Aria2JsonContext.Default.Ed2kSearchResults)!;
+                }
+
                 // Fallback for types not explicitly handled but registered?
                 // But we only use these two.
                 throw new NotSupportedException($"Type {typeof(T)} is not supported in AOT RPC client.");

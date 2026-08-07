@@ -4,6 +4,7 @@
     <x:String x:Key="MenuDownloading">下载中</x:String>
     <x:String x:Key="MenuWaiting">等待中</x:String>
     <x:String x:Key="MenuStopped">已停止</x:String>
+    <x:String x:Key="MenuEd2kSearch">ED2K 搜索</x:String>
     <x:String x:Key="MenuSettings">设置</x:String>
     <x:String x:Key="LabelTheme">主题</x:String>
     <x:String x:Key="LabelLanguage">语言</x:String>
@@ -17,7 +18,7 @@
     <x:String x:Key="TabLinkTask">链接任务</x:String>
     <x:String x:Key="TabTorrentTask">种子任务</x:String>
     <x:String x:Key="LabelUrl">下载链接</x:String>
-    <x:String x:Key="PlaceholderMultiLinks">添加多个下载链接时,请确保每行只有一个链接(支持磁力链)</x:String>
+    <x:String x:Key="PlaceholderMultiLinks">添加多个下载链接时，请确保每行只有一个链接（支持磁力链和 ED2K 链接）</x:String>
     <x:String x:Key="LabelTorrentFile">种子文件</x:String>
     <x:String x:Key="TorrentDropHint">将种子拖放到此处，或点击选择</x:String>
     <x:String x:Key="BtnCancel">取消</x:String>
@@ -68,6 +69,7 @@
     <x:String x:Key="SettingsGeneral">通用</x:String>
     <x:String x:Key="SettingsAppearance">外观</x:String>
     <x:String x:Key="SettingsNetwork">网络</x:String>
+    <x:String x:Key="SettingsEd2k">ED2K</x:String>
     <x:String x:Key="SettingsAdvanced">高级</x:String>
     <x:String x:Key="SettingsAbout">关于</x:String>
     <x:String x:Key="SettingsAdvancedDesc">aria2 引擎的高级配置选项。</x:String>
@@ -77,6 +79,11 @@
     <x:String x:Key="LabelTrackerSourcesSelectedFormat">已选择 {0} 个 Tracker 源</x:String>
     <x:String x:Key="LabelAutoSyncTracker">每天自动更新 Tracker 服务器列表</x:String>
     <x:String x:Key="LabelTrackerLastSync">上次同步：</x:String>
+    <x:String x:Key="NotificationTrackerTitle">Tracker</x:String>
+    <x:String x:Key="NotificationTrackerInvalidSource">请输入有效的 HTTP 或 HTTPS Tracker 源地址。</x:String>
+    <x:String x:Key="NotificationTrackerNoSource">请至少选择一个 Tracker 源。</x:String>
+    <x:String x:Key="NotificationTrackerSyncSucceeded">Tracker 列表同步成功。</x:String>
+    <x:String x:Key="NotificationTrackerSyncFailed">Tracker 列表同步失败。</x:String>
     <x:String x:Key="BtnAdd">添加</x:String>
     <x:String x:Key="PlaceholderTrackerSourceUrl">https://cdn.jsdelivr.net/gh/...</x:String>
     <x:String x:Key="ToolTipCopyLink">复制链接</x:String>
@@ -100,6 +107,11 @@
     <x:String x:Key="BtnResetSession">重置下载会话</x:String>
     <x:String x:Key="MessageConfirmResetSettings">确定要恢复所有初始设置吗？</x:String>
     <x:String x:Key="MessageConfirmResetSession">确定要重置下载会话吗？这将会清空所有下载任务（但不会删除您的本地文件）。</x:String>
+    <x:String x:Key="NotificationSessionResetTitle">会话已重置</x:String>
+    <x:String x:Key="NotificationSessionResetSucceeded">下载会话已重置。</x:String>
+    <x:String x:Key="NotificationSessionResetFailed">重置下载会话失败。</x:String>
+    <x:String x:Key="NotificationSettingsResetTitle">设置已恢复</x:String>
+    <x:String x:Key="NotificationSettingsResetSucceeded">已恢复初始设置，部分更改需要重启应用后生效。</x:String>
 
     <!-- Native Menu -->
     <x:String x:Key="MenuAbout">关于 Downio</x:String>
@@ -179,4 +191,70 @@
     <x:String x:Key="EmptyStateSubtitleDownloading">点击左侧“新建任务”，或按 {0} 开始下载。</x:String>
     <x:String x:Key="EmptyStateSubtitleWaiting">当前没有等待中的任务。</x:String>
     <x:String x:Key="EmptyStateSubtitleStopped">当前没有已完成或已停止的任务。</x:String>
+
+    <!-- ED2K 搜索 -->
+    <x:String x:Key="Ed2kSearchDescription">搜索 eDonkey/Kad 网络中的资源，并直接添加到下载队列。</x:String>
+    <x:String x:Key="Ed2kKeyword">关键词</x:String>
+    <x:String x:Key="Ed2kKeywordPlaceholder">输入文件名或搜索关键词</x:String>
+    <x:String x:Key="Ed2kFileType">文件类型</x:String>
+    <x:String x:Key="Ed2kTypeAny">不限</x:String>
+    <x:String x:Key="Ed2kTypeAudio">音频</x:String>
+    <x:String x:Key="Ed2kTypeVideo">视频</x:String>
+    <x:String x:Key="Ed2kTypeImage">图片</x:String>
+    <x:String x:Key="Ed2kTypeDocument">文档</x:String>
+    <x:String x:Key="Ed2kTypeArchive">压缩包</x:String>
+    <x:String x:Key="Ed2kTypeFile">文件</x:String>
+    <x:String x:Key="Ed2kMinSources">最少源数</x:String>
+    <x:String x:Key="Ed2kTimeout">超时（秒）</x:String>
+    <x:String x:Key="Ed2kSearchButton">搜索</x:String>
+    <x:String x:Key="Ed2kCancelButton">取消</x:String>
+    <x:String x:Key="Ed2kDownloadButton">下载</x:String>
+    <x:String x:Key="Ed2kSources">源数：</x:String>
+    <x:String x:Key="Ed2kCompleteSources">完整源：</x:String>
+    <x:String x:Key="Ed2kKeywordRequired">请输入搜索关键词。</x:String>
+    <x:String x:Key="Ed2kStatusSearching">正在连接 ED2K 网络...</x:String>
+    <x:String x:Key="Ed2kStatusSearchingCount">搜索中... 已找到 {0} 个结果</x:String>
+    <x:String x:Key="Ed2kStatusNoResults">搜索完成，未找到结果。</x:String>
+    <x:String x:Key="Ed2kStatusCompleted">搜索完成，共找到 {0} 个结果。</x:String>
+    <x:String x:Key="Ed2kStatusCancelled">已取消搜索。</x:String>
+    <x:String x:Key="Ed2kStatusFailed">搜索失败：{0}</x:String>
+    <x:String x:Key="Ed2kDownloadStartedTitle">ED2K 下载已开始</x:String>
+    <x:String x:Key="Ed2kDownloadStartedMessage">已将“{0}”添加到下载队列。</x:String>
+    <x:String x:Key="Ed2kDownloadFailedTitle">ED2K 下载失败</x:String>
+
+    <!-- ED2K 设置 -->
+    <x:String x:Key="Ed2kSettingsDescription">配置 aria2-next 的 ED2K 网络、引导数据源和搜索行为。</x:String>
+    <x:String x:Key="Ed2kEngineSettings">引擎设置</x:String>
+    <x:String x:Key="Ed2kListenPort">TCP 监听端口</x:String>
+    <x:String x:Key="Ed2kUdpListenPort">UDP/Kad 监听端口</x:String>
+    <x:String x:Key="Ed2kUploadSlots">上传槽位</x:String>
+    <x:String x:Key="Ed2kStaticServers">固定服务器</x:String>
+    <x:String x:Key="Ed2kStaticServersPlaceholder">host:port，每行一个</x:String>
+    <x:String x:Key="Ed2kBootstrapSettings">引导文件</x:String>
+    <x:String x:Key="Ed2kServerMetUrl">server.met 地址</x:String>
+    <x:String x:Key="Ed2kNodesDatUrl">nodes.dat 地址</x:String>
+    <x:String x:Key="Ed2kBootstrapAutoSync">自动同步</x:String>
+    <x:String x:Key="Ed2kBootstrapSyncInterval">同步频率</x:String>
+    <x:String x:Key="Ed2kIntervalEveryStartup">每次启动</x:String>
+    <x:String x:Key="Ed2kInterval6Hours">每 6 小时</x:String>
+    <x:String x:Key="Ed2kInterval12Hours">每 12 小时</x:String>
+    <x:String x:Key="Ed2kIntervalDaily">每天</x:String>
+    <x:String x:Key="Ed2kIntervalWeekly">每周</x:String>
+    <x:String x:Key="Ed2kBootstrapSyncNow">立即同步</x:String>
+    <x:String x:Key="Ed2kBootstrapLastSync">上次同步：</x:String>
+    <x:String x:Key="Ed2kBootstrapNotSynced">尚未同步</x:String>
+    <x:String x:Key="Ed2kSearchSettings">搜索默认值</x:String>
+    <x:String x:Key="Ed2kSearchTimeoutSetting">搜索超时（秒）</x:String>
+    <x:String x:Key="Ed2kRestartRequired">引擎设置已更改，需要重启下载引擎后生效。</x:String>
+    <x:String x:Key="Ed2kApplyRestartEngine">应用并重启引擎</x:String>
+    <x:String x:Key="Ed2kSettingsApplied">ED2K 设置已应用，下载引擎已重启。</x:String>
+    <x:String x:Key="Ed2kSettingsApplyFailed">应用 ED2K 设置失败：</x:String>
+    <x:String x:Key="Ed2kBootstrapSyncSucceeded">ED2K 引导文件已同步。</x:String>
+    <x:String x:Key="Ed2kBootstrapSyncFailed">ED2K 引导文件同步失败：</x:String>
+    <x:String x:Key="Ed2kInvalidListenPort">ED2K 监听端口必须在 0 到 65535 之间。</x:String>
+    <x:String x:Key="Ed2kInvalidUploadSlots">上传槽位必须在 1 到 100 之间。</x:String>
+    <x:String x:Key="Ed2kInvalidMinSources">最少源数必须在 0 到 999999 之间。</x:String>
+    <x:String x:Key="Ed2kInvalidSearchTimeout">搜索超时必须在 10 到 600 秒之间。</x:String>
+    <x:String x:Key="Ed2kInvalidServer">固定服务器必须使用 host:port 格式。</x:String>
+    <x:String x:Key="Ed2kInvalidBootstrapUrl">引导文件地址必须是有效的 HTTP 或 HTTPS 地址。</x:String>
 </ResourceDictionary>

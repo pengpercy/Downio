@@ -4,6 +4,7 @@
     <x:String x:Key="MenuDownloading">Downloading</x:String>
     <x:String x:Key="MenuWaiting">Waiting</x:String>
     <x:String x:Key="MenuStopped">Stopped</x:String>
+    <x:String x:Key="MenuEd2kSearch">ED2K Search</x:String>
     <x:String x:Key="MenuSettings">Settings</x:String>
     <x:String x:Key="LabelTheme">Theme</x:String>
     <x:String x:Key="LabelLanguage">Language</x:String>
@@ -17,7 +18,7 @@
     <x:String x:Key="TabLinkTask">Link Task</x:String>
     <x:String x:Key="TabTorrentTask">Torrent Task</x:String>
     <x:String x:Key="LabelUrl">Download URL</x:String>
-    <x:String x:Key="PlaceholderMultiLinks">Paste links here, one per line (supports magnet links)</x:String>
+    <x:String x:Key="PlaceholderMultiLinks">Paste links here, one per line (supports magnet and ED2K links)</x:String>
     <x:String x:Key="LabelTorrentFile">Torrent File</x:String>
     <x:String x:Key="TorrentDropHint">Drop torrent here, or click to select</x:String>
     <x:String x:Key="BtnCancel">Cancel</x:String>
@@ -68,7 +69,9 @@
     <x:String x:Key="SettingsGeneral">General</x:String>
     <x:String x:Key="SettingsAppearance">Appearance</x:String>
     <x:String x:Key="SettingsNetwork">Network</x:String>
+    <x:String x:Key="SettingsEd2k">ED2K</x:String>
     <x:String x:Key="SettingsAdvanced">Advanced</x:String>
+    <x:String x:Key="SettingsAbout">About</x:String>
     <x:String x:Key="SettingsAdvancedDesc">Advanced options for aria2 engine.</x:String>
     <x:String x:Key="LabelBtTrackers">Tracker Servers</x:String>
     <x:String x:Key="LabelTrackerServers">Tracker Servers:</x:String>
@@ -76,6 +79,11 @@
     <x:String x:Key="LabelTrackerSourcesSelectedFormat">{0} tracker sources selected</x:String>
     <x:String x:Key="LabelAutoSyncTracker">Auto update tracker list daily</x:String>
     <x:String x:Key="LabelTrackerLastSync">Last sync:</x:String>
+    <x:String x:Key="NotificationTrackerTitle">Tracker</x:String>
+    <x:String x:Key="NotificationTrackerInvalidSource">Enter a valid HTTP or HTTPS tracker source URL.</x:String>
+    <x:String x:Key="NotificationTrackerNoSource">Select at least one tracker source.</x:String>
+    <x:String x:Key="NotificationTrackerSyncSucceeded">Tracker list synchronized.</x:String>
+    <x:String x:Key="NotificationTrackerSyncFailed">Failed to synchronize the tracker list.</x:String>
     <x:String x:Key="BtnAdd">Add</x:String>
     <x:String x:Key="PlaceholderTrackerSourceUrl">https://cdn.jsdelivr.net/gh/...</x:String>
     <x:String x:Key="ToolTipCopyLink">Copy link</x:String>
@@ -99,6 +107,11 @@
     <x:String x:Key="BtnResetSession">Reset download session</x:String>
     <x:String x:Key="MessageConfirmResetSettings">Are you sure you want to reset all settings to defaults?</x:String>
     <x:String x:Key="MessageConfirmResetSession">Are you sure you want to reset the download session? This will remove all tasks from the list (but not your files).</x:String>
+    <x:String x:Key="NotificationSessionResetTitle">Session reset</x:String>
+    <x:String x:Key="NotificationSessionResetSucceeded">The download session has been reset.</x:String>
+    <x:String x:Key="NotificationSessionResetFailed">Failed to reset the download session.</x:String>
+    <x:String x:Key="NotificationSettingsResetTitle">Settings restored</x:String>
+    <x:String x:Key="NotificationSettingsResetSucceeded">Initial settings have been restored. Some changes require an application restart.</x:String>
 
     <!-- Native Menu -->
     <x:String x:Key="MenuAbout">About Downio</x:String>
@@ -178,4 +191,70 @@
     <x:String x:Key="EmptyStateSubtitleDownloading">Click “New Task” on the left, or press {0} to start.</x:String>
     <x:String x:Key="EmptyStateSubtitleWaiting">There are no waiting tasks.</x:String>
     <x:String x:Key="EmptyStateSubtitleStopped">There are no completed or stopped tasks.</x:String>
+
+    <!-- ED2K Search -->
+    <x:String x:Key="Ed2kSearchDescription">Search the eDonkey/Kad network and add a result directly to your download queue.</x:String>
+    <x:String x:Key="Ed2kKeyword">Keyword</x:String>
+    <x:String x:Key="Ed2kKeywordPlaceholder">Enter a file name or keyword</x:String>
+    <x:String x:Key="Ed2kFileType">File type</x:String>
+    <x:String x:Key="Ed2kTypeAny">Any</x:String>
+    <x:String x:Key="Ed2kTypeAudio">Audio</x:String>
+    <x:String x:Key="Ed2kTypeVideo">Video</x:String>
+    <x:String x:Key="Ed2kTypeImage">Image</x:String>
+    <x:String x:Key="Ed2kTypeDocument">Document</x:String>
+    <x:String x:Key="Ed2kTypeArchive">Archive</x:String>
+    <x:String x:Key="Ed2kTypeFile">File</x:String>
+    <x:String x:Key="Ed2kMinSources">Min sources</x:String>
+    <x:String x:Key="Ed2kTimeout">Timeout (s)</x:String>
+    <x:String x:Key="Ed2kSearchButton">Search</x:String>
+    <x:String x:Key="Ed2kCancelButton">Cancel</x:String>
+    <x:String x:Key="Ed2kDownloadButton">Download</x:String>
+    <x:String x:Key="Ed2kSources">Sources:</x:String>
+    <x:String x:Key="Ed2kCompleteSources">Complete:</x:String>
+    <x:String x:Key="Ed2kKeywordRequired">Enter a search keyword.</x:String>
+    <x:String x:Key="Ed2kStatusSearching">Connecting to the ED2K network...</x:String>
+    <x:String x:Key="Ed2kStatusSearchingCount">Searching... {0} results found</x:String>
+    <x:String x:Key="Ed2kStatusNoResults">Search completed with no results.</x:String>
+    <x:String x:Key="Ed2kStatusCompleted">Search completed: {0} results.</x:String>
+    <x:String x:Key="Ed2kStatusCancelled">Search cancelled.</x:String>
+    <x:String x:Key="Ed2kStatusFailed">Search failed: {0}</x:String>
+    <x:String x:Key="Ed2kDownloadStartedTitle">ED2K download started</x:String>
+    <x:String x:Key="Ed2kDownloadStartedMessage">Added “{0}” to the download queue.</x:String>
+    <x:String x:Key="Ed2kDownloadFailedTitle">ED2K download failed</x:String>
+
+    <!-- ED2K Settings -->
+    <x:String x:Key="Ed2kSettingsDescription">Configure aria2-next ED2K networking, bootstrap sources, and search behavior.</x:String>
+    <x:String x:Key="Ed2kEngineSettings">Engine settings</x:String>
+    <x:String x:Key="Ed2kListenPort">TCP listen port</x:String>
+    <x:String x:Key="Ed2kUdpListenPort">UDP/Kad listen port</x:String>
+    <x:String x:Key="Ed2kUploadSlots">Upload slots</x:String>
+    <x:String x:Key="Ed2kStaticServers">Static servers</x:String>
+    <x:String x:Key="Ed2kStaticServersPlaceholder">host:port, one per line</x:String>
+    <x:String x:Key="Ed2kBootstrapSettings">Bootstrap files</x:String>
+    <x:String x:Key="Ed2kServerMetUrl">server.met URL</x:String>
+    <x:String x:Key="Ed2kNodesDatUrl">nodes.dat URL</x:String>
+    <x:String x:Key="Ed2kBootstrapAutoSync">Automatic synchronization</x:String>
+    <x:String x:Key="Ed2kBootstrapSyncInterval">Synchronization frequency</x:String>
+    <x:String x:Key="Ed2kIntervalEveryStartup">Every startup</x:String>
+    <x:String x:Key="Ed2kInterval6Hours">Every 6 hours</x:String>
+    <x:String x:Key="Ed2kInterval12Hours">Every 12 hours</x:String>
+    <x:String x:Key="Ed2kIntervalDaily">Daily</x:String>
+    <x:String x:Key="Ed2kIntervalWeekly">Weekly</x:String>
+    <x:String x:Key="Ed2kBootstrapSyncNow">Sync now</x:String>
+    <x:String x:Key="Ed2kBootstrapLastSync">Last sync:</x:String>
+    <x:String x:Key="Ed2kBootstrapNotSynced">Not synced</x:String>
+    <x:String x:Key="Ed2kSearchSettings">Search defaults</x:String>
+    <x:String x:Key="Ed2kSearchTimeoutSetting">Search timeout (seconds)</x:String>
+    <x:String x:Key="Ed2kRestartRequired">Engine settings changed. Restart the download engine to apply them.</x:String>
+    <x:String x:Key="Ed2kApplyRestartEngine">Apply and restart engine</x:String>
+    <x:String x:Key="Ed2kSettingsApplied">ED2K settings applied and the download engine restarted.</x:String>
+    <x:String x:Key="Ed2kSettingsApplyFailed">Failed to apply ED2K settings:</x:String>
+    <x:String x:Key="Ed2kBootstrapSyncSucceeded">ED2K bootstrap files synchronized.</x:String>
+    <x:String x:Key="Ed2kBootstrapSyncFailed">Failed to synchronize ED2K bootstrap files:</x:String>
+    <x:String x:Key="Ed2kInvalidListenPort">ED2K listen ports must be between 0 and 65535.</x:String>
+    <x:String x:Key="Ed2kInvalidUploadSlots">Upload slots must be between 1 and 100.</x:String>
+    <x:String x:Key="Ed2kInvalidMinSources">Minimum sources must be between 0 and 999999.</x:String>
+    <x:String x:Key="Ed2kInvalidSearchTimeout">Search timeout must be between 10 and 600 seconds.</x:String>
+    <x:String x:Key="Ed2kInvalidServer">Each static server must use the host:port format.</x:String>
+    <x:String x:Key="Ed2kInvalidBootstrapUrl">Bootstrap URLs must be valid HTTP or HTTPS URLs.</x:String>
 </ResourceDictionary>

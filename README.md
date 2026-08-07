@@ -23,7 +23,8 @@
 
 ## Features
 
-- 🚀 **High Performance**: Powered by the robust `aria2` engine, supporting multi-threaded downloads.
+- 🚀 **High Performance**: Powered by the `aria2-next` engine, supporting multi-threaded downloads.
+- 🔎 **ED2K Search & Download**: Search eDonkey/Kad resources in the app or add an `ed2k://` link directly.
 - 🎨 **Modern UI**: Clean, beautiful interface built with Avalonia UI, following fluent design principles.
 - 🖥️ **Cross-Platform**: Native support for macOS (Universal), Windows, and Linux.
 - 🌐 **Advanced Network**: Full HTTP/HTTPS and SOCKS5 proxy support.
@@ -75,6 +76,8 @@ chmod +x build/package_osx.sh
 ## License
 
 MIT License. See [LICENSE](LICENSE) file for details.
+
+Bundled third-party components retain their own licenses. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
 ---
 <div align="center">

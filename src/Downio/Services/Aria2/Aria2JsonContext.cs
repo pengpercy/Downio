@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using Downio.Models;
 
 namespace Downio.Services.Aria2;
 
@@ -15,6 +16,9 @@ namespace Downio.Services.Aria2;
 [JsonSerializable(typeof(string))]
 [JsonSerializable(typeof(int))]
 [JsonSerializable(typeof(Dictionary<string, string>))]
+[JsonSerializable(typeof(Ed2kSearchResults))]
+[JsonSerializable(typeof(Ed2kSearchResult))]
+[JsonSerializable(typeof(List<Ed2kSearchResult>))]
 public partial class Aria2JsonContext : JsonSerializerContext
 {
 }

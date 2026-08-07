@@ -35,7 +35,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly AutoStartService _autoStartService;
     private readonly NotificationService _notificationService;
     private readonly TaskListView _taskListView;
-    private readonly SettingsView _settingsView;
+    private readonly Ed2kSearchView _ed2kSearchView;
     private readonly DispatcherTimer _refreshTimer;
     private readonly Dictionary<string, string> _lastStatusByGid = new();
     private readonly HashSet<string> _autoFilledClipboardLinks = new(StringComparer.OrdinalIgnoreCase);
@@ -60,6 +60,7 @@ public partial class MainWindowViewModel : ViewModelBase
         OnPropertyChanged(nameof(IsDownloading));
         OnPropertyChanged(nameof(IsWaiting));
         OnPropertyChanged(nameof(IsStopped));
+        OnPropertyChanged(nameof(IsEd2kSearch));
         OnPropertyChanged(nameof(IsSettings));
         
         // Refresh list when switching views if needed
@@ -73,6 +74,7 @@ public partial class MainWindowViewModel : ViewModelBase
     public bool IsDownloading => CurrentTitleKey == "MenuDownloading";
     public bool IsWaiting => CurrentTitleKey == "MenuWaiting";
     public bool IsStopped => CurrentTitleKey == "MenuStopped";
+    public bool IsEd2kSearch => CurrentTitleKey == "MenuEd2kSearch";
     public bool IsSettings => CurrentTitleKey == "MenuSettings";
 
     public bool IsMacOS => RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
@@ -96,6 +98,7 @@ public partial class MainWindowViewModel : ViewModelBase
         SettingsSection.General => "SettingsGeneral",
         SettingsSection.Appearance => "SettingsAppearance",
         SettingsSection.Network => "SettingsNetwork",
+        SettingsSection.Ed2k => "SettingsEd2k",
         SettingsSection.Advanced => "SettingsAdvanced",
         SettingsSection.About => "SettingsAbout",
         _ => "MenuSettings"
@@ -104,8 +107,14 @@ public partial class MainWindowViewModel : ViewModelBase
     public bool IsSettingsGeneral => SelectedSettingsSection == SettingsSection.General;
     public bool IsSettingsAppearance => SelectedSettingsSection == SettingsSection.Appearance;
     public bool IsSettingsNetwork => SelectedSettingsSection == SettingsSection.Network;
+    public bool IsSettingsEd2k => SelectedSettingsSection == SettingsSection.Ed2k;
     public bool IsSettingsAdvanced => SelectedSettingsSection == SettingsSection.Advanced;
     public bool IsSettingsAbout => SelectedSettingsSection == SettingsSection.About;
+    public MainWindowViewModel? AppearanceSettingsContent => IsSettingsAppearance ? this : null;
+    public MainWindowViewModel? NetworkSettingsContent => IsSettingsNetwork ? this : null;
+    public MainWindowViewModel? Ed2kSettingsContent => IsSettingsEd2k ? this : null;
+    public MainWindowViewModel? AdvancedSettingsContent => IsSettingsAdvanced ? this : null;
+    public MainWindowViewModel? AboutSettingsContent => IsSettingsAbout ? this : null;
 
     partial void OnSelectedSettingsSectionChanged(SettingsSection value)
     {
@@ -113,8 +122,14 @@ public partial class MainWindowViewModel : ViewModelBase
         OnPropertyChanged(nameof(IsSettingsGeneral));
         OnPropertyChanged(nameof(IsSettingsAppearance));
         OnPropertyChanged(nameof(IsSettingsNetwork));
+        OnPropertyChanged(nameof(IsSettingsEd2k));
         OnPropertyChanged(nameof(IsSettingsAdvanced));
         OnPropertyChanged(nameof(IsSettingsAbout));
+        OnPropertyChanged(nameof(AppearanceSettingsContent));
+        OnPropertyChanged(nameof(NetworkSettingsContent));
+        OnPropertyChanged(nameof(Ed2kSettingsContent));
+        OnPropertyChanged(nameof(AdvancedSettingsContent));
+        OnPropertyChanged(nameof(AboutSettingsContent));
     }
 
     public Thickness SidebarToggleMargin
@@ -449,7 +464,7 @@ public partial class MainWindowViewModel : ViewModelBase
         var url = (NewTrackerSourceUrl ?? string.Empty).Trim();
         if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) || (uri.Scheme != Uri.UriSchemeHttps && uri.Scheme != Uri.UriSchemeHttp))
         {
-            _notificationService.ShowNotification("Tracker", "Invalid tracker source URL.", ToastType.Warning);
+            _notificationService.ShowNotification(GetString("NotificationTrackerTitle"), GetString("NotificationTrackerInvalidSource"), ToastType.Warning);
             return;
         }
 
@@ -551,7 +566,7 @@ public partial class MainWindowViewModel : ViewModelBase
         }
         if (sources.Count == 0)
         {
-            _notificationService.ShowNotification("Tracker", "No tracker source selected.", ToastType.Warning);
+            _notificationService.ShowNotification(GetString("NotificationTrackerTitle"), GetString("NotificationTrackerNoSource"), ToastType.Warning);
             return;
         }
 
@@ -587,12 +602,12 @@ public partial class MainWindowViewModel : ViewModelBase
             await _aria2Service.ApplyBtTrackersAsync(BtTrackers).ConfigureAwait(false);
             LastSyncTrackerTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
-            _notificationService.ShowNotification("Tracker", "Tracker list synced.", ToastType.Success);
+            _notificationService.ShowNotification(GetString("NotificationTrackerTitle"), GetString("NotificationTrackerSyncSucceeded"), ToastType.Success);
         }
         catch (Exception ex)
         {
             AppLog.Error(ex, "Failed to sync trackers");
-            _notificationService.ShowNotification("Tracker", "Failed to sync tracker list.", ToastType.Error);
+            _notificationService.ShowNotification(GetString("NotificationTrackerTitle"), GetString("NotificationTrackerSyncFailed"), ToastType.Error);
         }
         finally
         {
@@ -780,12 +795,12 @@ public partial class MainWindowViewModel : ViewModelBase
                 await InitializeAria2Async();
                 _refreshTimer.Start();
                 
-                _notificationService.ShowNotification("Session Reset", "Download session has been reset.", ToastType.Success);
+                _notificationService.ShowNotification(GetString("NotificationSessionResetTitle"), GetString("NotificationSessionResetSucceeded"), ToastType.Success);
             }
             catch (Exception ex)
             {
                 AppLog.Error(ex, "Failed to reset session");
-                _notificationService.ShowNotification("Error", "Failed to reset session.", ToastType.Error);
+                _notificationService.ShowNotification(GetString("StatusError"), GetString("NotificationSessionResetFailed"), ToastType.Error);
                 _refreshTimer.Start();
             }
         }
@@ -839,9 +854,10 @@ public partial class MainWindowViewModel : ViewModelBase
             GlobalUserAgent = _settingsService.Settings.GlobalUserAgent;
             IsDefaultClientMagnet = _settingsService.Settings.DefaultClientMagnet;
             IsDefaultClientThunder = _settingsService.Settings.DefaultClientThunder;
+            LoadEd2kSettings();
 
             ThemeAccentService.Apply(_settingsService.Settings.AccentMode, _settingsService.Settings.CustomAccentColor);
-            _notificationService.ShowNotification("Settings Reset", "Settings have been reset to defaults. Please restart the app for some changes to take effect.", ToastType.Info);
+            _notificationService.ShowNotification(GetString("NotificationSettingsResetTitle"), GetString("NotificationSettingsResetSucceeded"), ToastType.Info);
         }
     }
 
@@ -1078,9 +1094,31 @@ public partial class MainWindowViewModel : ViewModelBase
         }
         SelectedLanguage = currentLang;
 
+        // Converter-based labels do not observe resource dictionary changes,
+        // so recreate their item containers after switching languages.
+        var selectedFileType = SelectedEd2kFileType;
+        var fileTypes = Ed2kFileTypeOptions.ToList();
+        Ed2kFileTypeOptions.Clear();
+        foreach (var fileType in fileTypes) Ed2kFileTypeOptions.Add(fileType);
+        SelectedEd2kFileType = selectedFileType;
+
+        var selectedSyncInterval = SelectedEd2kSyncInterval;
+        var syncIntervals = Ed2kSyncIntervalOptions.ToList();
+        Ed2kSyncIntervalOptions.Clear();
+        foreach (var syncInterval in syncIntervals) Ed2kSyncIntervalOptions.Add(syncInterval);
+        SelectedEd2kSyncInterval = selectedSyncInterval;
+
+        var searchResults = Ed2kSearchResults.ToList();
+        Ed2kSearchResults.Clear();
+        foreach (var result in searchResults) Ed2kSearchResults.Add(result);
+
         OnPropertyChanged(nameof(EmptyStateSubtitleDownloadingText));
         OnPropertyChanged(nameof(CheckUpdateButtonKey));
         OnPropertyChanged(nameof(SelectedTrackerSourceSummary));
+        OnPropertyChanged(nameof(CurrentSettingsTitleKey));
+        OnPropertyChanged(nameof(LastSyncTrackerTimeText));
+        OnPropertyChanged(nameof(Ed2kBootstrapLastSyncText));
+        RefreshEd2kSearchStatusText();
     }
 
     public MainWindowViewModel()
@@ -1096,7 +1134,8 @@ public partial class MainWindowViewModel : ViewModelBase
         
         // Initialize views
         _taskListView = new TaskListView();
-        _settingsView = new SettingsView();
+        _ed2kSearchView = new Ed2kSearchView();
+        SelectedEd2kFileType = Ed2kFileTypeOptions[0];
         
         ShowDownloading();
         
@@ -1141,6 +1180,7 @@ public partial class MainWindowViewModel : ViewModelBase
         GlobalUserAgent = _settingsService.Settings.GlobalUserAgent;
         IsDefaultClientMagnet = _settingsService.Settings.DefaultClientMagnet;
         IsDefaultClientThunder = _settingsService.Settings.DefaultClientThunder;
+        LoadEd2kSettings();
         AutoSyncTracker = _settingsService.Settings.AutoSyncTracker;
         LastSyncTrackerTime = _settingsService.Settings.LastSyncTrackerTime;
         InitializeTrackerSourceOptions();
@@ -1320,6 +1360,7 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             await _aria2Service.InitializeAsync(_settingsService.Settings);
             _ = ApplyProxySettingsAsync();
+            _ = MaybeAutoSyncEd2kBootstrapAsync();
             await RefreshTaskListAsync();
         }
         catch (Exception ex)

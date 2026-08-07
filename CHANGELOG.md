@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.0.78 - 2026-08-08
+
+- Replaced the bundled downloader with aria2-next 2.5.5 and added native ED2K support for search, direct links, network bootstrap data, and configurable engine/search settings.
+- Added architecture-specific aria2-next binaries for macOS, Windows, and Linux, and placed them in conventional platform package locations.
+- Added automatic and manual synchronization of ED2K server and Kad node bootstrap files with application and system proxy support.
+- Added localized ED2K search results with file-type detection, icons, keyboard search, aligned metadata, and persistent search defaults.
+- Fixed “Follow system” language switching after an explicit language selection and completed missing Chinese and English notifications.
+- Improved dark-theme input focus colors and reduced Settings window startup cost by loading non-default sections on demand.
+- Added third-party notices and bundled aria2-next license information.
+
 ## 1.0.77 - 2026-08-07
 
 - Added support for standard uppercase proxy environment variables when launching aria2 while preserving lowercase variable precedence.

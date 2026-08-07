@@ -14,6 +14,9 @@ public interface IAria2Service
     Task<string> AddTorrentAsync(string torrentFilePath, string savePath, IDictionary<string, string>? extraOptions = null);
     Task ApplyProxyAsync(string proxyType, string proxyAddress, int proxyPort, string proxyUsername, string proxyPassword);
     Task ApplyBtTrackersAsync(string btTrackers);
+    Task<string> StartEd2kSearchAsync(string keyword, string fileType = "", int minSourceCount = 0);
+    Task<Ed2kSearchResults> GetEd2kSearchResultsAsync(string gid);
+    Task CleanupEd2kSearchAsync(string gid);
     Task<List<DownloadTask>> GetGlobalStatusAsync();
     Task PauseAsync(string gid);
     Task PauseAllAsync();

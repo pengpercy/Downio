@@ -125,6 +125,14 @@ public partial class MainWindowViewModel
     }
 
     [RelayCommand]
+    public void ShowEd2kSearch()
+    {
+        IsSettingsVisible = true;
+        CurrentTitleKey = "MenuEd2kSearch";
+        CurrentView = _ed2kSearchView;
+    }
+
+    [RelayCommand]
     public async Task ShowSettings()
     {
         if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime { MainWindow: { } mainWindow }) return;
@@ -347,6 +355,7 @@ public partial class MainWindowViewModel
         if (string.IsNullOrWhiteSpace(value)) return false;
         if (value.StartsWith("magnet:?", StringComparison.OrdinalIgnoreCase)) return true;
         if (value.StartsWith("thunder://", StringComparison.OrdinalIgnoreCase)) return true;
+        if (value.StartsWith("ed2k://", StringComparison.OrdinalIgnoreCase)) return true;
 
         return Uri.TryCreate(value, UriKind.Absolute, out var uri) &&
                uri.Scheme switch
@@ -428,7 +437,11 @@ public partial class MainWindowViewModel
                     var displayName = outputName;
                     if (string.IsNullOrWhiteSpace(displayName))
                     {
-                        displayName = TryGetSafeFileNameFromUri(Uri.TryCreate(url, UriKind.Absolute, out var uri) ? uri : null);
+                        displayName = TryGetEd2kFileName(url);
+                        if (string.IsNullOrWhiteSpace(displayName))
+                        {
+                            displayName = TryGetSafeFileNameFromUri(Uri.TryCreate(url, UriKind.Absolute, out var uri) ? uri : null);
+                        }
                     }
 
                     var gid = await _aria2Service.AddUriAsync(url, outputName, NewTaskSavePath, NewTaskChunks, extraOptions);
@@ -698,6 +711,16 @@ public partial class MainWindowViewModel
         return Path.HasExtension(name) ? name : string.Empty;
     }
 
+    private static string TryGetEd2kFileName(string value)
+    {
+        const string prefix = "ed2k://|file|";
+        if (!value.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)) return string.Empty;
+
+        var end = value.IndexOf('|', prefix.Length);
+        if (end <= prefix.Length) return string.Empty;
+        return SanitizeDownloadFileName(value[prefix.Length..end]);
+    }
+
     private static string SanitizeDownloadFileName(string? fileName)
     {
         if (string.IsNullOrWhiteSpace(fileName)) return string.Empty;
@@ -862,6 +885,7 @@ public partial class MainWindowViewModel
     {
         if (_isShuttingDown) return;
         _isShuttingDown = true;
+        _ed2kSearchCancellation?.Cancel();
 
         try
         {

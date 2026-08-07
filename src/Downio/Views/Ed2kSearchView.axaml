@@ -1,0 +1,111 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:Downio.ViewModels"
+             xmlns:models="using:Downio.Models"
+             xmlns:localConv="using:Downio.Converters"
+             mc:Ignorable="d"
+             d:DesignWidth="900" d:DesignHeight="620"
+             x:Class="Downio.Views.Ed2kSearchView"
+             x:DataType="vm:MainWindowViewModel">
+    <UserControl.Resources>
+        <localConv:ResourceKeyToTextConverter x:Key="ResourceKeyToTextConverter" />
+        <localConv:Ed2kFileTypeIconConverter x:Key="Ed2kFileTypeIconConverter" />
+    </UserControl.Resources>
+
+    <Grid RowDefinitions="Auto,Auto,*" Margin="24,20,24,24">
+        <StackPanel Grid.Row="0" Spacing="5" Margin="0,0,0,18">
+            <TextBlock Text="{DynamicResource MenuEd2kSearch}" FontSize="22" FontWeight="SemiBold" />
+            <TextBlock Text="{DynamicResource Ed2kSearchDescription}" Opacity="0.65" TextWrapping="Wrap" />
+        </StackPanel>
+
+        <Border Grid.Row="1" Padding="16" CornerRadius="8"
+                Background="{DynamicResource CardBackgroundBrush}" BoxShadow="{DynamicResource CardShadow}"
+                Margin="0,0,0,14">
+            <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,180,Auto" ColumnSpacing="8" RowSpacing="12">
+                <StackPanel Grid.Column="0" Spacing="6">
+                    <TextBlock Text="{DynamicResource Ed2kKeyword}" FontWeight="Medium" />
+                    <Grid RowDefinitions="Auto,Auto">
+                        <TextBox Grid.Row="0" Text="{Binding Ed2kSearchKeyword}" PlaceholderText="{DynamicResource Ed2kKeywordPlaceholder}">
+                            <TextBox.KeyBindings>
+                                <KeyBinding Gesture="Enter" Command="{Binding StartEd2kSearchCommand}" />
+                            </TextBox.KeyBindings>
+                        </TextBox>
+                        <ProgressBar Grid.Row="1" IsIndeterminate="True" Height="2" Margin="2,-1,2,0"
+                                     IsVisible="{Binding IsEd2kSearching}" IsHitTestVisible="False" />
+                    </Grid>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Spacing="6">
+                    <TextBlock Text="{DynamicResource Ed2kFileType}" FontWeight="Medium" />
+                    <ComboBox ItemsSource="{Binding Ed2kFileTypeOptions}" SelectedItem="{Binding SelectedEd2kFileType}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate x:DataType="vm:Ed2kFileTypeOption">
+                                <StackPanel Orientation="Horizontal" Spacing="7">
+                                    <PathIcon Data="{Binding Value, Converter={StaticResource Ed2kFileTypeIconConverter}}"
+                                              Width="14" Height="14" Opacity="0.72" VerticalAlignment="Center" />
+                                    <TextBlock Text="{Binding ResourceKey, Converter={StaticResource ResourceKeyToTextConverter}}"
+                                               VerticalAlignment="Center" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </StackPanel>
+
+                <Grid Grid.Column="2" VerticalAlignment="Bottom">
+                    <Button Command="{Binding StartEd2kSearchCommand}" IsVisible="{Binding !IsEd2kSearching}"
+                            Classes="accent" Padding="18,8">
+                        <StackPanel Orientation="Horizontal" Spacing="7">
+                            <PathIcon Data="{StaticResource IconSearch}" Width="14" Height="14" />
+                            <TextBlock Text="{DynamicResource Ed2kSearchButton}" />
+                        </StackPanel>
+                    </Button>
+                    <Button Command="{Binding CancelEd2kSearchCommand}" IsVisible="{Binding IsEd2kSearching}"
+                            Padding="18,8">
+                        <TextBlock Text="{DynamicResource Ed2kCancelButton}" />
+                    </Button>
+                </Grid>
+
+                <TextBlock Grid.Row="1" Grid.ColumnSpan="3" Text="{Binding Ed2kSearchStatus}"
+                           Opacity="0.7" VerticalAlignment="Center" />
+            </Grid>
+        </Border>
+
+        <ScrollViewer Grid.Row="2">
+            <ItemsControl ItemsSource="{Binding Ed2kSearchResults}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="models:Ed2kSearchResult">
+                        <Border Padding="15,12" CornerRadius="8" Margin="0,0,0,7"
+                                Background="{DynamicResource CardBackgroundBrush}" BoxShadow="{DynamicResource CardShadow}">
+                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
+                                <PathIcon Grid.Column="0" Data="{Binding Converter={StaticResource Ed2kFileTypeIconConverter}}"
+                                          Width="24" Height="24" Opacity="0.72" VerticalAlignment="Center" />
+                                <StackPanel Grid.Column="1" Spacing="7">
+                                    <TextBlock Text="{Binding Name}" FontWeight="Medium" TextWrapping="Wrap" />
+                                    <Grid ColumnDefinitions="100,120,160,*" ColumnSpacing="16" Opacity="0.65" Height="18">
+                                        <TextBlock Grid.Column="0" Text="{Binding SizeText}" VerticalAlignment="Center" />
+                                        <TextBlock Grid.Column="1" VerticalAlignment="Center">
+                                            <Run Text="{DynamicResource Ed2kSources}"/><Run Text=" "/><Run Text="{Binding SourceCount}"/>
+                                        </TextBlock>
+                                        <TextBlock Grid.Column="2" VerticalAlignment="Center">
+                                            <Run Text="{DynamicResource Ed2kCompleteSources}"/><Run Text=" "/><Run Text="{Binding CompleteSourceCount}"/>
+                                        </TextBlock>
+                                    </Grid>
+                                </StackPanel>
+                                <Button Grid.Column="2" VerticalAlignment="Center" Padding="14,7"
+                                        Command="{Binding $parent[UserControl].((vm:MainWindowViewModel)DataContext).DownloadEd2kResultCommand}"
+                                        CommandParameter="{Binding}">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <PathIcon Data="{StaticResource IconDownloading}" Width="14" Height="14" />
+                                        <TextBlock Text="{DynamicResource Ed2kDownloadButton}" />
+                                    </StackPanel>
+                                </Button>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

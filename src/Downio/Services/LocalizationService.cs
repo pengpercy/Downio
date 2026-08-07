@@ -7,6 +7,9 @@ namespace Downio.Services;
 
 public static class LocalizationService
 {
+    // Capture the OS language before an explicit app language changes the
+    // process-wide CurrentUICulture.
+    private static readonly CultureInfo SystemUiCulture = CultureInfo.CurrentUICulture;
     private static string? _currentLanguage;
     private static ResourceDictionary? _currentTranslations;
 
@@ -48,7 +51,7 @@ public static class LocalizationService
             return requestedLanguage;
         }
 
-        var uiCulture = CultureInfo.CurrentUICulture;
+        var uiCulture = SystemUiCulture;
         var cultureName = uiCulture.Name;
         var twoLetterName = uiCulture.TwoLetterISOLanguageName;
 

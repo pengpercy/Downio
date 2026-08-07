@@ -283,6 +283,16 @@
                                            VerticalAlignment="Center" IsVisible="{Binding IsPaneOpen}" />
                             </Grid>
                         </Button>
+
+                        <Button Command="{Binding ShowEd2kSearchCommand}" Classes="sidebar"
+                                Classes.active="{Binding IsEd2kSearch}">
+                            <Grid ColumnDefinitions="40, *">
+                                <PathIcon Grid.Column="0" Data="{StaticResource IconSearch}"
+                                          VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0,1,0,0" />
+                                <TextBlock Grid.Column="1" Text="{DynamicResource MenuEd2kSearch}"
+                                           VerticalAlignment="Center" IsVisible="{Binding IsPaneOpen}" />
+                            </Grid>
+                        </Button>
                     </StackPanel>
 
                     <StackPanel Grid.Row="2" Spacing="4" Margin="0,0,0,20">

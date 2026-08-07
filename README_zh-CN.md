@@ -23,7 +23,8 @@
 
 ## ✨ 核心特性
 
-- 🚀 **极致性能**：基于强大的 `aria2` 引擎，支持多线程极速下载。
+- 🚀 **极致性能**：基于 `aria2-next` 引擎，支持多线程极速下载。
+- 🔎 **ED2K 搜索与下载**：可在应用内搜索 eDonkey/Kad 资源，也可直接添加 `ed2k://` 链接。
 - 🎨 **现代设计**：采用 Avalonia UI 构建，遵循流畅设计（Fluent Design）原则，界面清爽美观。
 - 🖥️ **全平台支持**：完美支持 macOS (Universal)、Windows 和 Linux 原生运行。
 - 🌐 **网络增强**：完整的 HTTP/HTTPS 和 SOCKS5 代理支持。
@@ -80,6 +81,8 @@ chmod +x build/package_osx.sh
 ## 📄 许可证
 
 MIT License. 详见 [LICENSE](LICENSE) 文件。
+
+随应用分发的第三方组件保留其各自许可证，详见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
 
 ---
 <div align="center">
