@@ -14,7 +14,7 @@
         <ApplicationManifest>app.manifest</ApplicationManifest>
         <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
         <ApplicationIcon>Assets/Branding/app_ico.ico</ApplicationIcon>
-        <Version>1.0.76</Version>
+        <Version>1.0.77</Version>
         <InformationalVersion>$(Version)</InformationalVersion>
     </PropertyGroup>
     
@@ -87,14 +87,14 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Avalonia" Version="12.1.0" />
-        <PackageReference Include="Avalonia.Desktop" Version="12.1.0" />
-        <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.0" />
-        <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.0" />
+        <PackageReference Include="Avalonia" Version="12.1.1" />
+        <PackageReference Include="Avalonia.Desktop" Version="12.1.1" />
+        <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.1" />
+        <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.1" />
         <PackageReference Include="Avalonia.Controls.DataGrid" Version="12.1.0" />
-        <PackageReference Include="Avalonia.Controls.ColorPicker" Version="12.1.0" />
-        <PackageReference Include="LiveMarkdown.Avalonia" Version="2.2.0" />
-        <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+        <PackageReference Include="Avalonia.Controls.ColorPicker" Version="12.1.1" />
+        <PackageReference Include="LiveMarkdown.Avalonia" Version="2.2.2" />
+        <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     </ItemGroup>
 
   <ItemGroup>

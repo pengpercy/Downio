@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.77 - 2026-08-07
+
+- Added support for standard uppercase proxy environment variables when launching aria2 while preserving lowercase variable precedence.
+- Refreshed proxy environment settings when downloads are added or resumed, so proxy changes no longer require restarting Downio.
+- Kept explicitly configured application proxy settings ahead of environment-provided proxies.
+
 ## 1.0.76 - 2026-07-19
 
 - Restored native Windows caption button height for the main window by removing styles that stretched minimize/maximize/close to the full 52px title bar.

@@ -16,6 +16,14 @@ namespace Downio.Services.Aria2;
 public class Aria2Service : IAria2Service, IDisposable
 {
     private const long MinSplitSizeBytes = 1024 * 1024;
+    private static readonly string[] Aria2ProxyEnvironmentVariables =
+    {
+        "http_proxy",
+        "https_proxy",
+        "ftp_proxy",
+        "all_proxy",
+        "no_proxy"
+    };
     private Process? _aria2Process;
     private JsonRpcClient? _rpcClient;
     private int _rpcPort = 16800;
@@ -24,6 +32,7 @@ public class Aria2Service : IAria2Service, IDisposable
     private readonly ConcurrentDictionary<string, int> _splitCache = new();
     private readonly SemaphoreSlim _lifecycleLock = new(1, 1);
     private readonly ConcurrentQueue<string> _stderrTail = new();
+    private bool _usesApplicationProxy;
 
     public async Task InitializeAsync(AppSettings settings)
     {
@@ -141,6 +150,8 @@ public class Aria2Service : IAria2Service, IDisposable
                 RedirectStandardError = true
             };
 
+            AddAria2ProxyEnvironmentAliases(startInfo);
+
             foreach (var arg in args)
             {
                 startInfo.ArgumentList.Add(arg);
@@ -196,6 +207,26 @@ public class Aria2Service : IAria2Service, IDisposable
         finally
         {
             _lifecycleLock.Release();
+        }
+    }
+
+    private static void AddAria2ProxyEnvironmentAliases(ProcessStartInfo startInfo)
+    {
+        // aria2 only documents the lowercase proxy variable names. .NET accepts
+        // both common casings, so add lowercase aliases for aria2 on platforms
+        // with case-sensitive environments while preserving lowercase precedence.
+        foreach (var lowerName in Aria2ProxyEnvironmentVariables)
+        {
+            if (Environment.GetEnvironmentVariable(lowerName) != null)
+            {
+                continue;
+            }
+
+            var upperValue = Environment.GetEnvironmentVariable(lowerName.ToUpperInvariant());
+            if (upperValue != null)
+            {
+                startInfo.Environment[lowerName] = upperValue;
+            }
         }
     }
 
@@ -367,6 +398,8 @@ public class Aria2Service : IAria2Service, IDisposable
     {
         if (_rpcClient == null) return string.Empty;
 
+        await RefreshEnvironmentProxyAsync().ConfigureAwait(false);
+
         var options = new Dictionary<string, string>
         {
             { "dir", savePath },
@@ -406,6 +439,8 @@ public class Aria2Service : IAria2Service, IDisposable
 
         try
         {
+            await RefreshEnvironmentProxyAsync().ConfigureAwait(false);
+
             var torrentBytes = await File.ReadAllBytesAsync(torrentFilePath);
             var base64Torrent = Convert.ToBase64String(torrentBytes);
 
@@ -445,16 +480,23 @@ public class Aria2Service : IAria2Service, IDisposable
         var address = proxyAddress?.Trim() ?? string.Empty;
         if (string.IsNullOrWhiteSpace(address) || proxyPort <= 0)
         {
-            options["all-proxy"] = string.Empty;
-            options["all-proxy-user"] = string.Empty;
-            options["all-proxy-passwd"] = string.Empty;
+            _usesApplicationProxy = false;
+            options = ProxyEnvironment.GetAria2Options();
         }
         else
         {
+            _usesApplicationProxy = true;
             var scheme = string.Equals(proxyType, "SOCKS5", StringComparison.OrdinalIgnoreCase) ? "socks5" : "http";
-            options["all-proxy"] = $"{scheme}://{address}:{proxyPort}";
-            options["all-proxy-user"] = proxyUsername?.Trim() ?? string.Empty;
-            options["all-proxy-passwd"] = proxyPassword ?? string.Empty;
+            var proxy = $"{scheme}://{address}:{proxyPort}";
+            var user = proxyUsername?.Trim() ?? string.Empty;
+            var password = proxyPassword ?? string.Empty;
+            foreach (var prefix in new[] { "http", "https", "ftp", "all" })
+            {
+                options[$"{prefix}-proxy"] = proxy;
+                options[$"{prefix}-proxy-user"] = user;
+                options[$"{prefix}-proxy-passwd"] = password;
+            }
+            options["no-proxy"] = string.Empty;
         }
 
         try
@@ -526,13 +568,29 @@ public class Aria2Service : IAria2Service, IDisposable
     public async Task UnpauseAsync(string gid)
     {
         if (_rpcClient == null) return;
+        await RefreshEnvironmentProxyAsync().ConfigureAwait(false);
         await _rpcClient.InvokeAsync<string>("unpause", gid);
     }
 
     public async Task UnpauseAllAsync()
     {
         if (_rpcClient == null) return;
+        await RefreshEnvironmentProxyAsync().ConfigureAwait(false);
         await _rpcClient.InvokeAsync<string>("unpauseAll");
+    }
+
+    private async Task RefreshEnvironmentProxyAsync()
+    {
+        if (_rpcClient == null || _usesApplicationProxy) return;
+
+        try
+        {
+            await _rpcClient.InvokeAsync<string>("changeGlobalOption", ProxyEnvironment.GetAria2Options()).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            AppLog.Warn($"Failed to refresh proxy environment: {ex.Message}");
+        }
     }
 
     public async Task RemoveAsync(string gid)
