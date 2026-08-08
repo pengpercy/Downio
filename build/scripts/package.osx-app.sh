@@ -7,16 +7,19 @@ set pipefail
 
 cd build
 
-if [[ ! -f "Downio/aria2c" ]]; then
-    echo "Missing aria2c in the macOS publish root for $RUNTIME."
+if [[ ! -d "Downio.app" ]]; then
+    echo "Missing SDK-generated Downio.app for $RUNTIME."
     exit 1
 fi
-chmod +x Downio/aria2c
 
-mkdir -p Downio.app/Contents/MacOS
 mkdir -p Downio.app/Contents/Resources
-cp -r Downio/* Downio.app/Contents/MacOS/
-rm -rf Downio
+ARIA2_PATH="$(find Downio.app -type f -name aria2c -print -quit)"
+if [[ -z "$ARIA2_PATH" ]]; then
+    echo "Missing aria2c in the macOS app bundle for $RUNTIME."
+    exit 1
+fi
+chmod +x "$ARIA2_PATH"
+
 ICON_SOURCE="../src/Downio/Assets/Branding/macOS/app_icon.png"
 ICONSET_DIR="App.iconset"
 rm -rf "$ICONSET_DIR"
@@ -35,11 +38,26 @@ iconutil -c icns "$ICONSET_DIR" -o Downio.app/Contents/Resources/App.icns
 rm -rf "$ICONSET_DIR"
 BUNDLE_SHORT_VERSION="${VERSION%%-*}"
 BUNDLE_BUILD_VERSION="${GITHUB_RUN_NUMBER:-$BUNDLE_SHORT_VERSION}"
-sed -e "s/Downio_VERSION/$BUNDLE_SHORT_VERSION/g" \
-    -e "s/Downio_BUILD_VERSION/$BUNDLE_BUILD_VERSION/g" \
-    resources/app/App.plist > Downio.app/Contents/Info.plist
+PLIST="Downio.app/Contents/Info.plist"
+set_plist_string() {
+    local key="$1"
+    local value="$2"
+    /usr/libexec/PlistBuddy -c "Set :$key $value" "$PLIST" 2>/dev/null || \
+        /usr/libexec/PlistBuddy -c "Add :$key string $value" "$PLIST"
+}
+set_plist_string CFBundleIconFile App
+set_plist_string CFBundleIdentifier com.Downio.app
+set_plist_string CFBundleName Downio
+set_plist_string CFBundleDisplayName Downio
+set_plist_string CFBundleVersion "$BUNDLE_BUILD_VERSION"
+set_plist_string CFBundleShortVersionString "$BUNDLE_SHORT_VERSION"
+set_plist_string LSMinimumSystemVersion 12.0
+/usr/libexec/PlistBuddy -c "Delete :CFBundleLocalizations" "$PLIST" 2>/dev/null || true
+/usr/libexec/PlistBuddy -c "Add :CFBundleLocalizations array" "$PLIST"
+/usr/libexec/PlistBuddy -c "Add :CFBundleLocalizations:0 string en" "$PLIST"
+/usr/libexec/PlistBuddy -c "Add :CFBundleLocalizations:1 string zh-Hans" "$PLIST"
 find resources/app -maxdepth 1 -type d -name "*.lproj" -exec cp -R {} Downio.app/Contents/Resources/ \;
-rm -rf Downio.app/Contents/MacOS/Downio.dsym
+find Downio.app -type d -name "*.dSYM" -prune -exec rm -rf {} +
 
 if [[ -n "${CODESIGN_IDENTITY:-}" ]]; then
     codesign --force --deep --options runtime --timestamp --sign "$CODESIGN_IDENTITY" Downio.app

@@ -89,8 +89,7 @@ jobs:
           RUNTIME: ${{ matrix.runtime }}
           CODESIGN_IDENTITY: ${{ env.MACOS_CODESIGN_IDENTITY }}
         run: |
-          mkdir -p build/Downio
-          tar -xf "build/downio.${{ matrix.runtime }}.tar" -C build/Downio
+          tar -xf "build/downio.${{ matrix.runtime }}.tar" -C build
           ./build/scripts/package.osx-app.sh
       - name: Notarize and staple DMG
         if: ${{ env.APPLE_ID != '' && env.APPLE_APP_SPECIFIC_PASSWORD != '' && env.APPLE_TEAM_ID != '' }}
