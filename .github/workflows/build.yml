@@ -70,7 +70,10 @@ jobs:
       - name: Publish macOS app bundle
         if: startsWith(matrix.runtime, 'osx-')
         run: |
-          dotnet publish src/Downio/Downio.csproj -c Release -o publish -r ${{ matrix.runtime }} --self-contained
+          dotnet publish src/Downio/Downio.csproj -c Release -o package-output -r ${{ matrix.runtime }} --self-contained
+          pkgutil --expand-full package-output/Downio-1.0.pkg package-expanded
+          mkdir -p publish
+          cp -R package-expanded/com.Downio.app.pkg/Payload/Downio.app publish/
 
       - name: Publish
         if: ${{ !startsWith(matrix.runtime, 'osx-') }}

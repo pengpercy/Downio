@@ -61,6 +61,8 @@ find Downio.app -type d -name "*.dSYM" -prune -exec rm -rf {} +
 
 if [[ -n "${CODESIGN_IDENTITY:-}" ]]; then
     codesign --force --deep --options runtime --timestamp --sign "$CODESIGN_IDENTITY" Downio.app
+else
+    codesign --force --deep --sign - Downio.app
 fi
 
 zip "Downio_$VERSION.$RUNTIME.zip" -r Downio.app

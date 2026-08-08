@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.79-beta.2 - 2026-08-08
+
+- Fixed macOS binaries incorrectly requiring macOS 26.5 despite the package declaring macOS 12.0.
+- Restored NativeAOT macOS publishing to reduce the installed app from about 167 MB to about 63 MB.
+- Updated macOS packaging to extract and re-sign the SDK-generated native app bundle before creating ZIP and DMG packages.
+
 ## 1.0.79-beta.1 - 2026-08-08
 
 - Added selectable stable and beta update channels, with beta users receiving both prerelease and stable updates.
