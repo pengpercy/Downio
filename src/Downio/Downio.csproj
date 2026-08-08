@@ -32,6 +32,7 @@
     
     <PropertyGroup Condition="'$(IsMacOSTarget)' == 'true'">
         <DefineConstants>$(DefineConstants);MACOS</DefineConstants>
+        <SupportedOSPlatformVersion>12.0</SupportedOSPlatformVersion>
     </PropertyGroup>
 
     <!-- Onigwrap's Mach-O header cannot fit the long bundle-relative install name
