@@ -135,6 +135,8 @@
     <x:String x:Key="NotificationTaskDeleted">任务已删除</x:String>
     <x:String x:Key="NotificationTasksDeleted">已删除 {0} 个任务</x:String>
     <x:String x:Key="NotificationAlsoDeletedFile">（同时删除了本地文件）</x:String>
+    <x:String x:Key="MessageTaskDeleteFailed">无法删除下载任务，请重试。</x:String>
+    <x:String x:Key="MessageFileDeleteFailed">下载任务已移除，但部分本地文件删除失败。</x:String>
 
     <!-- Time -->
     <x:String x:Key="TimeMoreThanOneDay">> 1 天</x:String>

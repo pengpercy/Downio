@@ -273,7 +273,7 @@
                                 <NumericUpDown Grid.Row="8" Grid.Column="1"
                                                Value="{Binding DefaultDownloadSplit}"
                                                Minimum="1"
-                                               Maximum="32"
+                                               Maximum="16"
                                                FormatString="0"
                                                Width="120"
                                                HorizontalAlignment="Right"/>

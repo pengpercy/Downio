@@ -15,7 +15,6 @@ namespace Downio.Services.Aria2;
 
 public class Aria2Service : IAria2Service, IDisposable
 {
-    private const long MinSplitSizeBytes = 1024 * 1024;
     private static readonly string[] Aria2ProxyEnvironmentVariables =
     {
         "http_proxy",
@@ -435,11 +434,13 @@ public class Aria2Service : IAria2Service, IDisposable
 
         await RefreshEnvironmentProxyAsync().ConfigureAwait(false);
 
+        var effectiveSplit = Math.Clamp(split, 1, 16);
+
         var options = new Dictionary<string, string>
         {
             { "dir", savePath },
-            { "split", split.ToString() },
-            { "max-connection-per-server", Math.Max(16, split).ToString() },
+            { "split", effectiveSplit.ToString() },
+            { "max-connection-per-server", effectiveSplit.ToString() },
             { "min-split-size", "1M" }
         };
         
@@ -462,7 +463,7 @@ public class Aria2Service : IAria2Service, IDisposable
         var gid = await _rpcClient.InvokeAsync<string>("addUri", new[] { url }, options);
         if (!string.IsNullOrWhiteSpace(gid))
         {
-            _splitCache[gid] = split;
+            _splitCache[gid] = effectiveSplit;
         }
         return !string.IsNullOrWhiteSpace(gid)
             ? gid
@@ -723,13 +724,28 @@ public class Aria2Service : IAria2Service, IDisposable
         {
              await _rpcClient.InvokeAsync<string>("remove", gid);
         }
+        catch (Aria2RpcException ex) when (IsGidNotFound(ex))
+        {
+            return;
+        }
         catch (Exception ex)
         {
             AppLog.Error(ex, $"Failed to remove task via aria2.remove, fallback to removeDownloadResult: {gid}");
             // Try removeDownloadResult if remove fails (e.g. task is complete/error)
-            await _rpcClient.InvokeAsync<string>("removeDownloadResult", gid);
+            try
+            {
+                await _rpcClient.InvokeAsync<string>("removeDownloadResult", gid);
+            }
+            catch (Aria2RpcException fallbackEx) when (IsGidNotFound(fallbackEx))
+            {
+                return;
+            }
         }
     }
+
+    private static bool IsGidNotFound(Aria2RpcException ex) =>
+        ex.RpcMessage.Contains("GID", StringComparison.OrdinalIgnoreCase) &&
+        ex.RpcMessage.Contains("not found", StringComparison.OrdinalIgnoreCase);
 
     private string GetString(string key, string defaultValue)
     {
@@ -833,6 +849,15 @@ public class Aria2Service : IAria2Service, IDisposable
 
         // Connections
         int.TryParse(status.NumConnections, out var connections);
+        var usedUriConnections = status.Files
+            .SelectMany(file => file.Uris)
+            .Count(uri => string.Equals(uri.Status, "used", StringComparison.OrdinalIgnoreCase));
+        if (connections == 0 && usedUriConnections > 0)
+        {
+            connections = _splitCache.TryGetValue(status.Gid, out var configuredMaximum)
+                ? Math.Min(usedUriConnections, configuredMaximum)
+                : usedUriConnections;
+        }
         if (taskStatus == "StatusDownloading" && connections == 0 && speedVal > 0)
         {
             // Fallback: if downloading but connections report 0, assume at least 1 (e.g. single HTTP stream)
@@ -844,11 +869,9 @@ public class Aria2Service : IAria2Service, IDisposable
             connections = 1;
         }
 
-        var split = connections > 0 ? connections : 1;
-        if (split <= 1 && _splitCache.TryGetValue(status.Gid, out var configuredSplit) && configuredSplit > 1)
-        {
-            split = EstimateActiveSplits(configuredSplit, total, completed, taskStatus);
-        }
+        var split = _splitCache.TryGetValue(status.Gid, out var configuredSplit)
+            ? configuredSplit
+            : Math.Max(connections, 1);
 
         return new DownloadTask
         {
@@ -863,6 +886,7 @@ public class Aria2Service : IAria2Service, IDisposable
             Connections = connections,
             Split = split,
             FilePath = filePath,
+            FilePaths = status.Files.Select(file => file.Path).Where(path => !string.IsNullOrWhiteSpace(path)).Distinct().ToList(),
             Url = url
         };
     }
@@ -890,19 +914,6 @@ public class Aria2Service : IAria2Service, IDisposable
             {
             }
         }
-    }
-
-    private static int EstimateActiveSplits(int configuredSplit, long total, long completed, string taskStatus)
-    {
-        if (taskStatus != "StatusDownloading") return 1;
-        if (configuredSplit <= 1) return 1;
-        if (total <= 0) return configuredSplit;
-
-        var remaining = Math.Max(0, total - completed);
-        if (remaining <= 0) return 1;
-
-        var remainingSplits = (int)Math.Ceiling(remaining / (double)MinSplitSizeBytes);
-        return Math.Clamp(remainingSplits, 1, configuredSplit);
     }
 
     private string FormatSpeed(long bytesPerSec)

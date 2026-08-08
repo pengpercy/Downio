@@ -85,8 +85,6 @@ public class JsonRpcClient
         try
         {
             var response = await _httpClient.PostAsync(_rpcUrl, content).ConfigureAwait(false);
-            response.EnsureSuccessStatusCode();
-
             var responseJson = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
             using var doc = JsonDocument.Parse(responseJson);
             
@@ -94,8 +92,10 @@ public class JsonRpcClient
             {
                 var code = error.GetProperty("code").GetInt32();
                 var message = error.GetProperty("message").GetString();
-                throw new Exception($"Aria2 RPC Error {code}: {message}");
+                throw new Aria2RpcException(code, message ?? "Unknown aria2 RPC error.");
             }
+
+            response.EnsureSuccessStatusCode();
 
             if (doc.RootElement.TryGetProperty("result", out var result))
             {
@@ -134,4 +134,11 @@ public class JsonRpcClient
             throw;
         }
     }
+}
+
+public sealed class Aria2RpcException(int code, string message)
+    : Exception($"Aria2 RPC Error {code}: {message}")
+{
+    public int Code { get; } = code;
+    public string RpcMessage { get; } = message;
 }

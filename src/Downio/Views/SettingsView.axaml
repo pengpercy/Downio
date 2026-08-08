@@ -81,7 +81,7 @@
 
                     <StackPanel Spacing="8">
                         <TextBlock Text="{DynamicResource LabelDefaultDownloadSplit}" FontWeight="Medium"/>
-                        <NumericUpDown Value="{Binding DefaultDownloadSplit}" Minimum="1" Maximum="32" FormatString="0" HorizontalAlignment="Left" Width="120"/>
+                        <NumericUpDown Value="{Binding DefaultDownloadSplit}" Minimum="1" Maximum="16" FormatString="0" HorizontalAlignment="Left" Width="120"/>
                     </StackPanel>
                 </StackPanel>
             </Border>

@@ -80,7 +80,7 @@
 
                         <StackPanel Grid.Row="0" Grid.Column="1" Spacing="8">
                             <TextBlock Text="{DynamicResource LabelChunks}" Opacity="0.7"/>
-                            <NumericUpDown Value="{Binding NewTaskChunks}" Minimum="1" Maximum="32" FormatString="0"/>
+                            <NumericUpDown Value="{Binding NewTaskChunks}" Minimum="1" Maximum="16" FormatString="0"/>
                         </StackPanel>
                     </Grid>
 

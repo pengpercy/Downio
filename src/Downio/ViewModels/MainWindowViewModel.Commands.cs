@@ -496,10 +496,11 @@ public partial class MainWindowViewModel
             Status = "StatusWaiting",
             Speed = "0 B/s",
             TimeLeft = "--",
-            Split = Math.Clamp(split, 1, 32),
+            Split = Math.Clamp(split, 1, 16),
             Connections = 0,
             Url = url,
-            FilePath = string.IsNullOrWhiteSpace(name) ? string.Empty : Path.Combine(savePath, name)
+            FilePath = string.IsNullOrWhiteSpace(name) ? string.Empty : Path.Combine(savePath, name),
+            FilePaths = string.IsNullOrWhiteSpace(name) ? [] : [Path.Combine(savePath, name)]
         });
     }
 
@@ -842,32 +843,33 @@ public partial class MainWindowViewModel
 
         if (!result) return;
 
-        await _aria2Service.RemoveAsync(task.Id);
-
-        if (dialog.DeleteFile && !string.IsNullOrEmpty(task.FilePath))
+        var removeSucceeded = true;
+        try
         {
-            try
-            {
-                if (File.Exists(task.FilePath))
-                {
-                    File.Delete(task.FilePath);
-                }
-                var aria2File = task.FilePath + ".aria2";
-                if (File.Exists(aria2File))
-                {
-                    File.Delete(aria2File);
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Failed to delete file: {ex.Message}");
-                AppLog.Error(ex, $"Failed to delete file for task: {task.Name} ({task.Id})");
-            }
+            await _aria2Service.RemoveAsync(task.Id);
+        }
+        catch (Exception ex)
+        {
+            removeSucceeded = false;
+            AppLog.Error(ex, $"Failed to remove task: {task.Name} ({task.Id})");
         }
 
+        var fileDeleteSucceeded = !dialog.DeleteFile || TryDeleteTaskFiles(task);
+
         await RefreshTaskListAsync();
-        var message = task.Name + (dialog.DeleteFile ? GetString("NotificationAlsoDeletedFile") : string.Empty);
-        _notificationService.ShowNotification(GetString("NotificationTaskDeleted"), message, ToastType.Success);
+        if (!removeSucceeded)
+        {
+            _notificationService.ShowNotification(GetString("StatusError"), GetString("MessageTaskDeleteFailed"), ToastType.Error);
+        }
+        else if (!fileDeleteSucceeded)
+        {
+            _notificationService.ShowNotification(GetString("StatusError"), GetString("MessageFileDeleteFailed"), ToastType.Error);
+        }
+        else
+        {
+            var message = task.Name + (dialog.DeleteFile ? GetString("NotificationAlsoDeletedFile") : string.Empty);
+            _notificationService.ShowNotification(GetString("NotificationTaskDeleted"), message, ToastType.Success);
+        }
     }
 
     [RelayCommand]

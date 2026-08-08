@@ -217,26 +217,38 @@ public partial class MainWindowViewModel : ViewModelBase
                 
                 if (result)
                 {
+                    var removeFailed = false;
+                    var fileDeleteFailed = false;
                     foreach (var task in tasksToDelete)
                     {
-                        await _aria2Service.RemoveAsync(task.Id);
-                        
-                        if (dialog.DeleteFile && !string.IsNullOrEmpty(task.FilePath))
+                        try
                         {
-                            try
-                            {
-                                if (File.Exists(task.FilePath)) File.Delete(task.FilePath);
-                                var aria2File = task.FilePath + ".aria2";
-                                if (File.Exists(aria2File)) File.Delete(aria2File);
-                            }
-                            catch { /* Ignore delete errors */ }
+                            await _aria2Service.RemoveAsync(task.Id);
+                        }
+                        catch (Exception ex)
+                        {
+                            removeFailed = true;
+                            AppLog.Error(ex, $"Failed to remove task: {task.Name} ({task.Id})");
+                        }
+
+                        if (dialog.DeleteFile && !TryDeleteTaskFiles(task))
+                        {
+                            fileDeleteFailed = true;
                         }
                     }
                     
                     SelectedTask = null;
                     await RefreshTaskListAsync();
                     
-                    if (tasksToDelete.Count == 1)
+                    if (removeFailed)
+                    {
+                        _notificationService.ShowNotification(GetString("StatusError"), GetString("MessageTaskDeleteFailed"), ToastType.Error);
+                    }
+                    else if (fileDeleteFailed)
+                    {
+                        _notificationService.ShowNotification(GetString("StatusError"), GetString("MessageFileDeleteFailed"), ToastType.Error);
+                    }
+                    else if (tasksToDelete.Count == 1)
                     {
                         var msg = tasksToDelete[0].Name + (dialog.DeleteFile ? GetString("NotificationAlsoDeletedFile") : string.Empty);
                         _notificationService.ShowNotification(GetString("NotificationTaskDeleted"), msg, ToastType.Success);
@@ -252,6 +264,32 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     private bool CanDeleteSelectedTasks() => SelectedTasks.Count > 0;
+
+    private static bool TryDeleteTaskFiles(DownloadTask task)
+    {
+        var paths = task.FilePaths
+            .Append(task.FilePath)
+            .Where(path => !string.IsNullOrWhiteSpace(path))
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+
+        var succeeded = true;
+        foreach (var path in paths)
+        {
+            try
+            {
+                if (File.Exists(path)) File.Delete(path);
+                if (File.Exists(path + ".aria2")) File.Delete(path + ".aria2");
+            }
+            catch (Exception ex)
+            {
+                succeeded = false;
+                AppLog.Error(ex, $"Failed to delete local file for task {task.Name}: {path}");
+            }
+        }
+
+        return succeeded;
+    }
 
     [RelayCommand]
     public async Task RefreshTasks()
@@ -1411,7 +1449,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
     partial void OnDefaultDownloadSplitChanged(int value)
     {
-        var normalized = Math.Clamp(value, 1, 32);
+        var normalized = Math.Clamp(value, 1, 16);
         if (normalized != value)
         {
             DefaultDownloadSplit = normalized;

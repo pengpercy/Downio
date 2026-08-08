@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.79-beta.4 - 2026-08-08
+
+- Fixed local files not being deleted when aria2 reported that a task GID was already gone.
+- Added deletion support for every file in multi-file downloads and truthful failure notifications.
+- Corrected split limits and inferred active HTTP connections when aria2-next omits `numConnections`.
+
 ## 1.0.79-beta.3 - 2026-08-08
 
 - Fixed the macOS download engine not starting because bundled content is stored under `Contents/Resources`.
