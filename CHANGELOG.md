@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.79-beta.6 - 2026-08-08
+
+- Restored native macOS system notifications when tasks are added or deleted, including a compatibility fallback when modern notification authorization is unavailable.
+- Added a Rider macOS debug configuration and pinned the compatible .NET SDK/workload set for Xcode 26.3.
+- Ensured aria2 exits with the debug host so repeated debugging does not leave its RPC port occupied.
+
 ## 1.0.79-beta.5 - 2026-08-08
 
 - Fixed deleted tasks reappearing after refresh by clearing aria2's stopped download result after removing an active task.
