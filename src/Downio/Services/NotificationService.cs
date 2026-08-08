@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using Avalonia;
 using Downio.Models;
 using Downio.Services.Notifications;
@@ -13,7 +14,13 @@ public class NotificationService
 
     public static void InitializePlatformIntegration()
     {
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+        {
+#if MACOS
+            MacSystemNotification.Initialize();
+#endif
+        }
+        else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
 #if WINDOWS
             WindowsSystemNotification.Initialize();
@@ -83,13 +90,28 @@ public class NotificationService
     // --- MacOS 实现 ---
     private static void ShowMacNotification(string title, string message)
     {
-        if (MacSystemNotification.TryShow(title, message))
-        {
-            return;
-        }
+#if MACOS
+        _ = ShowMacNotificationAsync(title, message);
+#endif
+    }
 
-        string script = $"display notification {EscapeAppleScriptString(message)} with title {EscapeAppleScriptString(title)}";
-        RunProcess("/usr/bin/osascript", $"-e {EscapeForArgs(script)}");
+    private static async Task ShowMacNotificationAsync(string title, string message)
+    {
+#if MACOS
+        try
+        {
+            if (!await MacSystemNotification.TryShowAsync(title, message).ConfigureAwait(false))
+            {
+                AppLog.Warn("macOS system notification permission was not granted.");
+            }
+        }
+        catch (Exception ex)
+        {
+            AppLog.Error(ex, "Failed to show macOS system notification");
+        }
+#else
+        await Task.CompletedTask;
+#endif
     }
 
     // --- Linux 实现 ---
@@ -122,18 +144,6 @@ public class NotificationService
         // 简单的单引号/双引号转义，防止 PowerShell/Bash 语法错误
         // 这里主要针对 PowerShell 的单引号包裹逻辑进行转义
         return input.Replace("'", "''").Replace("\"", "\\\"");
-    }
-
-    private static string EscapeAppleScriptString(string value)
-    {
-        value ??= string.Empty;
-        return "\"" + value.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
-    }
-
-    private static string EscapeForArgs(string value)
-    {
-        value ??= string.Empty;
-        return "\"" + value.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
     }
 
     private static string PathCombineSafe(params string[] parts) =>

@@ -1,89 +1,108 @@
 using System;
-using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
+using System.Threading;
+using System.Threading.Tasks;
+
+#if MACOS
+using UserNotifications;
+#endif
 
 namespace Downio.Services.Notifications;
 
+#if MACOS
+[SupportedOSPlatform("macos12.0")]
+#endif
 public static class MacSystemNotification
 {
-    public static bool TryShow(string title, string message)
+#if MACOS
+    private static readonly SemaphoreSlim AuthorizationGate = new(1, 1);
+    private static readonly NotificationCenterDelegate NotificationDelegate = new();
+#endif
+
+    public static void Initialize()
+    {
+#if MACOS
+        UNUserNotificationCenter.Current.Delegate = NotificationDelegate;
+#endif
+    }
+
+    public static async Task<bool> TryShowAsync(string title, string message)
     {
 #if !MACOS
+        await Task.CompletedTask;
         return false;
 #else
-        try
-        {
-            var nsUserNotificationCenterClass = ObjC.GetClass("NSUserNotificationCenter");
-            var defaultCenterSel = ObjC.GetSelector("defaultUserNotificationCenter");
-            var center = ObjC.SendIntPtr(nsUserNotificationCenterClass, defaultCenterSel);
-            if (center == IntPtr.Zero) return false;
+        var center = UNUserNotificationCenter.Current;
+        center.Delegate = NotificationDelegate;
 
-            var nsUserNotificationClass = ObjC.GetClass("NSUserNotification");
-            var allocSel = ObjC.GetSelector("alloc");
-            var initSel = ObjC.GetSelector("init");
-            var notification = ObjC.SendIntPtr(ObjC.SendIntPtr(nsUserNotificationClass, allocSel), initSel);
-            if (notification == IntPtr.Zero) return false;
-
-            var setTitleSel = ObjC.GetSelector("setTitle:");
-            var setInformativeTextSel = ObjC.GetSelector("setInformativeText:");
-            ObjC.SendVoid_IntPtr(notification, setTitleSel, ObjC.CreateNSString(title));
-            ObjC.SendVoid_IntPtr(notification, setInformativeTextSel, ObjC.CreateNSString(message));
-
-            var deliverSel = ObjC.GetSelector("deliverNotification:");
-            ObjC.SendVoid_IntPtr(center, deliverSel, notification);
-
-            return true;
-        }
-        catch
+        if (!await EnsureAuthorizationAsync(center).ConfigureAwait(false))
         {
             return false;
         }
+
+        using var content = new UNMutableNotificationContent
+        {
+            Title = title ?? string.Empty,
+            Body = message ?? string.Empty,
+            Sound = UNNotificationSound.Default
+        };
+        using var request = UNNotificationRequest.FromIdentifier(
+            Guid.NewGuid().ToString("N"),
+            content,
+            trigger: null);
+
+        await center.AddNotificationRequestAsync(request).ConfigureAwait(false);
+        return true;
 #endif
     }
 
 #if MACOS
-    private static class ObjC
+    private static async Task<bool> EnsureAuthorizationAsync(UNUserNotificationCenter center)
     {
-        private const string LibObjC = "/usr/lib/libobjc.A.dylib";
-
-        [DllImport(LibObjC)]
-        private static extern IntPtr objc_getClass(string name);
-
-        [DllImport(LibObjC)]
-        private static extern IntPtr sel_registerName(string name);
-
-        [DllImport(LibObjC, EntryPoint = "objc_msgSend")]
-        private static extern IntPtr objc_msgSend(IntPtr receiver, IntPtr selector);
-
-        [DllImport(LibObjC, EntryPoint = "objc_msgSend")]
-        private static extern IntPtr objc_msgSend_IntPtr(IntPtr receiver, IntPtr selector, IntPtr arg1);
-
-        [DllImport(LibObjC, EntryPoint = "objc_msgSend")]
-        private static extern void objc_msgSend_Void_IntPtr(IntPtr receiver, IntPtr selector, IntPtr arg1);
-
-        public static IntPtr GetClass(string name) => objc_getClass(name);
-
-        public static IntPtr GetSelector(string name) => sel_registerName(name);
-
-        public static IntPtr SendIntPtr(IntPtr receiver, IntPtr selector) => objc_msgSend(receiver, selector);
-
-        public static void SendVoid_IntPtr(IntPtr receiver, IntPtr selector, IntPtr arg1) =>
-            objc_msgSend_Void_IntPtr(receiver, selector, arg1);
-
-        public static IntPtr CreateNSString(string value)
+        await AuthorizationGate.WaitAsync().ConfigureAwait(false);
+        try
         {
-            value ??= string.Empty;
+            var settings = await center.GetNotificationSettingsAsync().ConfigureAwait(false);
+            switch (settings.AuthorizationStatus)
+            {
+                case UNAuthorizationStatus.Authorized:
+                case UNAuthorizationStatus.Provisional:
+                    return true;
+                case UNAuthorizationStatus.Denied:
+                    return false;
+                case UNAuthorizationStatus.NotDetermined:
+                    return await RequestAuthorizationAsync(center).ConfigureAwait(false);
+                default:
+                    return false;
+            }
+        }
+        finally
+        {
+            AuthorizationGate.Release();
+        }
+    }
 
-            var nsStringClass = GetClass("NSString");
-            var stringWithUtf8Sel = GetSelector("stringWithUTF8String:");
-            var utf8Bytes = System.Text.Encoding.UTF8.GetBytes(value + "\0");
+    private static async Task<bool> RequestAuthorizationAsync(UNUserNotificationCenter center)
+    {
+        var result = await center.RequestAuthorizationAsync(
+                UNAuthorizationOptions.Alert | UNAuthorizationOptions.Sound)
+            .ConfigureAwait(false);
 
-            var ptr = Marshal.AllocHGlobal(utf8Bytes.Length);
-            Marshal.Copy(utf8Bytes, 0, ptr, utf8Bytes.Length);
-            var nsString = objc_msgSend_IntPtr(nsStringClass, stringWithUtf8Sel, ptr);
-            Marshal.FreeHGlobal(ptr);
-            return nsString;
+        return result.Item1 && result.Item2 is null;
+    }
+
+    private sealed class NotificationCenterDelegate : UNUserNotificationCenterDelegate
+    {
+        public override void WillPresentNotification(
+            UNUserNotificationCenter center,
+            UNNotification notification,
+            Action<UNNotificationPresentationOptions> completionHandler)
+        {
+            completionHandler(
+                UNNotificationPresentationOptions.Banner |
+                UNNotificationPresentationOptions.List |
+                UNNotificationPresentationOptions.Sound);
         }
     }
 #endif
 }
-

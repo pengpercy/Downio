@@ -8,10 +8,9 @@ public static class AppVersionProvider
 {
     public static string GetCurrentVersion()
     {
-        if (!string.IsNullOrWhiteSpace(BuildInfo.Version) &&
-            Version.TryParse(BuildInfo.Version.TrimStart('v'), out var generated))
+        if (!string.IsNullOrWhiteSpace(BuildInfo.Version))
         {
-            return generated.ToString();
+            return NormalizeVersion(BuildInfo.Version);
         }
 
         var assembly = typeof(AppVersionProvider).Assembly;
@@ -21,11 +20,7 @@ public static class AppVersionProvider
 
         if (!string.IsNullOrWhiteSpace(info))
         {
-            var versionPart = info.Split('+', 2)[0];
-            if (Version.TryParse(versionPart.TrimStart('v'), out var parsed))
-            {
-                return parsed.ToString();
-            }
+            return NormalizeVersion(info);
         }
 
         var nameVersion = assembly.GetName().Version;
@@ -36,4 +31,7 @@ public static class AppVersionProvider
 
         return "0.0.0";
     }
+
+    private static string NormalizeVersion(string version) =>
+        version.Trim().TrimStart('v', 'V').Split('+', 2)[0];
 }

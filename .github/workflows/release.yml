@@ -66,7 +66,17 @@ jobs:
           VERSION: ${{ needs.version.outputs.version }}
           RELEASE_NOTES_FILE: ${{ steps.release_notes.outputs.file }}
         run: |
-          gh release create "$TAG" -t "$VERSION" -F "$RELEASE_NOTES_FILE" || gh release edit "$TAG" -t "$VERSION" -F "$RELEASE_NOTES_FILE"
+          if [[ "$VERSION" == *-* ]]; then
+            RELEASE_TYPE_ARGS=(--prerelease --latest=false)
+          else
+            RELEASE_TYPE_ARGS=(--latest)
+          fi
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release edit "$TAG" -t "$VERSION" -F "$RELEASE_NOTES_FILE" "${RELEASE_TYPE_ARGS[@]}"
+          else
+            gh release create "$TAG" -t "$VERSION" -F "$RELEASE_NOTES_FILE" "${RELEASE_TYPE_ARGS[@]}"
+          fi
       - name: Download artifacts
         uses: actions/download-artifact@v7
         with:

@@ -16,6 +16,7 @@ public class AppSettings
     public string ProxyUsername { get; set; } = string.Empty;
     public string ProxyPassword { get; set; } = string.Empty;
     public bool AutoInstallUpdates { get; set; } = false;
+    public UpdateChannel UpdateChannel { get; set; } = UpdateChannel.Stable;
     public string SkipVersion { get; set; } = string.Empty;
 
     // Advanced Settings

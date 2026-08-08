@@ -6,7 +6,7 @@ RID=$1
 VERSION=$2
 OUTPUT_DIR=$3
 APP_NAME="Downio"
-PUBLISH_DIR="src/Downio/bin/Release/net10.0/$RID/publish"
+PUBLISH_DIR="src/Downio/bin/Release/net10.0-macos/$RID/publish"
 
 if [ -z "$RID" ] || [ -z "$VERSION" ] || [ -z "$OUTPUT_DIR" ]; then
     echo "Usage: ./package_osx.sh <runtime_id> <version> <output_dir>"
@@ -43,7 +43,11 @@ chmod +x "$MACOS/aria2c"
 
 # Create Info.plist
 echo "Creating Info.plist..."
-sed "s/Downio_VERSION/$VERSION/g" build/resources/app/App.plist > "$CONTENTS/Info.plist"
+BUNDLE_SHORT_VERSION="${VERSION%%-*}"
+BUNDLE_BUILD_VERSION="${GITHUB_RUN_NUMBER:-$BUNDLE_SHORT_VERSION}"
+sed -e "s/Downio_VERSION/$BUNDLE_SHORT_VERSION/g" \
+    -e "s/Downio_BUILD_VERSION/$BUNDLE_BUILD_VERSION/g" \
+    build/resources/app/App.plist > "$CONTENTS/Info.plist"
 find build/resources/app -maxdepth 1 -type d -name "*.lproj" -exec cp -R {} "$RESOURCES/" \;
 
 # Generate .icns from PNG if available

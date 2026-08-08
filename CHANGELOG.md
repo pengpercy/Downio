@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.79-beta.1 - 2026-08-08
+
+- Added selectable stable and beta update channels, with beta users receiving both prerelease and stable updates.
+- Added semantic prerelease version comparison and GitHub Actions prerelease publishing based on version tags.
+- Targeted the native .NET 10 macOS workload and replaced legacy notification interop with `UNUserNotificationCenter`.
+- Updated macOS packaging metadata and CI workload setup for `net10.0-macos`.
+
 ## 1.0.78 - 2026-08-08
 
 - Replaced the bundled downloader with aria2-next 2.5.5 and added native ED2K support for search, direct links, network bootstrap data, and configurable engine/search settings.

@@ -179,6 +179,9 @@
     <x:String x:Key="ButtonRemindLater">Remind Me Later</x:String>
     <x:String x:Key="ButtonInstallUpdate">Install Update</x:String>
     <x:String x:Key="LabelAutoUpdate">Automatically download and install updates in the future</x:String>
+    <x:String x:Key="LabelUpdateChannel">Update channel</x:String>
+    <x:String x:Key="UpdateChannelStable">Stable</x:String>
+    <x:String x:Key="UpdateChannelBeta">Beta (includes stable releases)</x:String>
     <x:String x:Key="LabelSwitchOn">On</x:String>
     <x:String x:Key="LabelSwitchOff">Off</x:String>
     <x:String x:Key="UpdateStatusPreparing">Preparing...</x:String>

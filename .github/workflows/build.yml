@@ -47,6 +47,10 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
+      - name: Install macOS workload
+        if: startsWith(matrix.runtime, 'osx-')
+        run: dotnet workload install macos
+
       - name: Configure arm64 packages
         if: matrix.runtime == 'linux-arm64'
         run: |

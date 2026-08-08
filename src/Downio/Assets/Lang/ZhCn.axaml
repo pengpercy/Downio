@@ -179,6 +179,9 @@
     <x:String x:Key="ButtonRemindLater">稍后提醒我</x:String>
     <x:String x:Key="ButtonInstallUpdate">安装更新</x:String>
     <x:String x:Key="LabelAutoUpdate">以后自动下载并安装更新</x:String>
+    <x:String x:Key="LabelUpdateChannel">更新通道</x:String>
+    <x:String x:Key="UpdateChannelStable">正式版</x:String>
+    <x:String x:Key="UpdateChannelBeta">测试版（包含正式版）</x:String>
     <x:String x:Key="LabelSwitchOn">开启</x:String>
     <x:String x:Key="LabelSwitchOff">关闭</x:String>
     <x:String x:Key="UpdateStatusPreparing">正在准备...</x:String>

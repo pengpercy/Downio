@@ -829,6 +829,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
             IsAutoStartEnabled = _settingsService.Settings.AutoStart;
             IsAutoInstallUpdatesEnabled = _settingsService.Settings.AutoInstallUpdates;
+            SelectedUpdateChannel = UpdateChannelOptions.First(option => option.Value == _settingsService.Settings.UpdateChannel);
             IsExitOnClose = _settingsService.Settings.ExitOnClose;
 
             var savedAccentMode = _settingsService.Settings.AccentMode;
@@ -908,6 +909,7 @@ public partial class MainWindowViewModel : ViewModelBase
     public record ThemeOption(string Key, string Value);
     public record LanguageOption(string Key, string Value);
     public record AccentModeOption(string Key, string Value);
+    public record UpdateChannelOption(string Key, UpdateChannel Value);
 
     public ObservableCollection<ThemeOption> ThemeOptions { get; } =
     [
@@ -927,6 +929,12 @@ public partial class MainWindowViewModel : ViewModelBase
     [
         new("LabelFollowSystem", "System"),
         new("LabelCustomAccent", "Custom")
+    ];
+
+    public ObservableCollection<UpdateChannelOption> UpdateChannelOptions { get; } =
+    [
+        new("UpdateChannelStable", UpdateChannel.Stable),
+        new("UpdateChannelBeta", UpdateChannel.Beta)
     ];
 
     [ObservableProperty]
@@ -954,6 +962,18 @@ public partial class MainWindowViewModel : ViewModelBase
     partial void OnIsAutoInstallUpdatesEnabledChanged(bool value)
     {
         _settingsService.Settings.AutoInstallUpdates = value;
+        _settingsService.Save();
+    }
+
+    [ObservableProperty]
+    private UpdateChannelOption? _selectedUpdateChannel;
+
+    partial void OnSelectedUpdateChannelChanged(UpdateChannelOption? value)
+    {
+        if (value is null) return;
+
+        _settingsService.Settings.UpdateChannel = value.Value;
+        _settingsService.Settings.SkipVersion = string.Empty;
         _settingsService.Save();
     }
 
@@ -1094,6 +1114,12 @@ public partial class MainWindowViewModel : ViewModelBase
         }
         SelectedLanguage = currentLang;
 
+        var currentUpdateChannel = SelectedUpdateChannel;
+        var updateChannels = UpdateChannelOptions.ToList();
+        UpdateChannelOptions.Clear();
+        foreach (var updateChannel in updateChannels) UpdateChannelOptions.Add(updateChannel);
+        SelectedUpdateChannel = currentUpdateChannel;
+
         // Converter-based labels do not observe resource dictionary changes,
         // so recreate their item containers after switching languages.
         var selectedFileType = SelectedEd2kFileType;
@@ -1148,6 +1174,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
         IsAutoStartEnabled = _settingsService.Settings.AutoStart;
         IsAutoInstallUpdatesEnabled = _settingsService.Settings.AutoInstallUpdates;
+        SelectedUpdateChannel = UpdateChannelOptions.First(option => option.Value == _settingsService.Settings.UpdateChannel);
         IsExitOnClose = _settingsService.Settings.ExitOnClose;
 
         var savedAccentMode = _settingsService.Settings.AccentMode;
