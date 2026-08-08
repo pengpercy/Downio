@@ -1,0 +1,11 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Downio macOS Debug" type="XamarinMacProject" factoryName="Xamarin.Mac">
+    <option name="PROJECT_PATH" value="$PROJECT_DIR$/src/Downio/Downio.csproj" />
+    <option name="PROGRAM_PARAMETERS" value="" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/src/Downio" />
+    <option name="PASS_PARENT_ENVS_MAC" value="1" />
+    <method v="2">
+      <option name="Build" />
+    </method>
+  </configuration>
+</component>
