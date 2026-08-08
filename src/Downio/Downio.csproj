@@ -10,6 +10,7 @@
         <TargetFramework Condition="'$(IsWindowsTarget)' != 'true' and '$(IsMacOSTarget)' == 'true'">net10.0-macos</TargetFramework>
         <TargetFramework Condition="'$(IsWindowsTarget)' != 'true' and '$(IsMacOSTarget)' != 'true'">net10.0</TargetFramework>
         <OutputType Condition="'$(IsMacOSTarget)' == 'true'">Exe</OutputType>
+        <ApplicationId Condition="'$(IsMacOSTarget)' == 'true'">com.Downio.app</ApplicationId>
         <EnableWindowsTargeting Condition="'$(IsWindowsTarget)' == 'true'">true</EnableWindowsTargeting>
         <Nullable>enable</Nullable>
         <SuppressTrimAnalysisWarnings>false</SuppressTrimAnalysisWarnings>
