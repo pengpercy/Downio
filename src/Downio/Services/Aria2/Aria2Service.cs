@@ -717,29 +717,61 @@ public class Aria2Service : IAria2Service, IDisposable
     public async Task RemoveAsync(string gid)
     {
         if (_rpcClient == null) return;
-        // If active/waiting -> remove
-        // If stopped/error -> removeDownloadResult
-        
-        try 
+
+        // aria2.remove only moves an active task to the stopped results. The task
+        // must subsequently be removed from those results or it will reappear on
+        // the next tellStopped refresh.
+        var removedActiveTask = false;
+        Exception? removeFailure = null;
+        try
         {
-             await _rpcClient.InvokeAsync<string>("remove", gid);
+            await _rpcClient.InvokeAsync<string>("forceRemove", gid).ConfigureAwait(false);
+            removedActiveTask = true;
         }
         catch (Aria2RpcException ex) when (IsGidNotFound(ex))
         {
-            return;
+            // Completed/error/removed tasks are no longer in the active queue,
+            // but can still be present in the stopped results below.
         }
         catch (Exception ex)
         {
-            AppLog.Error(ex, $"Failed to remove task via aria2.remove, fallback to removeDownloadResult: {gid}");
-            // Try removeDownloadResult if remove fails (e.g. task is complete/error)
+            removeFailure = ex;
+            AppLog.Warn($"Failed to stop task before clearing its result ({gid}): {ex.Message}");
+        }
+
+        // The transition from active to stopped can take a short moment. Retry
+        // cleanup so a successful forceRemove cannot leave a visible result.
+        for (var attempt = 0; attempt < 10; attempt++)
+        {
             try
             {
-                await _rpcClient.InvokeAsync<string>("removeDownloadResult", gid);
-            }
-            catch (Aria2RpcException fallbackEx) when (IsGidNotFound(fallbackEx))
-            {
+                await _rpcClient.InvokeAsync<string>("removeDownloadResult", gid).ConfigureAwait(false);
+                _splitCache.TryRemove(gid, out _);
                 return;
             }
+            catch (Aria2RpcException ex) when (IsGidNotFound(ex))
+            {
+                if (!removedActiveTask)
+                {
+                    if (removeFailure != null) throw removeFailure;
+                    _splitCache.TryRemove(gid, out _);
+                    return;
+                }
+
+                if (attempt == 9)
+                {
+                    // It is already absent from both active and stopped results.
+                    _splitCache.TryRemove(gid, out _);
+                    return;
+                }
+            }
+            catch when (attempt < 9)
+            {
+                // aria2 may briefly reject removeDownloadResult while it moves
+                // the forcibly removed task into the stopped result list.
+            }
+
+            await Task.Delay(100).ConfigureAwait(false);
         }
     }
 

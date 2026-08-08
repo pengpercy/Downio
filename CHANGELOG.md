@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.79-beta.5 - 2026-08-08
+
+- Fixed deleted tasks reappearing after refresh by clearing aria2's stopped download result after removing an active task.
+- Removed successfully deleted tasks from the list immediately and cleared stale selection state.
+- Throttled single-instance listener retries to prevent runaway warning logs on macOS.
+
 ## 1.0.79-beta.4 - 2026-08-08
 
 - Fixed local files not being deleted when aria2 reported that a task GID was already gone.

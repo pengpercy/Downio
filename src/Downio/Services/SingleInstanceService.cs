@@ -113,6 +113,14 @@ public sealed class SingleInstanceService : IDisposable
             catch (Exception ex)
             {
                 AppLog.Warn($"Single instance listener failed: {ex.Message}");
+                try
+                {
+                    await Task.Delay(500, _cts.Token).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    return;
+                }
             }
         }
     }

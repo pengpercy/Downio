@@ -224,6 +224,8 @@ public partial class MainWindowViewModel : ViewModelBase
                         try
                         {
                             await _aria2Service.RemoveAsync(task.Id);
+                            Tasks.Remove(task);
+                            _lastStatusByGid.Remove(task.Id);
                         }
                         catch (Exception ex)
                         {
@@ -238,6 +240,7 @@ public partial class MainWindowViewModel : ViewModelBase
                     }
                     
                     SelectedTask = null;
+                    UpdateSelectedTasks([]);
                     await RefreshTaskListAsync();
                     
                     if (removeFailed)
