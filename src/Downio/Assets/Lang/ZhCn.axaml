@@ -132,6 +132,8 @@
     <x:String x:Key="NotificationDownloadComplete">下载完成</x:String>
     <x:String x:Key="NotificationDownloadFailed">下载失败</x:String>
     <x:String x:Key="MessageAddTaskFailed">无法添加下载任务，请确认下载引擎已正常启动。</x:String>
+    <x:String x:Key="NotificationTaskAdded">任务已添加</x:String>
+    <x:String x:Key="NotificationTasksAdded">已添加 {0} 个任务</x:String>
     <x:String x:Key="NotificationTaskDeleted">任务已删除</x:String>
     <x:String x:Key="NotificationTasksDeleted">已删除 {0} 个任务</x:String>
     <x:String x:Key="NotificationAlsoDeletedFile">（同时删除了本地文件）</x:String>

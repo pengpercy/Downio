@@ -132,6 +132,8 @@
     <x:String x:Key="NotificationDownloadComplete">Download Complete</x:String>
     <x:String x:Key="NotificationDownloadFailed">Download Failed</x:String>
     <x:String x:Key="MessageAddTaskFailed">Could not add the download. Make sure the download engine is running.</x:String>
+    <x:String x:Key="NotificationTaskAdded">Task Added</x:String>
+    <x:String x:Key="NotificationTasksAdded">Added {0} tasks</x:String>
     <x:String x:Key="NotificationTaskDeleted">Task Deleted</x:String>
     <x:String x:Key="NotificationTasksDeleted">Deleted {0} tasks</x:String>
     <x:String x:Key="NotificationAlsoDeletedFile"> (Also deleted local file)</x:String>

@@ -373,6 +373,7 @@ public partial class MainWindowViewModel
     public async Task StartDownload()
     {
         LastAddTaskSucceeded = false;
+        var addedTaskNames = new List<string>();
         bool isTorrent = NewTaskInputModeIndex == 1;
         if (!isTorrent && string.IsNullOrWhiteSpace(NewTaskUrl)) return;
         if (isTorrent && string.IsNullOrWhiteSpace(NewTaskTorrentFilePath)) return;
@@ -422,7 +423,9 @@ public partial class MainWindowViewModel
             if (isTorrent)
             {
                 var gid = await _aria2Service.AddTorrentAsync(NewTaskTorrentFilePath, NewTaskSavePath, extraOptions);
-                AddPendingTask(gid, Path.GetFileNameWithoutExtension(NewTaskTorrentFilePath), NewTaskSavePath, string.Empty, NewTaskChunks);
+                var displayName = Path.GetFileNameWithoutExtension(NewTaskTorrentFilePath);
+                AddPendingTask(gid, displayName, NewTaskSavePath, string.Empty, NewTaskChunks);
+                addedTaskNames.Add(displayName);
             }
             else
             {
@@ -447,6 +450,7 @@ public partial class MainWindowViewModel
 
                     var gid = await _aria2Service.AddUriAsync(url, outputName, NewTaskSavePath, NewTaskChunks, extraOptions);
                     AddPendingTask(gid, displayName, NewTaskSavePath, url, NewTaskChunks);
+                    addedTaskNames.Add(string.IsNullOrWhiteSpace(displayName) ? url : displayName);
                 }
             }
 
@@ -468,6 +472,14 @@ public partial class MainWindowViewModel
 
             _ = RefreshTaskListSoonAsync();
             LastAddTaskSucceeded = true;
+
+            var addedMessage = addedTaskNames.Count == 1
+                ? addedTaskNames[0]
+                : string.Format(GetString("NotificationTasksAdded"), addedTaskNames.Count);
+            _notificationService.ShowNotification(
+                GetString("NotificationTaskAdded"),
+                addedMessage,
+                ToastType.Success);
         }
         catch (Exception ex)
         {

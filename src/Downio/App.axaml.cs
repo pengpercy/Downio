@@ -57,6 +57,12 @@ public partial class App : Application
             try
             {
                 InitializeDesktopApplication(desktop);
+#if DEBUG
+                if (desktop.Args?.Contains("--notification-smoke-test", StringComparer.Ordinal) == true)
+                {
+                    new NotificationService().ShowNotification("Downio", "macOS system notification test", Models.ToastType.Info);
+                }
+#endif
             }
             catch (Exception ex)
             {
