@@ -13,7 +13,7 @@
         <ApplicationId Condition="'$(IsMacOSTarget)' == 'true'">com.Downio.app</ApplicationId>
         <EnableWindowsTargeting Condition="'$(IsWindowsTarget)' == 'true'">true</EnableWindowsTargeting>
         <Nullable>enable</Nullable>
-        <SuppressTrimAnalysisWarnings>false</SuppressTrimAnalysisWarnings>
+        <SuppressTrimAnalysisWarnings Condition="'$(Configuration)' != 'Debug'">false</SuppressTrimAnalysisWarnings>
         <TreatAsLocalProperty>PublishAot;DisableAOT</TreatAsLocalProperty>
         <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
         <EnableRequestDelegateGenerator>true</EnableRequestDelegateGenerator>

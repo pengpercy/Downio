@@ -1,0 +1,8 @@
+<Project>
+    <PropertyGroup Condition="'$(Configuration)' == 'Debug' and '$(MSBuildProjectName)' == 'Downio' and ($([MSBuild]::IsOSPlatform('OSX')) or '$(RuntimeIdentifier)' == 'osx-x64' or '$(RuntimeIdentifier)' == 'osx-arm64')">
+        <!-- The macOS SDK reads LinkMode before the project body. Set it here so
+             local Debug builds keep assemblies and PDBs intact for debugging. -->
+        <LinkMode>None</LinkMode>
+        <SuppressTrimAnalysisWarnings>true</SuppressTrimAnalysisWarnings>
+    </PropertyGroup>
+</Project>
