@@ -1,6 +1,6 @@
 Name: Downio
 Version: %_version
-Release: 1
+Release: %_release
 Summary: Open-source Downloader
 License: MIT
 URL: https://github.com/percy/Downio

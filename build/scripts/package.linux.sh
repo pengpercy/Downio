@@ -86,5 +86,15 @@ sed -i -e "s/^Version:.*/Version: $VERSION/" \
 # Build deb package with gzip compression
 dpkg-deb -Zgzip --root-owner-group --build resources/deb "Downio_$VERSION-1_$arch.deb"
 
-rpmbuild -bb --target="$target" resources/rpm/SPECS/build.spec --define "_topdir $(pwd)/resources/rpm" --define "_version $VERSION"
-mv "resources/rpm/RPMS/$target/Downio-$VERSION-1.$target.rpm" ./
+rpm_version="${VERSION%%-*}"
+rpm_release=1
+if [[ "$VERSION" == *-* ]]; then
+    rpm_prerelease="${VERSION#*-}"
+    rpm_release="0.${rpm_prerelease}.1"
+fi
+rpmbuild -bb --target="$target" resources/rpm/SPECS/build.spec \
+    --define "_topdir $(pwd)/resources/rpm" \
+    --define "_version $rpm_version" \
+    --define "_release $rpm_release"
+mv "resources/rpm/RPMS/$target/Downio-$rpm_version-$rpm_release.$target.rpm" \
+    "Downio-$VERSION-1.$target.rpm"
