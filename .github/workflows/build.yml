@@ -15,10 +15,10 @@ jobs:
             os: windows-2022
             runtime: win-arm64
           - name: macOS (Intel)
-            os: macos-15-intel
+            os: macos-26-intel
             runtime: osx-x64
           - name: macOS (Apple Silicon)
-            os: macos-latest
+            os: macos-26
             runtime: osx-arm64
           - name: Linux
             os: ubuntu-latest
