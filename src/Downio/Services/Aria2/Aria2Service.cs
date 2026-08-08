@@ -100,6 +100,7 @@ public class Aria2Service : IAria2Service, IDisposable
             {
                 "--enable-rpc=true",
                 $"--rpc-listen-port={_rpcPort}",
+                $"--stop-with-process={Environment.ProcessId}",
                 "--rpc-allow-origin-all=true",
                 "--rpc-listen-all=true",
                 $"--save-session={sessionFile}",
