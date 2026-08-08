@@ -47,13 +47,15 @@ public partial class AddTaskWindow : DialogWindow
         Close();
     }
 
-    private void OnDownloadClick(object sender, RoutedEventArgs e)
+    private async void OnDownloadClick(object sender, RoutedEventArgs e)
     {
-        // Execute the view model command
         if (_viewModel != null && _viewModel.StartDownloadCommand.CanExecute(null))
         {
-            _viewModel.StartDownloadCommand.Execute(null);
-            Close();
+            await _viewModel.StartDownload();
+            if (_viewModel.LastAddTaskSucceeded)
+            {
+                Close();
+            }
         }
     }
 

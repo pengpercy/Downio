@@ -43,8 +43,8 @@
                     <StackPanel Spacing="6" VerticalAlignment="Center">
                         <TextBlock Text="Downio" FontWeight="Bold" FontSize="22"/>
                         <StackPanel Orientation="Horizontal" Spacing="6" Opacity="0.7">
-                            <TextBlock Text="{DynamicResource LabelVersion}" FontSize="13"/>
-                            <TextBlock Text="{Binding AppVersion}" FontSize="13"/>
+                            <TextBlock Text="{DynamicResource LabelVersion}" FontSize="13" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding AppVersion}" FontSize="13" VerticalAlignment="Center" Margin="0,1,0,-1"/>
                         </StackPanel>
                     </StackPanel>
                 </StackPanel>

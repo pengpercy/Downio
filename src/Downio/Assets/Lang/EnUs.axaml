@@ -131,6 +131,7 @@
     <x:String x:Key="StatusError">Error</x:String>
     <x:String x:Key="NotificationDownloadComplete">Download Complete</x:String>
     <x:String x:Key="NotificationDownloadFailed">Download Failed</x:String>
+    <x:String x:Key="MessageAddTaskFailed">Could not add the download. Make sure the download engine is running.</x:String>
     <x:String x:Key="NotificationTaskDeleted">Task Deleted</x:String>
     <x:String x:Key="NotificationTasksDeleted">Deleted {0} tasks</x:String>
     <x:String x:Key="NotificationAlsoDeletedFile"> (Also deleted local file)</x:String>
@@ -181,7 +182,7 @@
     <x:String x:Key="LabelAutoUpdate">Automatically download and install updates in the future</x:String>
     <x:String x:Key="LabelUpdateChannel">Update channel</x:String>
     <x:String x:Key="UpdateChannelStable">Stable</x:String>
-    <x:String x:Key="UpdateChannelBeta">Beta (includes stable releases)</x:String>
+    <x:String x:Key="UpdateChannelBeta">Beta</x:String>
     <x:String x:Key="LabelSwitchOn">On</x:String>
     <x:String x:Key="LabelSwitchOff">Off</x:String>
     <x:String x:Key="UpdateStatusPreparing">Preparing...</x:String>

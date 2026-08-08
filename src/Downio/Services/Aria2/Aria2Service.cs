@@ -155,7 +155,7 @@ public class Aria2Service : IAria2Service, IDisposable
                 }
             }
 
-            var caBundlePath = Path.Combine(AppContext.BaseDirectory, "Assets", "cacert.pem");
+            var caBundlePath = Path.Combine(GetContentRoot(), "Assets", "cacert.pem");
             if (File.Exists(caBundlePath))
             {
                 args.Add($"--ca-certificate={caBundlePath}");
@@ -233,7 +233,7 @@ public class Aria2Service : IAria2Service, IDisposable
     private void PrepareEd2kBootstrapFiles()
     {
         CleanupStaleEd2kSearchDirectories();
-        var sourceDirectory = Path.Combine(AppContext.BaseDirectory, "Assets", "Ed2k");
+        var sourceDirectory = Path.Combine(GetContentRoot(), "Assets", "Ed2k");
         var targetDirectory = Path.Combine(_configDir, "ed2k");
         Directory.CreateDirectory(targetDirectory);
 
@@ -414,16 +414,24 @@ public class Aria2Service : IAria2Service, IDisposable
 
     private string GetBinaryPath()
     {
-        var basePath = AppContext.BaseDirectory;
         var binaryName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "aria2c.exe" : "aria2c";
-        // AppContext.BaseDirectory resolves to Contents/MacOS inside a macOS app,
-        // the executable directory on Windows, and /opt/Downio in Linux packages.
-        return Path.Combine(basePath, binaryName);
+        return Path.Combine(GetContentRoot(), binaryName);
+    }
+
+    private static string GetContentRoot()
+    {
+        var basePath = AppContext.BaseDirectory;
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) return basePath;
+
+        // The .NET macOS SDK places Content items in Contents/Resources while
+        // AppContext.BaseDirectory points to Contents/MacOS in an app bundle.
+        var resourcesPath = Path.GetFullPath(Path.Combine(basePath, "..", "Resources"));
+        return Directory.Exists(resourcesPath) ? resourcesPath : basePath;
     }
 
     public async Task<string> AddUriAsync(string url, string filename, string savePath, int split = 16, IDictionary<string, string>? extraOptions = null)
     {
-        if (_rpcClient == null) return string.Empty;
+        if (_rpcClient == null) throw new InvalidOperationException("aria2 RPC is not initialized.");
 
         await RefreshEnvironmentProxyAsync().ConfigureAwait(false);
 
@@ -456,13 +464,16 @@ public class Aria2Service : IAria2Service, IDisposable
         {
             _splitCache[gid] = split;
         }
-        return gid ?? string.Empty;
+        return !string.IsNullOrWhiteSpace(gid)
+            ? gid
+            : throw new InvalidOperationException("aria2 did not return a download GID.");
     }
 
     public async Task<string> AddTorrentAsync(string torrentFilePath, string savePath, IDictionary<string, string>? extraOptions = null)
     {
-        if (_rpcClient == null || string.IsNullOrWhiteSpace(torrentFilePath) || !File.Exists(torrentFilePath))
-            return string.Empty;
+        if (_rpcClient == null) throw new InvalidOperationException("aria2 RPC is not initialized.");
+        if (string.IsNullOrWhiteSpace(torrentFilePath) || !File.Exists(torrentFilePath))
+            throw new FileNotFoundException("Torrent file was not found.", torrentFilePath);
 
         try
         {
@@ -489,12 +500,14 @@ public class Aria2Service : IAria2Service, IDisposable
             // Params: [ base64Torrent, [uris], options ]
             // Note: [uris] is usually empty for local torrent files
             var gid = await _rpcClient.InvokeAsync<string>("addTorrent", base64Torrent, Array.Empty<string>(), options);
-            return gid ?? string.Empty;
+            return !string.IsNullOrWhiteSpace(gid)
+                ? gid
+                : throw new InvalidOperationException("aria2 did not return a download GID.");
         }
         catch (Exception ex)
         {
             AppLog.Error(ex, $"Failed to add torrent: {torrentFilePath}");
-            return string.Empty;
+            throw;
         }
     }
 

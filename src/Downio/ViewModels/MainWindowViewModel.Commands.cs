@@ -372,6 +372,7 @@ public partial class MainWindowViewModel
     [RelayCommand]
     public async Task StartDownload()
     {
+        LastAddTaskSucceeded = false;
         bool isTorrent = NewTaskInputModeIndex == 1;
         if (!isTorrent && string.IsNullOrWhiteSpace(NewTaskUrl)) return;
         if (isTorrent && string.IsNullOrWhiteSpace(NewTaskTorrentFilePath)) return;
@@ -466,13 +467,20 @@ public partial class MainWindowViewModel
             }
 
             _ = RefreshTaskListSoonAsync();
+            LastAddTaskSucceeded = true;
         }
         catch (Exception ex)
         {
             Debug.WriteLine($"Add Task Failed: {ex.Message}");
             AppLog.Error(ex, "Add task failed");
+            _notificationService.ShowNotification(
+                GetString("NotificationDownloadFailed"),
+                GetString("MessageAddTaskFailed"),
+                ToastType.Error);
         }
     }
+
+    public bool LastAddTaskSucceeded { get; private set; }
 
     private void AddPendingTask(string gid, string name, string savePath, string url, int split)
     {

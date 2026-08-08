@@ -712,8 +712,8 @@
                                 <StackPanel Spacing="8">
                                     <TextBlock Text="Downio" FontWeight="Bold" FontSize="18"/>
                                     <StackPanel Orientation="Horizontal" Spacing="6" Opacity="0.7">
-                                        <TextBlock Text="{DynamicResource LabelVersion}" FontSize="13"/>
-                                        <TextBlock Text="{Binding AppVersion}" FontSize="13"/>
+                                        <TextBlock Text="{DynamicResource LabelVersion}" FontSize="13" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{Binding AppVersion}" FontSize="13" VerticalAlignment="Center" Margin="0,1,0,-1"/>
                                     </StackPanel>
                                     <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,4,0,0">
                                         <PathIcon Data="{StaticResource IconGitHub}" Width="18" Height="18" Opacity="0.75"/>

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.79-beta.3 - 2026-08-08
+
+- Fixed the macOS download engine not starting because bundled content is stored under `Contents/Resources`.
+- Kept the add-task dialog open and displayed an error notification when a download cannot be added.
+- Simplified the beta update-channel label and visually aligned the version number on About pages.
+
 ## 1.0.79-beta.2 - 2026-08-08
 
 - Fixed macOS binaries incorrectly requiring macOS 26.5 despite the package declaring macOS 12.0.
