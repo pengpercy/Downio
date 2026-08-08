@@ -66,8 +66,6 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y llvm gcc-aarch64-linux-gnu libc6-dev-arm64-cross
-      - name: Build
-        run: dotnet build src/Downio/Downio.csproj -c Release -r ${{ matrix.runtime }}
       - name: Publish
         run: |
           dotnet publish src/Downio/Downio.csproj -c Release -o publish -r ${{ matrix.runtime }} --self-contained -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true

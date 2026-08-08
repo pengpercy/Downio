@@ -58,7 +58,7 @@
     <PropertyGroup Condition="'$(Configuration)' == 'Release' and '$(DisableAOT)' != 'true'">
         <!--AOT相关配置-->
         <PublishAot>true</PublishAot>
-        <TrimMode>full</TrimMode>
+        <TrimMode Condition="'$(IsMacOSTarget)' != 'true'">full</TrimMode>
         <UseAppHost>true</UseAppHost>
         <IsAotCompatible>true</IsAotCompatible>
         <AvaloniaEnableILVerify>true</AvaloniaEnableILVerify>
