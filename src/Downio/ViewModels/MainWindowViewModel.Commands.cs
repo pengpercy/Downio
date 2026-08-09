@@ -886,6 +886,7 @@ public partial class MainWindowViewModel
         if (_isShuttingDown) return;
         _isShuttingDown = true;
         _ed2kSearchCancellation?.Cancel();
+        _taskbarBadgeService.Dispose();
 
         try
         {

@@ -7,6 +7,7 @@ using System;
 using System.Linq;
 using Avalonia.Markup.Xaml;
 using Downio.Services;
+using Downio.Services.TaskbarBadge;
 using Downio.ViewModels;
 using Downio.Views;
 
@@ -70,7 +71,8 @@ public partial class App : Application
 
     private void InitializeDesktopApplication(IClassicDesktopStyleApplicationLifetime desktop)
     {
-        var viewModel = new MainWindowViewModel();
+        var taskbarBadgeService = new TaskbarBadgeService();
+        var viewModel = new MainWindowViewModel(taskbarBadgeService);
         DataContext = viewModel;
 
         var mainWindow = new MainWindow
@@ -79,6 +81,7 @@ public partial class App : Application
         };
         
         desktop.MainWindow = mainWindow;
+        mainWindow.Opened += (_, _) => taskbarBadgeService.Attach(mainWindow);
 
         _singleInstance?.SetActivateHandler(viewModel.ToggleMainWindow);
 

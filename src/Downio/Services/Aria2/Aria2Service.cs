@@ -845,6 +845,7 @@ public class Aria2Service : IAria2Service, IDisposable
             DownloadedBytes = completed,
             Progress = progress,
             Speed = FormatSpeed(speedVal),
+            DownloadSpeedBytesPerSecond = speedVal,
             Status = taskStatus,
             TimeLeft = timeLeft,
             Connections = connections,

@@ -23,6 +23,7 @@ using CommunityToolkit.Mvvm.Input;
 using Downio.Models;
 using Downio.Services;
 using Downio.Services.Aria2;
+using Downio.Services.TaskbarBadge;
 using Downio.Views;
 using Downio.Helpers;
 
@@ -34,6 +35,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly SettingsService _settingsService;
     private readonly AutoStartService _autoStartService;
     private readonly NotificationService _notificationService;
+    private readonly ITaskbarBadgeService _taskbarBadgeService;
     private readonly TaskListView _taskListView;
     private readonly Ed2kSearchView _ed2kSearchView;
     private readonly DispatcherTimer _refreshTimer;
@@ -43,6 +45,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private bool _isQuitRequested;
     private bool _suppressRefreshOnCurrentTitleChange;
     private readonly bool _windowControlsOnLeft;
+    private long _currentTotalDownloadSpeed;
 
     public SettingsService SettingsService => _settingsService;
 
@@ -830,6 +833,7 @@ public partial class MainWindowViewModel : ViewModelBase
             IsAutoStartEnabled = _settingsService.Settings.AutoStart;
             IsAutoInstallUpdatesEnabled = _settingsService.Settings.AutoInstallUpdates;
             IsExitOnClose = _settingsService.Settings.ExitOnClose;
+            IsDownloadSpeedBadgeVisible = _settingsService.Settings.ShowDownloadSpeedBadge;
 
             var savedAccentMode = _settingsService.Settings.AccentMode;
             SelectedAccentMode = AccentModeOptions.FirstOrDefault(a => a.Value == savedAccentMode) ?? AccentModeOptions[0];
@@ -964,6 +968,24 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         _settingsService.Settings.ExitOnClose = value;
         _settingsService.Save();
+    }
+
+    [ObservableProperty]
+    private bool _isDownloadSpeedBadgeVisible = true;
+
+    partial void OnIsDownloadSpeedBadgeVisibleChanged(bool value)
+    {
+        _settingsService.Settings.ShowDownloadSpeedBadge = value;
+        _settingsService.Save();
+
+        if (value)
+        {
+            _taskbarBadgeService.Update(_currentTotalDownloadSpeed);
+        }
+        else
+        {
+            _taskbarBadgeService.Clear();
+        }
     }
 
     [ObservableProperty]
@@ -1121,12 +1143,13 @@ public partial class MainWindowViewModel : ViewModelBase
         RefreshEd2kSearchStatusText();
     }
 
-    public MainWindowViewModel()
+    public MainWindowViewModel(ITaskbarBadgeService? taskbarBadgeService = null)
     {
         _windowControlsOnLeft = DetectWindowControlsOnLeft();
         _settingsService = new SettingsService();
         _autoStartService = new AutoStartService();
         _notificationService = new NotificationService();
+        _taskbarBadgeService = taskbarBadgeService ?? new TaskbarBadgeService();
         _notificationService.ToastRequested += (s, msg) => ShowToast(msg);
         _aria2Service = new Aria2Service();
 
@@ -1149,6 +1172,7 @@ public partial class MainWindowViewModel : ViewModelBase
         IsAutoStartEnabled = _settingsService.Settings.AutoStart;
         IsAutoInstallUpdatesEnabled = _settingsService.Settings.AutoInstallUpdates;
         IsExitOnClose = _settingsService.Settings.ExitOnClose;
+        IsDownloadSpeedBadgeVisible = _settingsService.Settings.ShowDownloadSpeedBadge;
 
         var savedAccentMode = _settingsService.Settings.AccentMode;
         SelectedAccentMode = AccentModeOptions.FirstOrDefault(a => a.Value == savedAccentMode) ?? AccentModeOptions[0];
@@ -1454,6 +1478,14 @@ public partial class MainWindowViewModel : ViewModelBase
             var allTasks = await _aria2Service.GetGlobalStatusAsync();
             string? completedTaskId = null;
 
+            _currentTotalDownloadSpeed = allTasks
+                .Where(task => task.Status == "StatusDownloading")
+                .Sum(task => task.DownloadSpeedBytesPerSecond);
+            if (IsDownloadSpeedBadgeVisible)
+            {
+                _taskbarBadgeService.Update(_currentTotalDownloadSpeed);
+            }
+
             foreach (var t in allTasks)
             {
                 if (_lastStatusByGid.TryGetValue(t.Id, out var prev))
@@ -1521,6 +1553,7 @@ public partial class MainWindowViewModel : ViewModelBase
                     if (existing.DownloadedBytes != task.DownloadedBytes) existing.DownloadedBytes = task.DownloadedBytes;
                     if (existing.TotalBytes != task.TotalBytes) existing.TotalBytes = task.TotalBytes;
                     if (existing.Speed != task.Speed) existing.Speed = task.Speed;
+                    if (existing.DownloadSpeedBytesPerSecond != task.DownloadSpeedBytesPerSecond) existing.DownloadSpeedBytesPerSecond = task.DownloadSpeedBytesPerSecond;
                     if (existing.TimeLeft != task.TimeLeft) existing.TimeLeft = task.TimeLeft;
                     if (existing.Connections != task.Connections) existing.Connections = task.Connections;
                     if (existing.Split != task.Split) existing.Split = task.Split;
@@ -1542,6 +1575,10 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             Debug.WriteLine($"Refresh Failed: {ex.Message}");
             AppLog.Error(ex, "Refresh task list failed");
+            if (IsDownloadSpeedBadgeVisible)
+            {
+                _taskbarBadgeService.Clear();
+            }
 
             if (allowRecovery && IsConnectionRefused(ex))
             {

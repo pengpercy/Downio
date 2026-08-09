@@ -59,6 +59,7 @@
     <x:String x:Key="LabelCustomAccent">Custom Accent</x:String>
     <x:String x:Key="LabelRgb">RGB</x:String>
     <x:String x:Key="LabelCloseAction">Close action</x:String>
+    <x:String x:Key="LabelDownloadSpeedBadge">Show download speed on taskbar / Dock</x:String>
     <x:String x:Key="LabelKeepInBackground">Keep running</x:String>
     <x:String x:Key="LabelExitApp">Exit app</x:String>
     <x:String x:Key="BtnCheckUpdate">Check Update</x:String>

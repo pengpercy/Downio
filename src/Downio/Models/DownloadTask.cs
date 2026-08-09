@@ -26,6 +26,9 @@ public partial class DownloadTask : ObservableObject
     private string _speed = string.Empty;
 
     [ObservableProperty]
+    private long _downloadSpeedBytesPerSecond;
+
+    [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsActive))]
     private string _status = "StatusDownloading"; // StatusDownloading, StatusCompleted, StatusPaused, StatusError
 

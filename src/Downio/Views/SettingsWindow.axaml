@@ -241,7 +241,7 @@
 
                             <Border Classes="settingsDivider"/>
 
-                            <Grid ColumnDefinitions="200, *" RowDefinitions="Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto" RowSpacing="10">
+                            <Grid ColumnDefinitions="200, *" RowDefinitions="Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto" RowSpacing="10">
                                 <TextBlock Grid.Row="0" Grid.Column="0" Text="{DynamicResource LabelLanguage}" VerticalAlignment="Center" Opacity="0.85" FontSize="13"/>
                                 <ComboBox Grid.Row="0" Grid.Column="1" Width="220" ItemsSource="{Binding LanguageOptions}" SelectedItem="{Binding SelectedLanguage}" HorizontalAlignment="Right">
                                     <ComboBox.ItemTemplate>
@@ -269,8 +269,13 @@
 
                                 <Border Grid.Row="7" Grid.ColumnSpan="2" Grid.Column="0" Classes="settingsRowDivider"/>
 
-                                <TextBlock Grid.Row="8" Grid.Column="0" Text="{DynamicResource LabelDefaultDownloadSplit}" VerticalAlignment="Center" Opacity="0.85" FontSize="13"/>
-                                <NumericUpDown Grid.Row="8" Grid.Column="1"
+                                <TextBlock Grid.Row="8" Grid.Column="0" Text="{DynamicResource LabelDownloadSpeedBadge}" VerticalAlignment="Center" Opacity="0.85" FontSize="13"/>
+                                <ToggleSwitch Grid.Row="8" Grid.Column="1" IsChecked="{Binding IsDownloadSpeedBadgeVisible}" HorizontalAlignment="Right"/>
+
+                                <Border Grid.Row="9" Grid.ColumnSpan="2" Grid.Column="0" Classes="settingsRowDivider"/>
+
+                                <TextBlock Grid.Row="10" Grid.Column="0" Text="{DynamicResource LabelDefaultDownloadSplit}" VerticalAlignment="Center" Opacity="0.85" FontSize="13"/>
+                                <NumericUpDown Grid.Row="10" Grid.Column="1"
                                                Value="{Binding DefaultDownloadSplit}"
                                                Minimum="1"
                                                Maximum="32"

@@ -59,6 +59,7 @@
     <x:String x:Key="LabelCustomAccent">自定义主题色</x:String>
     <x:String x:Key="LabelRgb">RGB</x:String>
     <x:String x:Key="LabelCloseAction">关闭行为</x:String>
+    <x:String x:Key="LabelDownloadSpeedBadge">在任务栏 / Dock 显示下载速度</x:String>
     <x:String x:Key="LabelKeepInBackground">后台运行</x:String>
     <x:String x:Key="LabelExitApp">退出程序</x:String>
     <x:String x:Key="BtnCheckUpdate">检查更新</x:String>
