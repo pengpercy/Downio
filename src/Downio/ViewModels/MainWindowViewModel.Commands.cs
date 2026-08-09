@@ -845,8 +845,10 @@ public partial class MainWindowViewModel
             AppLog.Error(ex, $"Failed to remove task: {task.Name} ({task.Id})");
         }
 
+        _stoppedTaskHistoryService.Remove(task.Id);
+
         var fileDeleteSucceeded = !dialog.DeleteFile ||
-            (removeSucceeded && await TryDeleteTaskFilesAsync(task));
+            await TryDeleteTaskFilesAsync(task);
 
         await RefreshTaskListAsync();
         if (!removeSucceeded)

@@ -36,6 +36,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly AutoStartService _autoStartService;
     private readonly NotificationService _notificationService;
     private readonly ITaskbarBadgeService _taskbarBadgeService;
+    private readonly StoppedTaskHistoryService _stoppedTaskHistoryService;
     private readonly TaskListView _taskListView;
     private readonly Ed2kSearchView _ed2kSearchView;
     private readonly DispatcherTimer _refreshTimer;
@@ -224,19 +225,19 @@ public partial class MainWindowViewModel : ViewModelBase
                     var fileDeleteFailed = false;
                     foreach (var task in tasksToDelete)
                     {
-                        var removeSucceeded = true;
                         try
                         {
                             await _aria2Service.RemoveAsync(task.Id);
                         }
                         catch (Exception ex)
                         {
-                            removeSucceeded = false;
                             removeFailed = true;
                             AppLog.Error(ex, $"Failed to remove task: {task.Name} ({task.Id})");
                         }
 
-                        if (dialog.DeleteFile && (!removeSucceeded || !await TryDeleteTaskFilesAsync(task)))
+                        _stoppedTaskHistoryService.Remove(task.Id);
+
+                        if (dialog.DeleteFile && !await TryDeleteTaskFilesAsync(task))
                         {
                             fileDeleteFailed = true;
                         }
@@ -859,6 +860,8 @@ public partial class MainWindowViewModel : ViewModelBase
                 {
                     File.Delete(Aria2SessionPath);
                 }
+
+                _stoppedTaskHistoryService.Clear();
                 
                 await InitializeAria2Async();
                 _refreshTimer.Start();
@@ -1215,6 +1218,7 @@ public partial class MainWindowViewModel : ViewModelBase
         _autoStartService = new AutoStartService();
         _notificationService = new NotificationService();
         _taskbarBadgeService = taskbarBadgeService ?? new TaskbarBadgeService();
+        _stoppedTaskHistoryService = new StoppedTaskHistoryService();
         _notificationService.ToastRequested += (s, msg) => ShowToast(msg);
         _aria2Service = new Aria2Service();
 
@@ -1575,6 +1579,8 @@ public partial class MainWindowViewModel : ViewModelBase
                 NavigateToStoppedTasks();
             }
 
+            _stoppedTaskHistoryService.SyncWithAria2(allTasks);
+
             var activeIds = new HashSet<string>(allTasks.Select(t => t.Id));
             var idsToRemove = _lastStatusByGid.Keys.Where(id => !activeIds.Contains(id)).ToList();
             foreach (var id in idsToRemove)
@@ -1590,6 +1596,11 @@ public partial class MainWindowViewModel : ViewModelBase
                 if (IsStopped) return t.Status == "StatusStopped" || t.Status == "StatusError" || t.Status == "StatusCompleted";
                 return true;
             }).ToList();
+
+            if (IsStopped)
+            {
+                filteredTasks.AddRange(_stoppedTaskHistoryService.GetTasksExcept(activeIds));
+            }
 
             // Sync list
             // 1. Remove missing

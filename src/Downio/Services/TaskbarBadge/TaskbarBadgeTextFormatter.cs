@@ -33,6 +33,23 @@ internal static class TaskbarBadgeTextFormatter
         return gigabytes < 10 ? $"{gigabytes:0.#} G/s" : $"{gigabytes:0} G/s";
     }
 
+    public static string FormatOverlay(long bytesPerSecond)
+    {
+        if (bytesPerSecond < 1024 * 1024)
+        {
+            return $"{Math.Max(1, Math.Round(bytesPerSecond / 1024d)):0}K";
+        }
+
+        if (bytesPerSecond < 1024L * 1024 * 1024)
+        {
+            var megabytes = bytesPerSecond / (1024d * 1024d);
+            return megabytes < 10 ? $"{megabytes:0.#}M" : $"{megabytes:0}M";
+        }
+
+        var gigabytes = bytesPerSecond / (1024d * 1024d * 1024d);
+        return gigabytes < 10 ? $"{gigabytes:0.#}G" : $"{gigabytes:0}G";
+    }
+
     public static string FormatDescription(long bytesPerSecond)
     {
         const double kilobyte = 1024d;

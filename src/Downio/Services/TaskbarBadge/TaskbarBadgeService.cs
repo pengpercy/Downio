@@ -21,6 +21,7 @@ public sealed class TaskbarBadgeService : ITaskbarBadgeService
 #if WINDOWS
     private IntPtr _taskbarList;
     private IntPtr _windowHandle;
+    private IntPtr _overlayIcon;
 #endif
 
 #if WINDOWS || MACOS
@@ -52,6 +53,7 @@ public sealed class TaskbarBadgeService : ITaskbarBadgeService
             }
 
             ThrowOnFailure(InvokeHrInit(_taskbarList));
+            AppLog.Info($"Taskbar download-speed badge attached to window handle 0x{_windowHandle.ToInt64():X}.");
         }
         catch (Exception ex)
         {
@@ -87,9 +89,11 @@ public sealed class TaskbarBadgeService : ITaskbarBadgeService
         IntPtr icon = IntPtr.Zero;
         try
         {
-            icon = CreateBadgeIcon(TaskbarBadgeTextFormatter.Format(normalizedSpeed));
+            icon = CreateBadgeIcon(TaskbarBadgeTextFormatter.FormatOverlay(normalizedSpeed));
             var description = $"Downloading at {TaskbarBadgeTextFormatter.FormatDescription(normalizedSpeed)}";
             ThrowOnFailure(InvokeSetOverlayIcon(_taskbarList, _windowHandle, icon, description));
+            ReplaceOverlayIcon(icon);
+            icon = IntPtr.Zero;
         }
         catch (Exception ex)
         {
@@ -136,6 +140,7 @@ public sealed class TaskbarBadgeService : ITaskbarBadgeService
         try
         {
             ThrowOnFailure(InvokeSetOverlayIcon(_taskbarList, _windowHandle, IntPtr.Zero, null));
+            ReleaseOverlayIcon();
         }
         catch (Exception ex)
         {
@@ -156,6 +161,7 @@ public sealed class TaskbarBadgeService : ITaskbarBadgeService
         Clear();
 
 #if WINDOWS
+        ReleaseOverlayIcon();
         ReleaseTaskbarList();
         _windowHandle = IntPtr.Zero;
 #endif
@@ -285,6 +291,27 @@ public sealed class TaskbarBadgeService : ITaskbarBadgeService
         var interfaceId = TaskbarList3InterfaceId;
         ThrowOnFailure(CoCreateInstance(ref classId, IntPtr.Zero, ClsctxInprocServer, ref interfaceId, out var taskbarList));
         return taskbarList;
+    }
+
+    private void ReplaceOverlayIcon(IntPtr icon)
+    {
+        var previousIcon = _overlayIcon;
+        _overlayIcon = icon;
+        if (previousIcon != IntPtr.Zero)
+        {
+            DestroyIcon(previousIcon);
+        }
+    }
+
+    private void ReleaseOverlayIcon()
+    {
+        if (_overlayIcon == IntPtr.Zero)
+        {
+            return;
+        }
+
+        DestroyIcon(_overlayIcon);
+        _overlayIcon = IntPtr.Zero;
     }
 
     private void ReleaseTaskbarList()

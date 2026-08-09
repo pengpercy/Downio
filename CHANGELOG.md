@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.82 - 2026-08-09
+
+- Persist completed, stopped, and failed download entries locally so the Stopped view remains populated after aria2 and Downio restart; deleting an entry or resetting the download session clears the corresponding history.
+- Fixed Windows taskbar speed overlays by retaining each native overlay icon until Windows replaces or clears it, and made the compact speed label readable at taskbar icon size.
+- Allow deletion of a locally persisted stopped task's files even when its in-memory aria2 result is no longer available after restart.
+
 ## 1.0.81 - 2026-08-09
 
 - Fixed local-file deletion on Windows: wait briefly for aria2 to release file handles, retry locked deletions, and show an error rather than a false success notification when a file remains.
