@@ -135,6 +135,8 @@
     <x:String x:Key="NotificationTaskDeleted">Task Deleted</x:String>
     <x:String x:Key="NotificationTasksDeleted">Deleted {0} tasks</x:String>
     <x:String x:Key="NotificationAlsoDeletedFile"> (Also deleted local file)</x:String>
+    <x:String x:Key="MessageTaskDeleteFailed">Could not remove the download task.</x:String>
+    <x:String x:Key="MessageFileDeleteFailed">The task was removed, but one or more local files could not be deleted.</x:String>
 
     <!-- Time -->
     <x:String x:Key="TimeMoreThanOneDay">> 1 Day</x:String>

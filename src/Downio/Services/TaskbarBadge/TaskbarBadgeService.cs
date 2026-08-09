@@ -19,7 +19,7 @@ namespace Downio.Services.TaskbarBadge;
 public sealed class TaskbarBadgeService : ITaskbarBadgeService
 {
 #if WINDOWS
-    private ITaskbarList3? _taskbarList;
+    private IntPtr _taskbarList;
     private IntPtr _windowHandle;
 #endif
 
@@ -46,13 +46,17 @@ public sealed class TaskbarBadgeService : ITaskbarBadgeService
 
         try
         {
-            _taskbarList ??= (ITaskbarList3)new CTaskbarList();
-            _taskbarList.HrInit();
+            if (_taskbarList == IntPtr.Zero)
+            {
+                _taskbarList = CreateTaskbarList();
+            }
+
+            ThrowOnFailure(InvokeHrInit(_taskbarList));
         }
         catch (Exception ex)
         {
             AppLog.Error(ex, "Taskbar download-speed badge initialization failed");
-            _taskbarList = null;
+            ReleaseTaskbarList();
         }
 #else
         _ = window;
@@ -62,7 +66,7 @@ public sealed class TaskbarBadgeService : ITaskbarBadgeService
     public void Update(long totalDownloadSpeedBytesPerSecond)
     {
 #if WINDOWS
-        if (_taskbarList is null || _windowHandle == IntPtr.Zero)
+        if (_taskbarList == IntPtr.Zero || _windowHandle == IntPtr.Zero)
         {
             return;
         }
@@ -85,7 +89,7 @@ public sealed class TaskbarBadgeService : ITaskbarBadgeService
         {
             icon = CreateBadgeIcon(TaskbarBadgeTextFormatter.Format(normalizedSpeed));
             var description = $"Downloading at {TaskbarBadgeTextFormatter.FormatDescription(normalizedSpeed)}";
-            _taskbarList.SetOverlayIcon(_windowHandle, icon, description);
+            ThrowOnFailure(InvokeSetOverlayIcon(_taskbarList, _windowHandle, icon, description));
         }
         catch (Exception ex)
         {
@@ -124,14 +128,14 @@ public sealed class TaskbarBadgeService : ITaskbarBadgeService
 #endif
 
 #if WINDOWS
-        if (_taskbarList is null || _windowHandle == IntPtr.Zero)
+        if (_taskbarList == IntPtr.Zero || _windowHandle == IntPtr.Zero)
         {
             return;
         }
 
         try
         {
-            _taskbarList.SetOverlayIcon(_windowHandle, IntPtr.Zero, null);
+            ThrowOnFailure(InvokeSetOverlayIcon(_taskbarList, _windowHandle, IntPtr.Zero, null));
         }
         catch (Exception ex)
         {
@@ -152,12 +156,7 @@ public sealed class TaskbarBadgeService : ITaskbarBadgeService
         Clear();
 
 #if WINDOWS
-        if (_taskbarList is not null)
-        {
-            Marshal.ReleaseComObject(_taskbarList);
-            _taskbarList = null;
-        }
-
+        ReleaseTaskbarList();
         _windowHandle = IntPtr.Zero;
 #endif
 
@@ -271,41 +270,77 @@ public sealed class TaskbarBadgeService : ITaskbarBadgeService
         return bitmap.GetHicon();
     }
 
-    [ComImport]
-    [Guid("56FDF344-FD6D-11d0-958A-006097C9A090")]
-    private class CTaskbarList;
+    // NativeAOT cannot activate [ComImport] coclasses with `new`, which causes
+    // InvalidProgramException at startup. Use a direct COM activation and vtable calls instead.
+    private static readonly Guid TaskbarListClassId = new("56FDF344-FD6D-11d0-958A-006097C9A090");
+    private static readonly Guid TaskbarList3InterfaceId = new("EA1AFB91-9E28-4B86-90E9-9E9F8A5EEA84");
+    private const uint ClsctxInprocServer = 0x1;
+    private const int IUnknownReleaseSlot = 2;
+    private const int HrInitSlot = 3;
+    private const int SetOverlayIconSlot = 18;
 
-    [ComImport]
-    [Guid("EA1AFB91-9E28-4B86-90E9-9E9F8A5EEA84")]
-    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-    private interface ITaskbarList3
+    private static IntPtr CreateTaskbarList()
     {
-        void HrInit();
-        void AddTab(IntPtr hwnd);
-        void DeleteTab(IntPtr hwnd);
-        void ActivateTab(IntPtr hwnd);
-        void SetActiveAlt(IntPtr hwnd);
-        void MarkFullscreenWindow(IntPtr hwnd, [MarshalAs(UnmanagedType.Bool)] bool fullscreen);
-        void SetProgressValue(IntPtr hwnd, ulong completed, ulong total);
-        void SetProgressState(IntPtr hwnd, TaskbarProgressState flags);
-        void RegisterTab(IntPtr hwndTab, IntPtr hwndMdi);
-        void UnregisterTab(IntPtr hwndTab);
-        void SetTabOrder(IntPtr hwndTab, IntPtr hwndInsertBefore);
-        void SetTabActive(IntPtr hwndTab, IntPtr hwndMdi, uint reserved);
-        void ThumbBarAddButtons(IntPtr hwnd, uint buttonCount, IntPtr buttons);
-        void ThumbBarUpdateButtons(IntPtr hwnd, uint buttonCount, IntPtr buttons);
-        void ThumbBarSetImageList(IntPtr hwnd, IntPtr imageList);
-        void SetOverlayIcon(IntPtr hwnd, IntPtr icon, [MarshalAs(UnmanagedType.LPWStr)] string? description);
+        var classId = TaskbarListClassId;
+        var interfaceId = TaskbarList3InterfaceId;
+        ThrowOnFailure(CoCreateInstance(ref classId, IntPtr.Zero, ClsctxInprocServer, ref interfaceId, out var taskbarList));
+        return taskbarList;
     }
 
-    private enum TaskbarProgressState
+    private void ReleaseTaskbarList()
     {
-        NoProgress = 0,
-        Indeterminate = 0x1,
-        Normal = 0x2,
-        Error = 0x4,
-        Paused = 0x8
+        if (_taskbarList == IntPtr.Zero)
+        {
+            return;
+        }
+
+        try
+        {
+            GetComMethod<ReleaseDelegate>(_taskbarList, IUnknownReleaseSlot)(_taskbarList);
+        }
+        finally
+        {
+            _taskbarList = IntPtr.Zero;
+        }
     }
+
+    private static int InvokeHrInit(IntPtr taskbarList) =>
+        GetComMethod<HrInitDelegate>(taskbarList, HrInitSlot)(taskbarList);
+
+    private static int InvokeSetOverlayIcon(IntPtr taskbarList, IntPtr windowHandle, IntPtr icon, string? description) =>
+        GetComMethod<SetOverlayIconDelegate>(taskbarList, SetOverlayIconSlot)(taskbarList, windowHandle, icon, description);
+
+    private static T GetComMethod<T>(IntPtr instance, int slot) where T : Delegate
+    {
+        var vtable = Marshal.ReadIntPtr(instance);
+        var address = Marshal.ReadIntPtr(vtable, slot * IntPtr.Size);
+        return Marshal.GetDelegateForFunctionPointer<T>(address);
+    }
+
+    private static void ThrowOnFailure(int hresult)
+    {
+        if (hresult < 0)
+        {
+            Marshal.ThrowExceptionForHR(hresult);
+        }
+    }
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate uint ReleaseDelegate(IntPtr instance);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate int HrInitDelegate(IntPtr instance);
+
+    [UnmanagedFunctionPointer(CallingConvention.StdCall, CharSet = CharSet.Unicode)]
+    private delegate int SetOverlayIconDelegate(IntPtr instance, IntPtr windowHandle, IntPtr icon, [MarshalAs(UnmanagedType.LPWStr)] string? description);
+
+    [DllImport("ole32.dll")]
+    private static extern int CoCreateInstance(
+        ref Guid classId,
+        IntPtr outer,
+        uint context,
+        ref Guid interfaceId,
+        out IntPtr instance);
 
     [DllImport("user32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]

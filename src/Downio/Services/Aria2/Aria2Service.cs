@@ -857,6 +857,11 @@ public class Aria2Service : IAria2Service, IDisposable
             Connections = connections,
             Split = split,
             FilePath = filePath,
+            FilePaths = status.Files
+                .Select(file => file.Path)
+                .Where(path => !string.IsNullOrWhiteSpace(path))
+                .Distinct(StringComparer.Ordinal)
+                .ToList(),
             Url = url
         };
     }

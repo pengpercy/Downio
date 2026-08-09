@@ -220,26 +220,40 @@ public partial class MainWindowViewModel : ViewModelBase
                 
                 if (result)
                 {
+                    var removeFailed = false;
+                    var fileDeleteFailed = false;
                     foreach (var task in tasksToDelete)
                     {
-                        await _aria2Service.RemoveAsync(task.Id);
-                        
-                        if (dialog.DeleteFile && !string.IsNullOrEmpty(task.FilePath))
+                        var removeSucceeded = true;
+                        try
                         {
-                            try
-                            {
-                                if (File.Exists(task.FilePath)) File.Delete(task.FilePath);
-                                var aria2File = task.FilePath + ".aria2";
-                                if (File.Exists(aria2File)) File.Delete(aria2File);
-                            }
-                            catch { /* Ignore delete errors */ }
+                            await _aria2Service.RemoveAsync(task.Id);
+                        }
+                        catch (Exception ex)
+                        {
+                            removeSucceeded = false;
+                            removeFailed = true;
+                            AppLog.Error(ex, $"Failed to remove task: {task.Name} ({task.Id})");
+                        }
+
+                        if (dialog.DeleteFile && (!removeSucceeded || !await TryDeleteTaskFilesAsync(task)))
+                        {
+                            fileDeleteFailed = true;
                         }
                     }
                     
                     SelectedTask = null;
                     await RefreshTaskListAsync();
                     
-                    if (tasksToDelete.Count == 1)
+                    if (removeFailed)
+                    {
+                        _notificationService.ShowNotification(GetString("StatusError"), GetString("MessageTaskDeleteFailed"), ToastType.Error);
+                    }
+                    else if (fileDeleteFailed)
+                    {
+                        _notificationService.ShowNotification(GetString("StatusError"), GetString("MessageFileDeleteFailed"), ToastType.Error);
+                    }
+                    else if (tasksToDelete.Count == 1)
                     {
                         var msg = tasksToDelete[0].Name + (dialog.DeleteFile ? GetString("NotificationAlsoDeletedFile") : string.Empty);
                         _notificationService.ShowNotification(GetString("NotificationTaskDeleted"), msg, ToastType.Success);
@@ -255,6 +269,57 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     private bool CanDeleteSelectedTasks() => SelectedTasks.Count > 0;
+
+    private static async Task<bool> TryDeleteTaskFilesAsync(DownloadTask task)
+    {
+        var paths = task.FilePaths
+            .Append(task.FilePath)
+            .Where(path => !string.IsNullOrWhiteSpace(path))
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+
+        var succeeded = true;
+        foreach (var path in paths)
+        {
+            succeeded &= await TryDeleteFileWithRetryAsync(path, task);
+            succeeded &= await TryDeleteFileWithRetryAsync(path + ".aria2", task);
+        }
+
+        return succeeded;
+    }
+
+    private static async Task<bool> TryDeleteFileWithRetryAsync(string path, DownloadTask task)
+    {
+        const int maxAttempts = 10;
+        for (var attempt = 0; attempt < maxAttempts; attempt++)
+        {
+            try
+            {
+                if (!File.Exists(path)) return true;
+
+                File.Delete(path);
+                if (!File.Exists(path)) return true;
+            }
+            catch (IOException) when (attempt < maxAttempts - 1)
+            {
+                // On Windows, aria2 can retain the file handle briefly after forceRemove.
+            }
+            catch (UnauthorizedAccessException) when (attempt < maxAttempts - 1)
+            {
+                // Antivirus/indexing software can also briefly retain a new download file.
+            }
+            catch (Exception ex)
+            {
+                AppLog.Error(ex, $"Failed to delete local file for task {task.Name}: {path}");
+                return false;
+            }
+
+            await Task.Delay(200);
+        }
+
+        AppLog.Warn($"Failed to delete local file after {maxAttempts} attempts for task {task.Name}: {path}");
+        return false;
+    }
 
     [RelayCommand]
     public async Task RefreshTasks()

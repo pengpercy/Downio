@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.81 - 2026-08-09
+
+- Fixed local-file deletion on Windows: wait briefly for aria2 to release file handles, retry locked deletions, and show an error rather than a false success notification when a file remains.
+- Delete every file belonging to multi-file torrent and Metalink tasks, including each `.aria2` control file.
+- Fixed the Windows taskbar speed badge under NativeAOT by replacing unsupported `[ComImport]` activation with direct TaskbarList3 COM activation.
+
 ## 1.0.80 - 2026-08-09
 
 - Fixed Windows download-engine startup: aria2-next now uses the Windows certificate store instead of receiving an unsupported custom CA bundle, restoring task creation and downloads.
