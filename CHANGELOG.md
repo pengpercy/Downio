@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.79 - 2026-08-09
+
+- Added live aggregate download-speed badges on the Windows taskbar and macOS Dock.
+- Added a General settings switch to show or hide the badge; it is enabled by default and updates immediately.
+- Displayed explicit per-second speed units on the badge, such as `9.5 M/s`.
+
 ## 1.0.78 - 2026-08-08
 
 - Replaced the bundled downloader with aria2-next 2.5.5 and added native ED2K support for search, direct links, network bootstrap data, and configurable engine/search settings.
