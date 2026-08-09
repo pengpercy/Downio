@@ -155,10 +155,16 @@ public class Aria2Service : IAria2Service, IDisposable
                 }
             }
 
-            var caBundlePath = Path.Combine(AppContext.BaseDirectory, "Assets", "cacert.pem");
-            if (File.Exists(caBundlePath))
+            // aria2-next uses WinTLS on Windows, which relies on the Windows certificate store
+            // and rejects the --ca-certificate option outright. Other platforms still need the
+            // bundled CA bundle when their TLS backend does not have a system trust store.
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                args.Add($"--ca-certificate={caBundlePath}");
+                var caBundlePath = Path.Combine(AppContext.BaseDirectory, "Assets", "cacert.pem");
+                if (File.Exists(caBundlePath))
+                {
+                    args.Add($"--ca-certificate={caBundlePath}");
+                }
             }
 
             var startInfo = new ProcessStartInfo

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.80 - 2026-08-09
+
+- Fixed Windows download-engine startup: aria2-next now uses the Windows certificate store instead of receiving an unsupported custom CA bundle, restoring task creation and downloads.
+
 ## 1.0.79 - 2026-08-09
 
 - Added live aggregate download-speed badges on the Windows taskbar and macOS Dock.
