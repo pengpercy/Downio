@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.83 - 2026-08-16
+
+- Fixed macOS automatic updates leaving a `Downio.app.bak` folder behind: the updater now removes the backup only after the replacement app has been copied and launched successfully.
+- Disabled NuGet vulnerability auditing for offline local builds to prevent `NU1900` source-connectivity warnings, while retaining the audit in CI builds.
+
 ## 1.0.82 - 2026-08-09
 
 - Persist completed, stopped, and failed download entries locally so the Stopped view remains populated after aria2 and Downio restart; deleting an entry or resetting the download session clears the corresponding history.
