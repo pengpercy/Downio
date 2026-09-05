@@ -642,12 +642,12 @@ public partial class MainWindowViewModel : ViewModelBase
         IsSyncingTrackers = true;
         try
         {
-            var handler = new HttpClientHandler();
-            if (!string.IsNullOrWhiteSpace(ProxyAddress) && ProxyPort > 0 && ProxyTypeIndex == 0)
-            {
-                handler.Proxy = new WebProxy(ProxyAddress, ProxyPort);
-                handler.UseProxy = true;
-            }
+            var handler = ProxyEnvironment.CreateHttpHandler(
+                ProxyTypeIndex == 1 ? "SOCKS5" : "HTTP",
+                ProxyAddress,
+                ProxyPort,
+                ProxyUsername,
+                ProxyPassword);
 
             using var client = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(30) };
             client.DefaultRequestHeaders.UserAgent.ParseAdd("Downio/1.0");

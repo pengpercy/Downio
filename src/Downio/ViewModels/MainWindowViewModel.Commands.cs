@@ -21,6 +21,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Downio.Models;
 using Downio.Services;
+using Downio.Services.Aria2;
 using Downio.Views;
 
 namespace Downio.ViewModels;
@@ -548,39 +549,15 @@ public partial class MainWindowViewModel
 
     private HttpClientHandler CreateDownloadProbeHandler(IDictionary<string, string>? extraOptions)
     {
-        var handler = new HttpClientHandler
-        {
-            AllowAutoRedirect = true
-        };
+        var taskProxy = extraOptions != null && extraOptions.TryGetValue("all-proxy", out var tp) ? tp : null;
 
-        var proxy = extraOptions != null && extraOptions.TryGetValue("all-proxy", out var taskProxy)
-            ? taskProxy
-            : string.Empty;
-
-        if (string.IsNullOrWhiteSpace(proxy))
-        {
-            var address = _settingsService.Settings.ProxyAddress?.Trim() ?? string.Empty;
-            if (!string.IsNullOrWhiteSpace(address) && _settingsService.Settings.ProxyPort > 0)
-            {
-                var scheme = string.Equals(_settingsService.Settings.ProxyType, "SOCKS5", StringComparison.OrdinalIgnoreCase) ? "socks5" : "http";
-                proxy = $"{scheme}://{address}:{_settingsService.Settings.ProxyPort}";
-            }
-        }
-
-        if (!string.IsNullOrWhiteSpace(proxy) && Uri.TryCreate(proxy, UriKind.Absolute, out var proxyUri))
-        {
-            var webProxy = new WebProxy(proxyUri);
-            var user = _settingsService.Settings.ProxyUsername?.Trim() ?? string.Empty;
-            if (!string.IsNullOrWhiteSpace(user))
-            {
-                webProxy.Credentials = new NetworkCredential(user, _settingsService.Settings.ProxyPassword ?? string.Empty);
-            }
-
-            handler.UseProxy = true;
-            handler.Proxy = webProxy;
-        }
-
-        return handler;
+        return ProxyEnvironment.CreateHttpHandler(
+            _settingsService.Settings.ProxyType,
+            _settingsService.Settings.ProxyAddress,
+            _settingsService.Settings.ProxyPort,
+            _settingsService.Settings.ProxyUsername,
+            _settingsService.Settings.ProxyPassword,
+            taskProxy);
     }
 
     private void ApplyDownloadProbeHeaders(HttpRequestMessage request, IDictionary<string, string>? extraOptions)

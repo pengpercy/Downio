@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.85 - 2026-09-05
+
+- Fixed `https_proxy` and related system environment variables not being honored by the application's own HTTP traffic (update checks, filename detection, tracker sync, and ED2K bootstrap downloads). These requests now fall back to the environment proxy when no in-app proxy is configured.
+- On macOS, proxy variables exported in shell profiles (`.zshrc`, `.zshenv`, `.zprofile`, `.bash_profile`, `.bashrc`, `.profile`) are now read when the app is launched outside a shell and the variables are not otherwise set.
+- Tracker synchronization now also honors SOCKS5 proxies instead of silently skipping them.
+
 ## 1.0.84 - 2026-09-05
 
 - Fixed system proxy environment handling for aria2: `https_proxy`, `HTTPS_PROXY`, and related variables are now resolved consistently at startup and when downloads refresh their proxy settings.

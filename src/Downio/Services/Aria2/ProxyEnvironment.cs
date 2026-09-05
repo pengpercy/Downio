@@ -1,7 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
+using System.Net;
+using System.Net.Http;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 
 namespace Downio.Services.Aria2;
 
@@ -14,6 +18,12 @@ internal static class ProxyEnvironment
         "ftp_proxy",
         "all_proxy",
         "no_proxy"
+    };
+
+    private static readonly string[] MacShellProfiles =
+    {
+        ".zshrc", ".zshenv", ".zprofile",
+        ".bash_profile", ".bashrc", ".profile"
     };
 
     public static Dictionary<string, string> GetAria2Options()
@@ -32,6 +42,72 @@ internal static class ProxyEnvironment
         options["no-proxy"] = GetValue(environment, "no_proxy");
 
         return options;
+    }
+
+    public static HttpClientHandler CreateHttpHandler(
+        string? appProxyType = null,
+        string? appProxyAddress = null,
+        int appProxyPort = 0,
+        string? appProxyUsername = null,
+        string? appProxyPassword = null,
+        string? taskProxy = null)
+    {
+        var handler = new HttpClientHandler
+        {
+            AllowAutoRedirect = true
+        };
+
+        if (!string.IsNullOrWhiteSpace(taskProxy) && Uri.TryCreate(taskProxy, UriKind.Absolute, out var taskUri))
+        {
+            handler.UseProxy = true;
+            handler.Proxy = new WebProxy(taskUri);
+            return handler;
+        }
+
+        var address = appProxyAddress?.Trim() ?? string.Empty;
+        if (!string.IsNullOrWhiteSpace(address) && appProxyPort > 0)
+        {
+            var scheme = string.Equals(appProxyType, "SOCKS5", StringComparison.OrdinalIgnoreCase) ? "socks5" : "http";
+            var proxyUri = new Uri($"{scheme}://{address}:{appProxyPort}");
+            var proxy = new WebProxy(proxyUri);
+            var user = appProxyUsername?.Trim() ?? string.Empty;
+            if (!string.IsNullOrWhiteSpace(user))
+            {
+                proxy.Credentials = new NetworkCredential(user, appProxyPassword ?? string.Empty);
+            }
+            handler.UseProxy = true;
+            handler.Proxy = proxy;
+            return handler;
+        }
+
+        var environment = GetCurrentProxyEnvironment();
+        var envProxy = GetValue(environment, "https_proxy");
+        if (string.IsNullOrWhiteSpace(envProxy))
+        {
+            envProxy = GetValue(environment, "http_proxy");
+        }
+        if (string.IsNullOrWhiteSpace(envProxy))
+        {
+            envProxy = GetValue(environment, "all_proxy");
+        }
+
+        if (!string.IsNullOrWhiteSpace(envProxy))
+        {
+            var normalized = envProxy.Contains("://", StringComparison.Ordinal) ? envProxy : $"http://{envProxy}";
+            if (Uri.TryCreate(normalized, UriKind.Absolute, out var envUri))
+            {
+                var webProxy = new WebProxy(envUri);
+                var (user, password) = GetCredentials(envProxy);
+                if (!string.IsNullOrEmpty(user))
+                {
+                    webProxy.Credentials = new NetworkCredential(user, password);
+                }
+                handler.UseProxy = true;
+                handler.Proxy = webProxy;
+            }
+        }
+
+        return handler;
     }
 
     public static void ApplyTo(ProcessStartInfo startInfo)
@@ -88,13 +164,14 @@ internal static class ProxyEnvironment
 
         if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
         {
-            // GUI apps are commonly launched from launchd, whereas developers
-            // may start the app from a shell. Keep the process environment as
-            // the explicit override and use launchctl only to fill its gaps.
-            return MergeEnvironments(ReadLaunchctlEnvironment(), ReadProcessEnvironment());
+            var shellProfile = ReadShellProfileEnvironment();
+            var launchctl = ReadLaunchctlEnvironment();
+            var process = ReadProcessEnvironment();
+            var baseEnv = MergeEnvironments(shellProfile, launchctl);
+            return MergeEnvironments(baseEnv, process);
         }
 
-        return ReadProcessEnvironment();
+        return MergeEnvironments(ReadShellProfileEnvironment(), ReadProcessEnvironment());
     }
 
     private static Dictionary<string, string> ReadWindowsEnvironment()
@@ -130,6 +207,51 @@ internal static class ProxyEnvironment
             if (value != null)
             {
                 result[name] = value;
+            }
+        }
+
+        return result;
+    }
+
+    private static Dictionary<string, string> ReadShellProfileEnvironment()
+    {
+        var result = new Dictionary<string, string>(StringComparer.Ordinal);
+        var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        if (string.IsNullOrWhiteSpace(home)) return result;
+
+        foreach (var profile in MacShellProfiles)
+        {
+            var path = Path.Combine(home, profile);
+            if (!File.Exists(path)) continue;
+
+            try
+            {
+                foreach (var rawLine in File.ReadLines(path))
+                {
+                    var line = rawLine.Trim();
+                    if (line.Length == 0 || line[0] == '#') continue;
+
+                    var exportMatch = Regex.Match(
+                        line,
+                        @"^export\s+(?:--\s+)?(\w+)=[""']?(.+?)[""']?\s*(?:#.*)?$");
+                    if (!exportMatch.Success) continue;
+
+                    var varName = exportMatch.Groups[1].Value;
+                    var varValue = exportMatch.Groups[2].Value;
+
+                    foreach (var proxyName in VariableNames)
+                    {
+                        if (result.ContainsKey(proxyName)) continue;
+                        if (string.Equals(varName, proxyName, StringComparison.Ordinal) ||
+                            string.Equals(varName, proxyName.ToUpperInvariant(), StringComparison.Ordinal))
+                        {
+                            result[proxyName] = varValue;
+                        }
+                    }
+                }
+            }
+            catch
+            {
             }
         }
 
