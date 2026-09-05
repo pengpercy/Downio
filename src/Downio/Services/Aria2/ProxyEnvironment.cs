@@ -16,8 +16,6 @@ internal static class ProxyEnvironment
         "no_proxy"
     };
 
-    private static bool _observedLaunchctlEnvironment;
-
     public static Dictionary<string, string> GetAria2Options()
     {
         var environment = GetCurrentProxyEnvironment();
@@ -34,6 +32,18 @@ internal static class ProxyEnvironment
         options["no-proxy"] = GetValue(environment, "no_proxy");
 
         return options;
+    }
+
+    public static void ApplyTo(ProcessStartInfo startInfo)
+    {
+        var environment = GetCurrentProxyEnvironment();
+        foreach (var name in VariableNames)
+        {
+            if (environment.TryGetValue(name, out var value))
+            {
+                startInfo.Environment[name] = value;
+            }
+        }
     }
 
     private static (string User, string Password) GetCredentials(string proxy)
@@ -78,16 +88,10 @@ internal static class ProxyEnvironment
 
         if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
         {
-            var launchctlEnvironment = ReadLaunchctlEnvironment();
-            if (launchctlEnvironment.Count > 0)
-            {
-                _observedLaunchctlEnvironment = true;
-            }
-
-            if (_observedLaunchctlEnvironment)
-            {
-                return launchctlEnvironment;
-            }
+            // GUI apps are commonly launched from launchd, whereas developers
+            // may start the app from a shell. Keep the process environment as
+            // the explicit override and use launchctl only to fill its gaps.
+            return MergeEnvironments(ReadLaunchctlEnvironment(), ReadProcessEnvironment());
         }
 
         return ReadProcessEnvironment();
@@ -98,10 +102,10 @@ internal static class ProxyEnvironment
         var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         foreach (var name in VariableNames)
         {
-            var upperName = name.ToUpperInvariant();
-            var value = Environment.GetEnvironmentVariable(upperName, EnvironmentVariableTarget.User)
-                        ?? Environment.GetEnvironmentVariable(upperName, EnvironmentVariableTarget.Machine)
-                        ?? Environment.GetEnvironmentVariable(upperName);
+            var value = GetWindowsEnvironmentVariable(name, EnvironmentVariableTarget.User)
+                        ?? GetWindowsEnvironmentVariable(name, EnvironmentVariableTarget.Machine)
+                        ?? Environment.GetEnvironmentVariable(name)
+                        ?? Environment.GetEnvironmentVariable(name.ToUpperInvariant());
             if (value != null)
             {
                 result[name] = value;
@@ -109,6 +113,12 @@ internal static class ProxyEnvironment
         }
 
         return result;
+    }
+
+    private static string? GetWindowsEnvironmentVariable(string name, EnvironmentVariableTarget target)
+    {
+        return Environment.GetEnvironmentVariable(name, target)
+               ?? Environment.GetEnvironmentVariable(name.ToUpperInvariant(), target);
     }
 
     private static Dictionary<string, string> ReadLaunchctlEnvironment()
@@ -121,6 +131,19 @@ internal static class ProxyEnvironment
             {
                 result[name] = value;
             }
+        }
+
+        return result;
+    }
+
+    private static Dictionary<string, string> MergeEnvironments(
+        IReadOnlyDictionary<string, string> defaults,
+        IReadOnlyDictionary<string, string> overrides)
+    {
+        var result = new Dictionary<string, string>(defaults, StringComparer.Ordinal);
+        foreach (var pair in overrides)
+        {
+            result[pair.Key] = pair.Value;
         }
 
         return result;

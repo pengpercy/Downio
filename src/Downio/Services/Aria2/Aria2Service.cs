@@ -16,14 +16,6 @@ namespace Downio.Services.Aria2;
 public class Aria2Service : IAria2Service, IDisposable
 {
     private const long MinSplitSizeBytes = 1024 * 1024;
-    private static readonly string[] Aria2ProxyEnvironmentVariables =
-    {
-        "http_proxy",
-        "https_proxy",
-        "ftp_proxy",
-        "all_proxy",
-        "no_proxy"
-    };
     private Process? _aria2Process;
     private JsonRpcClient? _rpcClient;
     private int _rpcPort = 16800;
@@ -176,7 +168,7 @@ public class Aria2Service : IAria2Service, IDisposable
                 RedirectStandardError = true
             };
 
-            AddAria2ProxyEnvironmentAliases(startInfo);
+            ProxyEnvironment.ApplyTo(startInfo);
 
             foreach (var arg in args)
             {
@@ -267,26 +259,6 @@ public class Aria2Service : IAria2Service, IDisposable
             File.Copy(sourcePath, targetPath);
         }
         return File.Exists(targetPath) ? targetPath : string.Empty;
-    }
-
-    private static void AddAria2ProxyEnvironmentAliases(ProcessStartInfo startInfo)
-    {
-        // aria2 only documents the lowercase proxy variable names. .NET accepts
-        // both common casings, so add lowercase aliases for aria2 on platforms
-        // with case-sensitive environments while preserving lowercase precedence.
-        foreach (var lowerName in Aria2ProxyEnvironmentVariables)
-        {
-            if (Environment.GetEnvironmentVariable(lowerName) != null)
-            {
-                continue;
-            }
-
-            var upperValue = Environment.GetEnvironmentVariable(lowerName.ToUpperInvariant());
-            if (upperValue != null)
-            {
-                startInfo.Environment[lowerName] = upperValue;
-            }
-        }
     }
 
     private static async Task<bool> IsRpcReadyAsync(JsonRpcClient client)

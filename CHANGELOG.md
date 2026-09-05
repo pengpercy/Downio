@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.84 - 2026-09-05
+
+- Fixed system proxy environment handling for aria2: `https_proxy`, `HTTPS_PROXY`, and related variables are now resolved consistently at startup and when downloads refresh their proxy settings.
+- On macOS, merge `launchctl` and process proxy environments instead of discarding process variables when `launchctl` contains only a partial proxy configuration.
+- Recognize lowercase user- and machine-level proxy environment variables on Windows.
+
 ## 1.0.83 - 2026-08-16
 
 - Fixed macOS automatic updates leaving a `Downio.app.bak` folder behind: the updater now removes the backup only after the replacement app has been copied and launched successfully.
