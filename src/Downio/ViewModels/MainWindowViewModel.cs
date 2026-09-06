@@ -23,6 +23,7 @@ using CommunityToolkit.Mvvm.Input;
 using Downio.Models;
 using Downio.Services;
 using Downio.Services.Aria2;
+using Downio.Services.TaskbarBadge;
 using Downio.Views;
 using Downio.Helpers;
 
@@ -34,6 +35,8 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly SettingsService _settingsService;
     private readonly AutoStartService _autoStartService;
     private readonly NotificationService _notificationService;
+    private readonly ITaskbarBadgeService _taskbarBadgeService;
+    private readonly StoppedTaskHistoryService _stoppedTaskHistoryService;
     private readonly TaskListView _taskListView;
     private readonly Ed2kSearchView _ed2kSearchView;
     private readonly DispatcherTimer _refreshTimer;
@@ -43,6 +46,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private bool _isQuitRequested;
     private bool _suppressRefreshOnCurrentTitleChange;
     private readonly bool _windowControlsOnLeft;
+    private long _currentTotalDownloadSpeed;
 
     public SettingsService SettingsService => _settingsService;
 
@@ -217,26 +221,40 @@ public partial class MainWindowViewModel : ViewModelBase
                 
                 if (result)
                 {
+                    var removeFailed = false;
+                    var fileDeleteFailed = false;
                     foreach (var task in tasksToDelete)
                     {
-                        await _aria2Service.RemoveAsync(task.Id);
-                        
-                        if (dialog.DeleteFile && !string.IsNullOrEmpty(task.FilePath))
+                        try
                         {
-                            try
-                            {
-                                if (File.Exists(task.FilePath)) File.Delete(task.FilePath);
-                                var aria2File = task.FilePath + ".aria2";
-                                if (File.Exists(aria2File)) File.Delete(aria2File);
-                            }
-                            catch { /* Ignore delete errors */ }
+                            await _aria2Service.RemoveAsync(task.Id);
+                        }
+                        catch (Exception ex)
+                        {
+                            removeFailed = true;
+                            AppLog.Error(ex, $"Failed to remove task: {task.Name} ({task.Id})");
+                        }
+
+                        _stoppedTaskHistoryService.Remove(task.Id);
+
+                        if (dialog.DeleteFile && !await TryDeleteTaskFilesAsync(task))
+                        {
+                            fileDeleteFailed = true;
                         }
                     }
                     
                     SelectedTask = null;
                     await RefreshTaskListAsync();
                     
-                    if (tasksToDelete.Count == 1)
+                    if (removeFailed)
+                    {
+                        _notificationService.ShowNotification(GetString("StatusError"), GetString("MessageTaskDeleteFailed"), ToastType.Error);
+                    }
+                    else if (fileDeleteFailed)
+                    {
+                        _notificationService.ShowNotification(GetString("StatusError"), GetString("MessageFileDeleteFailed"), ToastType.Error);
+                    }
+                    else if (tasksToDelete.Count == 1)
                     {
                         var msg = tasksToDelete[0].Name + (dialog.DeleteFile ? GetString("NotificationAlsoDeletedFile") : string.Empty);
                         _notificationService.ShowNotification(GetString("NotificationTaskDeleted"), msg, ToastType.Success);
@@ -252,6 +270,57 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     private bool CanDeleteSelectedTasks() => SelectedTasks.Count > 0;
+
+    private static async Task<bool> TryDeleteTaskFilesAsync(DownloadTask task)
+    {
+        var paths = task.FilePaths
+            .Append(task.FilePath)
+            .Where(path => !string.IsNullOrWhiteSpace(path))
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+
+        var succeeded = true;
+        foreach (var path in paths)
+        {
+            succeeded &= await TryDeleteFileWithRetryAsync(path, task);
+            succeeded &= await TryDeleteFileWithRetryAsync(path + ".aria2", task);
+        }
+
+        return succeeded;
+    }
+
+    private static async Task<bool> TryDeleteFileWithRetryAsync(string path, DownloadTask task)
+    {
+        const int maxAttempts = 10;
+        for (var attempt = 0; attempt < maxAttempts; attempt++)
+        {
+            try
+            {
+                if (!File.Exists(path)) return true;
+
+                File.Delete(path);
+                if (!File.Exists(path)) return true;
+            }
+            catch (IOException) when (attempt < maxAttempts - 1)
+            {
+                // On Windows, aria2 can retain the file handle briefly after forceRemove.
+            }
+            catch (UnauthorizedAccessException) when (attempt < maxAttempts - 1)
+            {
+                // Antivirus/indexing software can also briefly retain a new download file.
+            }
+            catch (Exception ex)
+            {
+                AppLog.Error(ex, $"Failed to delete local file for task {task.Name}: {path}");
+                return false;
+            }
+
+            await Task.Delay(200);
+        }
+
+        AppLog.Warn($"Failed to delete local file after {maxAttempts} attempts for task {task.Name}: {path}");
+        return false;
+    }
 
     [RelayCommand]
     public async Task RefreshTasks()
@@ -573,12 +642,12 @@ public partial class MainWindowViewModel : ViewModelBase
         IsSyncingTrackers = true;
         try
         {
-            var handler = new HttpClientHandler();
-            if (!string.IsNullOrWhiteSpace(ProxyAddress) && ProxyPort > 0 && ProxyTypeIndex == 0)
-            {
-                handler.Proxy = new WebProxy(ProxyAddress, ProxyPort);
-                handler.UseProxy = true;
-            }
+            var handler = ProxyEnvironment.CreateHttpHandler(
+                ProxyTypeIndex == 1 ? "SOCKS5" : "HTTP",
+                ProxyAddress,
+                ProxyPort,
+                ProxyUsername,
+                ProxyPassword);
 
             using var client = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(30) };
             client.DefaultRequestHeaders.UserAgent.ParseAdd("Downio/1.0");
@@ -791,6 +860,8 @@ public partial class MainWindowViewModel : ViewModelBase
                 {
                     File.Delete(Aria2SessionPath);
                 }
+
+                _stoppedTaskHistoryService.Clear();
                 
                 await InitializeAria2Async();
                 _refreshTimer.Start();
@@ -830,6 +901,7 @@ public partial class MainWindowViewModel : ViewModelBase
             IsAutoStartEnabled = _settingsService.Settings.AutoStart;
             IsAutoInstallUpdatesEnabled = _settingsService.Settings.AutoInstallUpdates;
             IsExitOnClose = _settingsService.Settings.ExitOnClose;
+            IsDownloadSpeedBadgeVisible = _settingsService.Settings.ShowDownloadSpeedBadge;
 
             var savedAccentMode = _settingsService.Settings.AccentMode;
             SelectedAccentMode = AccentModeOptions.FirstOrDefault(a => a.Value == savedAccentMode) ?? AccentModeOptions[0];
@@ -964,6 +1036,24 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         _settingsService.Settings.ExitOnClose = value;
         _settingsService.Save();
+    }
+
+    [ObservableProperty]
+    private bool _isDownloadSpeedBadgeVisible = true;
+
+    partial void OnIsDownloadSpeedBadgeVisibleChanged(bool value)
+    {
+        _settingsService.Settings.ShowDownloadSpeedBadge = value;
+        _settingsService.Save();
+
+        if (value)
+        {
+            _taskbarBadgeService.Update(_currentTotalDownloadSpeed);
+        }
+        else
+        {
+            _taskbarBadgeService.Clear();
+        }
     }
 
     [ObservableProperty]
@@ -1121,12 +1211,14 @@ public partial class MainWindowViewModel : ViewModelBase
         RefreshEd2kSearchStatusText();
     }
 
-    public MainWindowViewModel()
+    public MainWindowViewModel(ITaskbarBadgeService? taskbarBadgeService = null)
     {
         _windowControlsOnLeft = DetectWindowControlsOnLeft();
         _settingsService = new SettingsService();
         _autoStartService = new AutoStartService();
         _notificationService = new NotificationService();
+        _taskbarBadgeService = taskbarBadgeService ?? new TaskbarBadgeService();
+        _stoppedTaskHistoryService = new StoppedTaskHistoryService();
         _notificationService.ToastRequested += (s, msg) => ShowToast(msg);
         _aria2Service = new Aria2Service();
 
@@ -1149,6 +1241,7 @@ public partial class MainWindowViewModel : ViewModelBase
         IsAutoStartEnabled = _settingsService.Settings.AutoStart;
         IsAutoInstallUpdatesEnabled = _settingsService.Settings.AutoInstallUpdates;
         IsExitOnClose = _settingsService.Settings.ExitOnClose;
+        IsDownloadSpeedBadgeVisible = _settingsService.Settings.ShowDownloadSpeedBadge;
 
         var savedAccentMode = _settingsService.Settings.AccentMode;
         SelectedAccentMode = AccentModeOptions.FirstOrDefault(a => a.Value == savedAccentMode) ?? AccentModeOptions[0];
@@ -1454,6 +1547,14 @@ public partial class MainWindowViewModel : ViewModelBase
             var allTasks = await _aria2Service.GetGlobalStatusAsync();
             string? completedTaskId = null;
 
+            _currentTotalDownloadSpeed = allTasks
+                .Where(task => task.Status == "StatusDownloading")
+                .Sum(task => task.DownloadSpeedBytesPerSecond);
+            if (IsDownloadSpeedBadgeVisible)
+            {
+                _taskbarBadgeService.Update(_currentTotalDownloadSpeed);
+            }
+
             foreach (var t in allTasks)
             {
                 if (_lastStatusByGid.TryGetValue(t.Id, out var prev))
@@ -1478,6 +1579,8 @@ public partial class MainWindowViewModel : ViewModelBase
                 NavigateToStoppedTasks();
             }
 
+            _stoppedTaskHistoryService.SyncWithAria2(allTasks);
+
             var activeIds = new HashSet<string>(allTasks.Select(t => t.Id));
             var idsToRemove = _lastStatusByGid.Keys.Where(id => !activeIds.Contains(id)).ToList();
             foreach (var id in idsToRemove)
@@ -1493,6 +1596,11 @@ public partial class MainWindowViewModel : ViewModelBase
                 if (IsStopped) return t.Status == "StatusStopped" || t.Status == "StatusError" || t.Status == "StatusCompleted";
                 return true;
             }).ToList();
+
+            if (IsStopped)
+            {
+                filteredTasks.AddRange(_stoppedTaskHistoryService.GetTasksExcept(activeIds));
+            }
 
             // Sync list
             // 1. Remove missing
@@ -1521,6 +1629,7 @@ public partial class MainWindowViewModel : ViewModelBase
                     if (existing.DownloadedBytes != task.DownloadedBytes) existing.DownloadedBytes = task.DownloadedBytes;
                     if (existing.TotalBytes != task.TotalBytes) existing.TotalBytes = task.TotalBytes;
                     if (existing.Speed != task.Speed) existing.Speed = task.Speed;
+                    if (existing.DownloadSpeedBytesPerSecond != task.DownloadSpeedBytesPerSecond) existing.DownloadSpeedBytesPerSecond = task.DownloadSpeedBytesPerSecond;
                     if (existing.TimeLeft != task.TimeLeft) existing.TimeLeft = task.TimeLeft;
                     if (existing.Connections != task.Connections) existing.Connections = task.Connections;
                     if (existing.Split != task.Split) existing.Split = task.Split;
@@ -1542,6 +1651,10 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             Debug.WriteLine($"Refresh Failed: {ex.Message}");
             AppLog.Error(ex, "Refresh task list failed");
+            if (IsDownloadSpeedBadgeVisible)
+            {
+                _taskbarBadgeService.Clear();
+            }
 
             if (allowRecovery && IsConnectionRefused(ex))
             {

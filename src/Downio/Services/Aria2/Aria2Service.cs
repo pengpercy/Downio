@@ -16,14 +16,6 @@ namespace Downio.Services.Aria2;
 public class Aria2Service : IAria2Service, IDisposable
 {
     private const long MinSplitSizeBytes = 1024 * 1024;
-    private static readonly string[] Aria2ProxyEnvironmentVariables =
-    {
-        "http_proxy",
-        "https_proxy",
-        "ftp_proxy",
-        "all_proxy",
-        "no_proxy"
-    };
     private Process? _aria2Process;
     private JsonRpcClient? _rpcClient;
     private int _rpcPort = 16800;
@@ -155,10 +147,16 @@ public class Aria2Service : IAria2Service, IDisposable
                 }
             }
 
-            var caBundlePath = Path.Combine(AppContext.BaseDirectory, "Assets", "cacert.pem");
-            if (File.Exists(caBundlePath))
+            // aria2-next uses WinTLS on Windows, which relies on the Windows certificate store
+            // and rejects the --ca-certificate option outright. Other platforms still need the
+            // bundled CA bundle when their TLS backend does not have a system trust store.
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                args.Add($"--ca-certificate={caBundlePath}");
+                var caBundlePath = Path.Combine(AppContext.BaseDirectory, "Assets", "cacert.pem");
+                if (File.Exists(caBundlePath))
+                {
+                    args.Add($"--ca-certificate={caBundlePath}");
+                }
             }
 
             var startInfo = new ProcessStartInfo
@@ -170,7 +168,7 @@ public class Aria2Service : IAria2Service, IDisposable
                 RedirectStandardError = true
             };
 
-            AddAria2ProxyEnvironmentAliases(startInfo);
+            ProxyEnvironment.ApplyTo(startInfo);
 
             foreach (var arg in args)
             {
@@ -261,26 +259,6 @@ public class Aria2Service : IAria2Service, IDisposable
             File.Copy(sourcePath, targetPath);
         }
         return File.Exists(targetPath) ? targetPath : string.Empty;
-    }
-
-    private static void AddAria2ProxyEnvironmentAliases(ProcessStartInfo startInfo)
-    {
-        // aria2 only documents the lowercase proxy variable names. .NET accepts
-        // both common casings, so add lowercase aliases for aria2 on platforms
-        // with case-sensitive environments while preserving lowercase precedence.
-        foreach (var lowerName in Aria2ProxyEnvironmentVariables)
-        {
-            if (Environment.GetEnvironmentVariable(lowerName) != null)
-            {
-                continue;
-            }
-
-            var upperValue = Environment.GetEnvironmentVariable(lowerName.ToUpperInvariant());
-            if (upperValue != null)
-            {
-                startInfo.Environment[lowerName] = upperValue;
-            }
-        }
     }
 
     private static async Task<bool> IsRpcReadyAsync(JsonRpcClient client)
@@ -845,11 +823,17 @@ public class Aria2Service : IAria2Service, IDisposable
             DownloadedBytes = completed,
             Progress = progress,
             Speed = FormatSpeed(speedVal),
+            DownloadSpeedBytesPerSecond = speedVal,
             Status = taskStatus,
             TimeLeft = timeLeft,
             Connections = connections,
             Split = split,
             FilePath = filePath,
+            FilePaths = status.Files
+                .Select(file => file.Path)
+                .Where(path => !string.IsNullOrWhiteSpace(path))
+                .Distinct(StringComparer.Ordinal)
+                .ToList(),
             Url = url
         };
     }

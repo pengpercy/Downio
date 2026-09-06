@@ -21,6 +21,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Downio.Models;
 using Downio.Services;
+using Downio.Services.Aria2;
 using Downio.Views;
 
 namespace Downio.ViewModels;
@@ -548,39 +549,15 @@ public partial class MainWindowViewModel
 
     private HttpClientHandler CreateDownloadProbeHandler(IDictionary<string, string>? extraOptions)
     {
-        var handler = new HttpClientHandler
-        {
-            AllowAutoRedirect = true
-        };
+        var taskProxy = extraOptions != null && extraOptions.TryGetValue("all-proxy", out var tp) ? tp : null;
 
-        var proxy = extraOptions != null && extraOptions.TryGetValue("all-proxy", out var taskProxy)
-            ? taskProxy
-            : string.Empty;
-
-        if (string.IsNullOrWhiteSpace(proxy))
-        {
-            var address = _settingsService.Settings.ProxyAddress?.Trim() ?? string.Empty;
-            if (!string.IsNullOrWhiteSpace(address) && _settingsService.Settings.ProxyPort > 0)
-            {
-                var scheme = string.Equals(_settingsService.Settings.ProxyType, "SOCKS5", StringComparison.OrdinalIgnoreCase) ? "socks5" : "http";
-                proxy = $"{scheme}://{address}:{_settingsService.Settings.ProxyPort}";
-            }
-        }
-
-        if (!string.IsNullOrWhiteSpace(proxy) && Uri.TryCreate(proxy, UriKind.Absolute, out var proxyUri))
-        {
-            var webProxy = new WebProxy(proxyUri);
-            var user = _settingsService.Settings.ProxyUsername?.Trim() ?? string.Empty;
-            if (!string.IsNullOrWhiteSpace(user))
-            {
-                webProxy.Credentials = new NetworkCredential(user, _settingsService.Settings.ProxyPassword ?? string.Empty);
-            }
-
-            handler.UseProxy = true;
-            handler.Proxy = webProxy;
-        }
-
-        return handler;
+        return ProxyEnvironment.CreateHttpHandler(
+            _settingsService.Settings.ProxyType,
+            _settingsService.Settings.ProxyAddress,
+            _settingsService.Settings.ProxyPort,
+            _settingsService.Settings.ProxyUsername,
+            _settingsService.Settings.ProxyPassword,
+            taskProxy);
     }
 
     private void ApplyDownloadProbeHeaders(HttpRequestMessage request, IDictionary<string, string>? extraOptions)
@@ -834,32 +811,36 @@ public partial class MainWindowViewModel
 
         if (!result) return;
 
-        await _aria2Service.RemoveAsync(task.Id);
-
-        if (dialog.DeleteFile && !string.IsNullOrEmpty(task.FilePath))
+        var removeSucceeded = true;
+        try
         {
-            try
-            {
-                if (File.Exists(task.FilePath))
-                {
-                    File.Delete(task.FilePath);
-                }
-                var aria2File = task.FilePath + ".aria2";
-                if (File.Exists(aria2File))
-                {
-                    File.Delete(aria2File);
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Failed to delete file: {ex.Message}");
-                AppLog.Error(ex, $"Failed to delete file for task: {task.Name} ({task.Id})");
-            }
+            await _aria2Service.RemoveAsync(task.Id);
+        }
+        catch (Exception ex)
+        {
+            removeSucceeded = false;
+            AppLog.Error(ex, $"Failed to remove task: {task.Name} ({task.Id})");
         }
 
+        _stoppedTaskHistoryService.Remove(task.Id);
+
+        var fileDeleteSucceeded = !dialog.DeleteFile ||
+            await TryDeleteTaskFilesAsync(task);
+
         await RefreshTaskListAsync();
-        var message = task.Name + (dialog.DeleteFile ? GetString("NotificationAlsoDeletedFile") : string.Empty);
-        _notificationService.ShowNotification(GetString("NotificationTaskDeleted"), message, ToastType.Success);
+        if (!removeSucceeded)
+        {
+            _notificationService.ShowNotification(GetString("StatusError"), GetString("MessageTaskDeleteFailed"), ToastType.Error);
+        }
+        else if (!fileDeleteSucceeded)
+        {
+            _notificationService.ShowNotification(GetString("StatusError"), GetString("MessageFileDeleteFailed"), ToastType.Error);
+        }
+        else
+        {
+            var message = task.Name + (dialog.DeleteFile ? GetString("NotificationAlsoDeletedFile") : string.Empty);
+            _notificationService.ShowNotification(GetString("NotificationTaskDeleted"), message, ToastType.Success);
+        }
     }
 
     [RelayCommand]
@@ -886,6 +867,7 @@ public partial class MainWindowViewModel
         if (_isShuttingDown) return;
         _isShuttingDown = true;
         _ed2kSearchCancellation?.Cancel();
+        _taskbarBadgeService.Dispose();
 
         try
         {

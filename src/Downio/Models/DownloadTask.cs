@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Downio.Models;
@@ -26,6 +27,9 @@ public partial class DownloadTask : ObservableObject
     private string _speed = string.Empty;
 
     [ObservableProperty]
+    private long _downloadSpeedBytesPerSecond;
+
+    [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsActive))]
     private string _status = "StatusDownloading"; // StatusDownloading, StatusCompleted, StatusPaused, StatusError
 
@@ -45,6 +49,9 @@ public partial class DownloadTask : ObservableObject
 
     [ObservableProperty]
     private string _filePath = string.Empty;
+
+    [ObservableProperty]
+    private List<string> _filePaths = [];
 
     public string SizeInfo => $"{FormatBytes(DownloadedBytes)} / {FormatBytes(TotalBytes)}";
 

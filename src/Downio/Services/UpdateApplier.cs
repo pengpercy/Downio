@@ -151,6 +151,9 @@ public static class UpdateApplier
         sb.AppendLine("ditto \"$NEW_APP\" \"$TARGET_APP\"");
         sb.AppendLine("xattr -dr com.apple.quarantine \"$TARGET_APP\" >/dev/null 2>&1 || true");
         sb.AppendLine("open \"$TARGET_APP\"");
+        // Preserve the previous bundle until the replacement has been copied and launched,
+        // then remove it so automatic updates do not leave Downio.app.bak in Finder.
+        sb.AppendLine("rm -rf \"$BACKUP_APP\"");
         File.WriteAllText(scriptPath, sb.ToString(), new UTF8Encoding(false));
 
         try

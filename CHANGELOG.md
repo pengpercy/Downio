@@ -1,5 +1,51 @@
 # Changelog
 
+## 1.0.86 - 2026-09-06
+
+- The app now detects the OS-level system proxy as a lowest-priority fallback: on macOS it reads the SystemConfiguration proxy state (via `scutil --proxy`), on Windows the WinINET registry settings. Proxy tools such as Clash and Surge that toggle the system proxy without exporting `http_proxy` / `https_proxy` environment variables now work out of the box.
+- Proxy resolution now follows a clear priority chain: per-task proxy > in-app proxy settings > environment variables > OS system proxy, for aria2 downloads, update checks, filename detection, tracker sync, and ED2K bootstrap alike.
+- macOS proxy exceptions (ExceptionsList) and Windows `ProxyOverride` entries are mapped to aria2's `no-proxy` option so local addresses bypass the proxy.
+- System proxy detection is cached briefly (5 seconds) so proxy on/off switches in Clash/Surge are picked up quickly without spawning helper processes on every request.
+
+## 1.0.85 - 2026-09-05
+
+- Fixed `https_proxy` and related system environment variables not being honored by the application's own HTTP traffic (update checks, filename detection, tracker sync, and ED2K bootstrap downloads). These requests now fall back to the environment proxy when no in-app proxy is configured.
+- On macOS, proxy variables exported in shell profiles (`.zshrc`, `.zshenv`, `.zprofile`, `.bash_profile`, `.bashrc`, `.profile`) are now read when the app is launched outside a shell and the variables are not otherwise set.
+- Tracker synchronization now also honors SOCKS5 proxies instead of silently skipping them.
+
+## 1.0.84 - 2026-09-05
+
+- Fixed system proxy environment handling for aria2: `https_proxy`, `HTTPS_PROXY`, and related variables are now resolved consistently at startup and when downloads refresh their proxy settings.
+- On macOS, merge `launchctl` and process proxy environments instead of discarding process variables when `launchctl` contains only a partial proxy configuration.
+- Recognize lowercase user- and machine-level proxy environment variables on Windows.
+
+## 1.0.83 - 2026-08-16
+
+- Fixed macOS automatic updates leaving a `Downio.app.bak` folder behind: the updater now removes the backup only after the replacement app has been copied and launched successfully.
+- Disabled NuGet vulnerability auditing for offline local builds to prevent `NU1900` source-connectivity warnings, while retaining the audit in CI builds.
+
+## 1.0.82 - 2026-08-09
+
+- Persist completed, stopped, and failed download entries locally so the Stopped view remains populated after aria2 and Downio restart; deleting an entry or resetting the download session clears the corresponding history.
+- Fixed Windows taskbar speed overlays by retaining each native overlay icon until Windows replaces or clears it, and made the compact speed label readable at taskbar icon size.
+- Allow deletion of a locally persisted stopped task's files even when its in-memory aria2 result is no longer available after restart.
+
+## 1.0.81 - 2026-08-09
+
+- Fixed local-file deletion on Windows: wait briefly for aria2 to release file handles, retry locked deletions, and show an error rather than a false success notification when a file remains.
+- Delete every file belonging to multi-file torrent and Metalink tasks, including each `.aria2` control file.
+- Fixed the Windows taskbar speed badge under NativeAOT by replacing unsupported `[ComImport]` activation with direct TaskbarList3 COM activation.
+
+## 1.0.80 - 2026-08-09
+
+- Fixed Windows download-engine startup: aria2-next now uses the Windows certificate store instead of receiving an unsupported custom CA bundle, restoring task creation and downloads.
+
+## 1.0.79 - 2026-08-09
+
+- Added live aggregate download-speed badges on the Windows taskbar and macOS Dock.
+- Added a General settings switch to show or hide the badge; it is enabled by default and updates immediately.
+- Displayed explicit per-second speed units on the badge, such as `9.5 M/s`.
+
 ## 1.0.78 - 2026-08-08
 
 - Replaced the bundled downloader with aria2-next 2.5.5 and added native ED2K support for search, direct links, network bootstrap data, and configurable engine/search settings.

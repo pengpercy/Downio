@@ -10,6 +10,7 @@ using System.Diagnostics;
 using System.Collections.Generic;
 using System.Linq;
 using Downio.Models;
+using Downio.Services.Aria2;
 
 namespace Downio.Services;
 
@@ -20,28 +21,14 @@ public class UpdateService
 
     public UpdateService(AppSettings? settings = null)
     {
-        var handler = new HttpClientHandler();
-
-        if (settings != null)
-        {
-            var address = settings.ProxyAddress?.Trim() ?? string.Empty;
-            var port = settings.ProxyPort;
-            if (!string.IsNullOrWhiteSpace(address) && port > 0)
-            {
-                var scheme = string.Equals(settings.ProxyType, "SOCKS5", StringComparison.OrdinalIgnoreCase) ? "socks5" : "http";
-                var proxyUri = new Uri($"{scheme}://{address}:{port}");
-                var proxy = new WebProxy(proxyUri);
-
-                var user = settings.ProxyUsername?.Trim() ?? string.Empty;
-                if (!string.IsNullOrWhiteSpace(user))
-                {
-                    proxy.Credentials = new NetworkCredential(user, settings.ProxyPassword ?? string.Empty);
-                }
-
-                handler.UseProxy = true;
-                handler.Proxy = proxy;
-            }
-        }
+        var handler = settings != null
+            ? ProxyEnvironment.CreateHttpHandler(
+                settings.ProxyType,
+                settings.ProxyAddress,
+                settings.ProxyPort,
+                settings.ProxyUsername,
+                settings.ProxyPassword)
+            : ProxyEnvironment.CreateHttpHandler();
 
         _httpClient = new HttpClient(handler)
         {
