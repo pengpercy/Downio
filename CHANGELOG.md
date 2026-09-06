@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.86 - 2026-09-06
+
+- The app now detects the OS-level system proxy as a lowest-priority fallback: on macOS it reads the SystemConfiguration proxy state (via `scutil --proxy`), on Windows the WinINET registry settings. Proxy tools such as Clash and Surge that toggle the system proxy without exporting `http_proxy` / `https_proxy` environment variables now work out of the box.
+- Proxy resolution now follows a clear priority chain: per-task proxy > in-app proxy settings > environment variables > OS system proxy, for aria2 downloads, update checks, filename detection, tracker sync, and ED2K bootstrap alike.
+- macOS proxy exceptions (ExceptionsList) and Windows `ProxyOverride` entries are mapped to aria2's `no-proxy` option so local addresses bypass the proxy.
+- System proxy detection is cached briefly (5 seconds) so proxy on/off switches in Clash/Surge are picked up quickly without spawning helper processes on every request.
+
 ## 1.0.85 - 2026-09-05
 
 - Fixed `https_proxy` and related system environment variables not being honored by the application's own HTTP traffic (update checks, filename detection, tracker sync, and ED2K bootstrap downloads). These requests now fall back to the environment proxy when no in-app proxy is configured.
