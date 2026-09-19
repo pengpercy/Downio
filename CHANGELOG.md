@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.88 - 2026-09-19
+
+- Fixed the task-list “Open Folder” button not invoking its command. The action now uses a direct click handler so it reliably receives the row’s download task, and reports an error when the destination cannot be opened.
+
 ## 1.0.87 - 2026-09-19
 
 - Fixed the per-task “Open Folder” action on macOS and other platforms by passing the target path as a process argument rather than embedding shell quotes; files and directories with spaces are now revealed correctly.

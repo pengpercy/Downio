@@ -20,6 +20,14 @@ public partial class TaskListView : UserControl
         DataContextChanged += OnDataContextChanged;
     }
 
+    private void OpenFolderButton_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        if (sender is Button { DataContext: DownloadTask task } && DataContext is MainWindowViewModel vm)
+        {
+            _ = vm.OpenFolder(task);
+        }
+    }
+
     private void OnPointerPressed(object? sender, PointerPressedEventArgs e)
     {
         if (sender is not ListBox listBox) return;

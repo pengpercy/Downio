@@ -360,9 +360,12 @@ public partial class MainWindowViewModel : ViewModelBase
         if (task == null || string.IsNullOrWhiteSpace(task.FilePath)) return Task.CompletedTask;
 
         var filePath = task.FilePath;
-        var directory = Path.GetDirectoryName(filePath);
-        if (string.IsNullOrWhiteSpace(directory) || !Directory.Exists(directory))
+        // A task may still be downloading, so its file does not have to exist yet.
+        // Reveal the containing directory whenever it is available.
+        var directory = Directory.Exists(filePath) ? filePath : Path.GetDirectoryName(filePath);
+        if (string.IsNullOrWhiteSpace(directory))
         {
+            _notificationService.ShowNotification(GetString("StatusError"), GetString("MessageOpenFolderFailed"), ToastType.Warning);
             return Task.CompletedTask;
         }
 
@@ -397,6 +400,7 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             Debug.WriteLine($"Open folder failed: {ex.Message}");
             AppLog.Error(ex, $"Open folder failed: {task.Name} ({task.Id})");
+            _notificationService.ShowNotification(GetString("StatusError"), GetString("MessageOpenFolderFailed"), ToastType.Error);
         }
 
         return Task.CompletedTask;

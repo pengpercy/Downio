@@ -120,8 +120,8 @@
                                             
                                             <!-- Open Folder -->
                                             <Button Background="Transparent" BorderThickness="0" Padding="6"
-                                                    Command="{Binding $parent[UserControl].((vm:MainWindowViewModel)DataContext).OpenFolderCommand}"
-                                                    CommandParameter="{Binding}">
+                                                    Click="OpenFolderButton_Click"
+                                                    ToolTip.Tip="{DynamicResource ToolTipOpenFolder}">
                                                 <PathIcon Data="{StaticResource IconFolder}" Width="12" Height="12" Opacity="0.7" />
                                             </Button>
                                             

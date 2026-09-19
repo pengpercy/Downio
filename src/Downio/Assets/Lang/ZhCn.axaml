@@ -123,6 +123,7 @@
     <x:String x:Key="MenuFile">文件</x:String>
     <x:String x:Key="MenuView">视图</x:String>
     <x:String x:Key="MenuDelete">删除</x:String>
+    <x:String x:Key="ToolTipOpenFolder">打开所在文件夹</x:String>
     <x:String x:Key="MenuDetails">详情</x:String>
 
     <!-- Status -->
@@ -136,6 +137,7 @@
     <x:String x:Key="NotificationTasksDeleted">已删除 {0} 个任务</x:String>
     <x:String x:Key="NotificationAlsoDeletedFile">（同时删除了本地文件）</x:String>
     <x:String x:Key="MessageTaskDeleteFailed">无法删除下载任务。</x:String>
+    <x:String x:Key="MessageOpenFolderFailed">无法打开所在文件夹。</x:String>
     <x:String x:Key="MessageFileDeleteFailed">任务已删除，但一个或多个本地文件无法删除。</x:String>
 
     <!-- Time -->

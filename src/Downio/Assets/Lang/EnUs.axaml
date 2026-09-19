@@ -123,6 +123,7 @@
     <x:String x:Key="MenuFile">File</x:String>
     <x:String x:Key="MenuView">View</x:String>
     <x:String x:Key="MenuDelete">Delete</x:String>
+    <x:String x:Key="ToolTipOpenFolder">Open containing folder</x:String>
     <x:String x:Key="MenuDetails">Details</x:String>
 
     <!-- Status -->
@@ -136,6 +137,7 @@
     <x:String x:Key="NotificationTasksDeleted">Deleted {0} tasks</x:String>
     <x:String x:Key="NotificationAlsoDeletedFile"> (Also deleted local file)</x:String>
     <x:String x:Key="MessageTaskDeleteFailed">Could not remove the download task.</x:String>
+    <x:String x:Key="MessageOpenFolderFailed">Could not open the containing folder.</x:String>
     <x:String x:Key="MessageFileDeleteFailed">The task was removed, but one or more local files could not be deleted.</x:String>
 
     <!-- Time -->
