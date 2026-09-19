@@ -333,6 +333,7 @@
                                 <StackPanel Orientation="Horizontal" IsVisible="{Binding !IsSettingsVisible}"
                                             Margin="{Binding TitleBarToolsMargin}">
                                     <Button Command="{Binding ResumeAllCommand}"
+                                            chrome:WindowDecorationProperties.ElementRole="User"
                                             Background="Transparent"
                                             BorderThickness="0"
                                             Padding="8"
@@ -346,6 +347,7 @@
                                                Opacity="0.7" Margin="6,0"/>
                                                
                                     <Button Command="{Binding PauseAllCommand}"
+                                            chrome:WindowDecorationProperties.ElementRole="User"
                                             Background="Transparent"
                                             BorderThickness="0"
                                             Padding="8"
@@ -359,6 +361,7 @@
                                                Opacity="0.7" Margin="6,0"/>
 
                                     <Button Command="{Binding DeleteSelectedTasksCommand}"
+                                            chrome:WindowDecorationProperties.ElementRole="User"
                                             Background="Transparent"
                                             BorderThickness="0"
                                             Padding="8"

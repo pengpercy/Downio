@@ -357,26 +357,41 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     public Task OpenFolder(DownloadTask? task)
     {
-        if (task == null || string.IsNullOrEmpty(task.FilePath)) return Task.CompletedTask;
+        if (task == null || string.IsNullOrWhiteSpace(task.FilePath)) return Task.CompletedTask;
 
-        var path = task.FilePath;
-        var dir = Path.GetDirectoryName(path);
+        var filePath = task.FilePath;
+        var directory = Path.GetDirectoryName(filePath);
+        if (string.IsNullOrWhiteSpace(directory) || !Directory.Exists(directory))
+        {
+            return Task.CompletedTask;
+        }
 
-        if (!Directory.Exists(dir)) return Task.CompletedTask;
         try
         {
+            var startInfo = new ProcessStartInfo
+            {
+                UseShellExecute = false
+            };
+
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                Process.Start("explorer.exe", $"/select,\"{path}\"");
+                startInfo.FileName = "explorer.exe";
+                startInfo.ArgumentList.Add($"/select,{filePath}");
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
-                Process.Start("open", $"-R \"{path}\"");
+                // ArgumentList avoids passing literal quote characters to open when file names contain spaces.
+                startInfo.FileName = "open";
+                startInfo.ArgumentList.Add("-R");
+                startInfo.ArgumentList.Add(filePath);
             }
             else
             {
-                Process.Start("xdg-open", dir);
+                startInfo.FileName = "xdg-open";
+                startInfo.ArgumentList.Add(directory);
             }
+
+            Process.Start(startInfo);
         }
         catch (Exception ex)
         {

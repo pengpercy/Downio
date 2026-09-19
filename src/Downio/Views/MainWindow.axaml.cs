@@ -1,6 +1,8 @@
 using System;
+using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.VisualTree;
 using Downio.Helpers;
 using Downio.ViewModels;
 
@@ -38,10 +40,18 @@ public partial class MainWindow : Window
         // chrome:WindowDecorationProperties.ElementRole="TitleBar".
         // Manually toggling WindowState here races with that native handler
         // and briefly maximizes then restores. Only assist single-click drag.
-        if (e.ClickCount == 1 && e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+        if (e.ClickCount == 1 &&
+            e.GetCurrentPoint(this).Properties.IsLeftButtonPressed &&
+            !IsInteractiveTitleBarElement(e.Source))
         {
             BeginMoveDrag(e);
         }
+    }
+
+    private static bool IsInteractiveTitleBarElement(object? source)
+    {
+        return source is Control control &&
+               control.GetSelfAndVisualAncestors().OfType<Button>().Any();
     }
 
     private void UpdateMacTitleBarInsets()

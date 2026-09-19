@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.87 - 2026-09-19
+
+- Fixed the per-task “Open Folder” action on macOS and other platforms by passing the target path as a process argument rather than embedding shell quotes; files and directories with spaces are now revealed correctly.
+- Fixed title-bar download controls, including Remove Selected, being treated as drag targets on macOS. They are now explicitly interactive and clicks reach their commands.
+
 ## 1.0.86 - 2026-09-06
 
 - The app now detects the OS-level system proxy as a lowest-priority fallback: on macOS it reads the SystemConfiguration proxy state (via `scutil --proxy`), on Windows the WinINET registry settings. Proxy tools such as Clash and Surge that toggle the system proxy without exporting `http_proxy` / `https_proxy` environment variables now work out of the box.
