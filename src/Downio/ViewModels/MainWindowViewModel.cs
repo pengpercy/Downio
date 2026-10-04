@@ -355,22 +355,28 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    public Task OpenFolder(DownloadTask? task)
+    public async Task OpenFolder(DownloadTask? task)
     {
-        if (task == null || string.IsNullOrWhiteSpace(task.FilePath)) return Task.CompletedTask;
-
-        var filePath = task.FilePath;
-        // A task may still be downloading, so its file does not have to exist yet.
-        // Reveal the containing directory whenever it is available.
-        var directory = Directory.Exists(filePath) ? filePath : Path.GetDirectoryName(filePath);
-        if (string.IsNullOrWhiteSpace(directory))
-        {
-            _notificationService.ShowNotification(GetString("StatusError"), GetString("MessageOpenFolderFailed"), ToastType.Warning);
-            return Task.CompletedTask;
-        }
+        if (task == null) return;
 
         try
         {
+            var filePath = string.IsNullOrWhiteSpace(task.FilePath)
+                ? task.FilePaths.FirstOrDefault(path => !string.IsNullOrWhiteSpace(path))
+                : task.FilePath;
+            if (string.IsNullOrWhiteSpace(filePath))
+                throw new IOException("The task has no destination path.");
+
+            filePath = Path.GetFullPath(filePath);
+            var fileExists = File.Exists(filePath);
+            var directory = Directory.Exists(filePath) ? filePath : Path.GetDirectoryName(filePath);
+            // Downloads (including nested torrent files) may not have been created yet.
+            while (!string.IsNullOrWhiteSpace(directory) && !Directory.Exists(directory))
+                directory = Path.GetDirectoryName(directory);
+
+            if (string.IsNullOrWhiteSpace(directory))
+                throw new DirectoryNotFoundException("The task's containing folder does not exist.");
+
             var startInfo = new ProcessStartInfo
             {
                 UseShellExecute = false
@@ -379,14 +385,17 @@ public partial class MainWindowViewModel : ViewModelBase
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 startInfo.FileName = "explorer.exe";
-                startInfo.ArgumentList.Add($"/select,{filePath}");
+                if (fileExists)
+                    startInfo.ArgumentList.Add($"/select,{filePath}");
+                else
+                    startInfo.ArgumentList.Add(directory);
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
-                // ArgumentList avoids passing literal quote characters to open when file names contain spaces.
-                startInfo.FileName = "open";
-                startInfo.ArgumentList.Add("-R");
-                startInfo.ArgumentList.Add(filePath);
+                startInfo.FileName = "/usr/bin/open";
+                if (fileExists)
+                    startInfo.ArgumentList.Add("-R");
+                startInfo.ArgumentList.Add(fileExists ? filePath : directory);
             }
             else
             {
@@ -394,7 +403,20 @@ public partial class MainWindowViewModel : ViewModelBase
                 startInfo.ArgumentList.Add(directory);
             }
 
-            Process.Start(startInfo);
+            // Explorer can reuse an existing process; its exit code is not a reliable
+            // success signal. The Unix launchers report failures through their exit code.
+            var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+            startInfo.RedirectStandardError = !isWindows;
+            using var process = Process.Start(startInfo)
+                ?? throw new IOException("The folder opener could not be started.");
+            if (!isWindows)
+            {
+                var errorTask = process.StandardError.ReadToEndAsync();
+                await process.WaitForExitAsync();
+                var error = await errorTask;
+                if (process.ExitCode != 0)
+                    throw new IOException($"Folder opener exited with code {process.ExitCode}: {error.Trim()}");
+            }
         }
         catch (Exception ex)
         {
@@ -402,8 +424,6 @@ public partial class MainWindowViewModel : ViewModelBase
             AppLog.Error(ex, $"Open folder failed: {task.Name} ({task.Id})");
             _notificationService.ShowNotification(GetString("StatusError"), GetString("MessageOpenFolderFailed"), ToastType.Error);
         }
-
-        return Task.CompletedTask;
     }
 
     [RelayCommand]

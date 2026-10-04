@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.89 - 2026-10-04
+
+- Fixed the task-list “Open Folder” action when a download file is missing or has not been created: macOS now opens the nearest existing containing directory instead of silently failing to reveal the file; Windows also falls back to opening the directory.
+- Folder launcher failures now produce an error notification and diagnostic log on macOS and Linux.
+
 ## 1.0.88 - 2026-09-19
 
 - Fixed the task-list “Open Folder” button not invoking its command. The action now uses a direct click handler so it reliably receives the row’s download task, and reports an error when the destination cannot be opened.
