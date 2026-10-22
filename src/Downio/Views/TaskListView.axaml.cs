@@ -1,5 +1,7 @@
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Downio.ViewModels;
@@ -18,32 +20,40 @@ public partial class TaskListView : UserControl
     {
         InitializeComponent();
         DataContextChanged += OnDataContextChanged;
+        TasksListBox.AddHandler(PointerPressedEvent, OnListPointerPressed, RoutingStrategies.Tunnel);
+        TasksListBox.AddHandler(PointerReleasedEvent, OnListPointerReleased, RoutingStrategies.Tunnel);
     }
 
     private void OpenFolderButton_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
-        if (sender is Button { DataContext: DownloadTask task } && DataContext is MainWindowViewModel vm)
+        if (sender is Control { DataContext: DownloadTask task } && DataContext is MainWindowViewModel vm)
         {
             _ = vm.OpenFolder(task);
         }
     }
 
-    private void OnPointerPressed(object? sender, PointerPressedEventArgs e)
+    // Selection is driven entirely from here. The handlers run in the tunnel phase so the
+    // ListBox's built-in Multiple-mode toggling (which may fire on press or on release)
+    // never runs and can't undo what a click just selected.
+    private void OnListPointerPressed(object? sender, PointerPressedEventArgs e)
     {
         if (sender is not ListBox listBox) return;
 
-        var point = e.GetCurrentPoint(listBox);
-        var props = point.Properties;
+        var props = e.GetCurrentPoint(listBox).Properties;
         var isLeft = props.IsLeftButtonPressed;
         var isRight = props.IsRightButtonPressed;
         if (!isLeft && !isRight) return;
 
         var sourceControl = e.Source as Control;
-        if (FindAncestor<Button>(sourceControl) != null) return;
+        if (FindAncestor<Button>(sourceControl) != null || FindAncestor<ScrollBar>(sourceControl) != null) return;
 
-        var clickedContainer = FindAncestor<ListBoxItem>(sourceControl);
-        if (clickedContainer == null)
+        listBox.Focus();
+
+        var clickedItem = FindAncestor<ListBoxItem>(sourceControl)?.DataContext;
+        var clickedIndex = clickedItem == null ? -1 : listBox.Items.IndexOf(clickedItem);
+        if (clickedItem == null || clickedIndex < 0)
         {
+            // Clicking empty space clears the selection.
             if (isLeft)
             {
                 ClearSelection(listBox);
@@ -52,15 +62,9 @@ public partial class TaskListView : UserControl
             return;
         }
 
-        var clickedItem = clickedContainer.DataContext;
-        if (clickedItem == null) return;
-
-        var clickedIndex = listBox.Items.IndexOf(clickedItem);
-        if (clickedIndex < 0) return;
-
         var selectedItems = listBox.SelectedItems;
-        var selectedCount = selectedItems?.Count ?? 0;
-        var isSelected = selectedItems?.Contains(clickedItem) == true;
+        if (selectedItems == null) return;
+        var isSelected = selectedItems.Contains(clickedItem);
 
         var mods = e.KeyModifiers;
         var isCtrlOrCmd = mods.HasFlag(KeyModifiers.Control) || mods.HasFlag(KeyModifiers.Meta);
@@ -68,13 +72,8 @@ public partial class TaskListView : UserControl
 
         if (isRight)
         {
-            if (!isSelected)
-            {
-                selectedItems?.Clear();
-                selectedItems?.Add(clickedItem);
-            }
-            listBox.SelectedItem = clickedItem;
-            _anchorIndex = clickedIndex;
+            // Right-clicking inside the selection keeps it so the context menu acts on it.
+            if (!isSelected) SelectOnly(listBox, clickedItem, clickedIndex);
             e.Handled = true;
             return;
         }
@@ -83,38 +82,28 @@ public partial class TaskListView : UserControl
         {
             if (_anchorIndex < 0) _anchorIndex = clickedIndex;
             SelectRange(listBox, _anchorIndex, clickedIndex, isCtrlOrCmd);
-            listBox.SelectedItem = clickedItem;
-            e.Handled = true;
-            return;
         }
-
-        if (isCtrlOrCmd)
+        else if (isCtrlOrCmd)
         {
-            if (isSelected)
-            {
-                selectedItems?.Remove(clickedItem);
-            }
-            else
-            {
-                selectedItems?.Add(clickedItem);
-            }
-            listBox.SelectedItem = clickedItem;
+            if (isSelected) selectedItems.Remove(clickedItem);
+            else selectedItems.Add(clickedItem);
             _anchorIndex = clickedIndex;
-            e.Handled = true;
-            return;
         }
-
-        if (isSelected && selectedCount == 1)
+        else
         {
-            ClearSelection(listBox);
-            e.Handled = true;
-            return;
+            SelectOnly(listBox, clickedItem, clickedIndex);
         }
 
-        selectedItems?.Clear();
-        selectedItems?.Add(clickedItem);
-        listBox.SelectedItem = clickedItem;
-        _anchorIndex = clickedIndex;
+        e.Handled = true;
+    }
+
+    private void OnListPointerReleased(object? sender, PointerReleasedEventArgs e)
+    {
+        // Swallow the left release too, otherwise the ListBoxItem toggles the selection back.
+        // Right release is left alone: it is what opens the context menu.
+        if (e.InitialPressMouseButton != MouseButton.Left) return;
+        var sourceControl = e.Source as Control;
+        if (FindAncestor<Button>(sourceControl) != null || FindAncestor<ScrollBar>(sourceControl) != null) return;
         e.Handled = true;
     }
 
@@ -133,11 +122,7 @@ public partial class TaskListView : UserControl
             {
                 selectedItems?.Add(listBox.Items[i]);
             }
-            if (listBox.ItemCount > 0)
-            {
-                listBox.SelectedItem = listBox.Items[listBox.ItemCount - 1];
-                _anchorIndex = 0;
-            }
+            _anchorIndex = listBox.ItemCount > 0 ? 0 : -1;
             e.Handled = true;
             return;
         }
@@ -151,7 +136,8 @@ public partial class TaskListView : UserControl
 
         if (e.Key == Key.Delete || e.Key == Key.Back)
         {
-            if (DataContext is MainWindowViewModel vm && vm.DeleteSelectedTasksCommand.CanExecute(null))
+            // Keyboard delete only acts on a selection; clearing the whole list stays a toolbar action.
+            if (DataContext is MainWindowViewModel { HasSelectedTasks: true } vm)
             {
                 vm.DeleteSelectedTasksCommand.Execute(null);
                 e.Handled = true;
@@ -196,31 +182,35 @@ public partial class TaskListView : UserControl
                 return;
             }
 
-            var listBox = this.FindControl<ListBox>("TasksListBox");
-            if (listBox == null || !listBox.Items.Contains(_viewModel.SelectedTask))
+            var listBox = TasksListBox;
+            var task = _viewModel.SelectedTask;
+            var index = listBox.Items.IndexOf(task);
+            if (index < 0)
             {
                 return;
             }
 
-            var selectedItems = listBox.SelectedItems;
-            selectedItems?.Clear();
-            selectedItems?.Add(_viewModel.SelectedTask);
-            listBox.SelectedItem = _viewModel.SelectedTask;
-            listBox.ScrollIntoView(_viewModel.SelectedTask);
+            SelectOnly(listBox, task, index);
+            listBox.ScrollIntoView(task);
             listBox.Focus();
-
-            var selectedIndex = listBox.Items.IndexOf(_viewModel.SelectedTask);
-            if (selectedIndex >= 0)
-            {
-                _anchorIndex = selectedIndex;
-            }
         }, DispatcherPriority.Background);
+    }
+
+    private void SelectOnly(ListBox listBox, object item, int index)
+    {
+        var selectedItems = listBox.SelectedItems;
+        if (selectedItems == null) return;
+        if (selectedItems.Count != 1 || !selectedItems.Contains(item))
+        {
+            selectedItems.Clear();
+            selectedItems.Add(item);
+        }
+        _anchorIndex = index;
     }
 
     private void ClearSelection(ListBox listBox)
     {
         listBox.SelectedItems?.Clear();
-        listBox.SelectedItem = null;
         _anchorIndex = -1;
     }
 

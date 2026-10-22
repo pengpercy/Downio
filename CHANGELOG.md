@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.0.90 - 2026-10-23
+
+- Fixed “Open Folder” doing nothing for tasks that were added before aria2 resolved the file name: the task list now picks up the destination path, file list, and URL on every refresh. On Windows, files whose path contains spaces are now selected in Explorer correctly.
+- Fixed tasks not being selectable in the task list: a click no longer gets toggled back off by the list’s built-in selection, and Ctrl/⌘-click, Shift-click, and Ctrl/⌘+A keep multi-selection intact.
+- Fixed deleted downloading/waiting/paused tasks reappearing under Stopped: aria2’s leftover “removed” result is now purged, and deleting history-only tasks no longer reports a false error.
+- The title-bar delete button is never disabled: it deletes the selected tasks (with a selection count badge), offers to clear the current list when nothing is selected, and shows a notice when the list is empty. The Delete key only acts on a selection. Multi-task confirmation messages are now localized.
+- Redesigned the task list: file-type tiles tinted by status, a compact status/size/speed line, a hairline border with a soft shadow instead of the hard green hover shadow, a clear selected state (accent border, tint, and check badge), hover-revealed secondary actions, and a pause/resume button only on tasks that can be paused or resumed. The context menu gains Open Folder and Copy Link.
+- Redesigned the task details window with an overview card, transfer metrics, and copyable link/path/ID rows plus an Open Folder button.
+- The completed status color is now #33D158.
+- File and folder pickers use localized titles. On macOS, native panels follow the app’s language setting (after a restart), and debug builds now ship the `.lproj` folders so the open panel sidebar is localized when running from `bin/`.
+
 ## 1.0.89 - 2026-10-04
 
 - Fixed the task-list “Open Folder” action when a download file is missing or has not been created: macOS now opens the nearest existing containing directory instead of silently failing to reveal the file; Windows also falls back to opening the directory.

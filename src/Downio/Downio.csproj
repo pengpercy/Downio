@@ -14,7 +14,7 @@
         <ApplicationManifest>app.manifest</ApplicationManifest>
         <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
         <ApplicationIcon>Assets/Branding/app_ico.ico</ApplicationIcon>
-        <Version>1.0.89</Version>
+        <Version>1.0.90</Version>
         <InformationalVersion>$(Version)</InformationalVersion>
         <!-- Avoid NU1900 when a developer is building offline; CI retains package vulnerability auditing. -->
         <NuGetAudit Condition="'$(CI)' != 'true'">false</NuGetAudit>
@@ -148,5 +148,16 @@
 
   <ItemGroup>
     <TrimmerRootAssembly Include="Avalonia.Themes.Fluent" />
+  </ItemGroup>
+
+  <!-- An unbundled macOS executable takes its localizations from *.lproj folders next to it.
+       Without them, native panels (e.g. the open panel sidebar) fall back to English when running
+       from bin/. Packaged builds get these from build/package_osx.sh instead. -->
+  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('OSX'))">
+    <Content Include="..\..\build\resources\app\*.lproj\**">
+      <Link>%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+    </Content>
   </ItemGroup>
 </Project>

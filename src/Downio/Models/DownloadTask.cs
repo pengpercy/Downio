@@ -31,9 +31,16 @@ public partial class DownloadTask : ObservableObject
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsActive))]
+    [NotifyPropertyChangedFor(nameof(IsCompleted))]
+    [NotifyPropertyChangedFor(nameof(CanToggleState))]
     private string _status = "StatusDownloading"; // StatusDownloading, StatusCompleted, StatusPaused, StatusError
 
     public bool IsActive => Status == "StatusDownloading" || Status == "StatusWaiting";
+
+    public bool IsCompleted => Status == "StatusCompleted";
+
+    // Pause/resume only applies to tasks aria2 still holds as active, waiting or paused.
+    public bool CanToggleState => IsActive || Status == "StatusPaused";
 
     [ObservableProperty]
     private string _timeLeft = string.Empty;

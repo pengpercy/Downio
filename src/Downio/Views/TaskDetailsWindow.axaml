@@ -4,112 +4,230 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:models="using:Downio.Models"
         xmlns:conv="using:Downio.Converters"
+        xmlns:aconv="using:Avalonia.Data.Converters"
         xmlns:views="using:Downio.Views"
         xmlns:controls="using:Downio.Controls"
-        mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="450"
+        mc:Ignorable="d" d:DesignWidth="520" d:DesignHeight="560"
         x:Class="Downio.Views.TaskDetailsWindow"
         x:DataType="models:DownloadTask"
         Classes="dialog"
         Title="{DynamicResource MenuDetails}"
-        Width="500" SizeToContent="Height">
-
+        Width="520" SizeToContent="Height">
 
     <Window.Resources>
         <conv:StatusToIconConverter x:Key="StatusToIconConverter" />
+        <conv:StatusColorConverter x:Key="StatusColorConverter" />
         <conv:ResourceKeyToTextConverter x:Key="ResourceKeyToTextConverter" />
+        <conv:Ed2kFileTypeIconConverter x:Key="FileTypeIconConverter" />
     </Window.Resources>
 
+    <Window.Styles>
+        <Style Selector="Border.detailsCard">
+            <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="BoxShadow" Value="{DynamicResource CardShadow}" />
+            <Setter Property="Padding" Value="18,16" />
+        </Style>
+
+        <Style Selector="TextBlock.sectionTitle">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Opacity" Value="0.85" />
+        </Style>
+
+        <Style Selector="TextBlock.fieldLabel">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Opacity" Value="0.55" />
+        </Style>
+
+        <Style Selector="TextBlock.metricValue">
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+
+        <Style Selector="Border.divider">
+            <Setter Property="Height" Value="1" />
+            <Setter Property="Background" Value="{DynamicResource SystemControlHighlightBaseLowBrush}" />
+            <Setter Property="Opacity" Value="0.25" />
+        </Style>
+
+        <Style Selector="Border.metricTile">
+            <Setter Property="Background" Value="{DynamicResource WorkspaceBackgroundBrush}" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="10" />
+        </Style>
+
+        <Style Selector="Button.iconButton">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="7" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="VerticalAlignment" Value="Top" />
+        </Style>
+        <Style Selector="Button.iconButton PathIcon">
+            <Setter Property="Width" Value="13" />
+            <Setter Property="Height" Value="13" />
+            <Setter Property="Opacity" Value="0.65" />
+        </Style>
+        <Style Selector="Button.iconButton:pointerover PathIcon">
+            <Setter Property="Opacity" Value="1" />
+        </Style>
+    </Window.Styles>
+
     <controls:DialogHost Title="{Binding $parent[Window].Title}">
-        <Grid RowDefinitions="Auto, Auto">
-            <!-- Content -->
-            <StackPanel Grid.Row="0" Spacing="16">
-                <!-- File Name -->
-                <StackPanel Spacing="4">
-                    <TextBlock Text="{DynamicResource LabelFileName}" FontSize="12" Opacity="0.6" />
-                    <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="Medium" TextWrapping="Wrap" />
-                </StackPanel>
+        <StackPanel Spacing="12">
 
-                <!-- URL -->
-                <StackPanel Spacing="4">
-                    <TextBlock Text="{DynamicResource LabelUrl}" FontSize="12" Opacity="0.6" />
-                    <TextBox Text="{Binding Url}" IsReadOnly="True" BorderThickness="0" Background="Transparent"
-                             Padding="0" TextWrapping="Wrap" FontSize="13" />
-                </StackPanel>
+            <!-- Overview: file identity, status and progress -->
+            <Border Classes="detailsCard">
+                <StackPanel Spacing="14">
+                    <Grid ColumnDefinitions="Auto, *" ColumnSpacing="14">
+                        <Panel Grid.Column="0" Width="48" Height="48" VerticalAlignment="Top">
+                            <Border CornerRadius="12" Opacity="0.12"
+                                    Background="{DynamicResource SystemControlBackgroundAccentBrush}" />
+                            <PathIcon Data="{Binding Name, Converter={StaticResource FileTypeIconConverter}, ConverterParameter=fileName}"
+                                      Width="22" Height="22"
+                                      Foreground="{DynamicResource SystemControlForegroundAccentBrush}" />
+                        </Panel>
 
-                <!-- Save Path -->
-                <StackPanel Spacing="4">
-                    <TextBlock Text="{DynamicResource LabelSavePath}" FontSize="12" Opacity="0.6" />
-                    <TextBlock Text="{Binding FilePath}" FontSize="13" TextWrapping="Wrap" />
-                </StackPanel>
-
-                <!-- Stats Grid -->
-                <Grid ColumnDefinitions="*, *" RowDefinitions="Auto, Auto, Auto, Auto" Margin="0,4,0,0">
-                    <!-- Status -->
-                    <StackPanel Grid.Row="0" Grid.Column="0" Spacing="4" Margin="0,0,0,16">
-                        <TextBlock Text="{DynamicResource LabelStatus}" FontSize="12" Opacity="0.6" />
-                        <StackPanel Orientation="Horizontal" Spacing="6">
-                            <PathIcon Data="{Binding Status, Converter={StaticResource StatusToIconConverter}}"
-                                      Width="14" Height="14" Opacity="0.8" />
-                            <TextBlock Text="{Binding Status, Converter={StaticResource ResourceKeyToTextConverter}}"
-                                       FontSize="13" />
+                        <StackPanel Grid.Column="1" Spacing="8" VerticalAlignment="Center">
+                            <SelectableTextBlock Text="{Binding Name}" FontSize="15" FontWeight="SemiBold"
+                                                 TextWrapping="Wrap" />
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <!-- Status pill tinted with the status color -->
+                                <Panel>
+                                    <Border CornerRadius="10" Opacity="0.14"
+                                            Background="{Binding Status, Converter={StaticResource StatusColorConverter}}" />
+                                    <StackPanel Orientation="Horizontal" Spacing="5" Margin="8,3,10,3">
+                                        <PathIcon Data="{Binding Status, Converter={StaticResource StatusToIconConverter}}"
+                                                  Width="10" Height="10"
+                                                  Foreground="{Binding Status, Converter={StaticResource StatusColorConverter}}" />
+                                        <TextBlock Text="{Binding Status, Converter={StaticResource ResourceKeyToTextConverter}}"
+                                                   FontSize="12" FontWeight="Medium" VerticalAlignment="Center"
+                                                   Foreground="{Binding Status, Converter={StaticResource StatusColorConverter}}" />
+                                    </StackPanel>
+                                </Panel>
+                                <TextBlock Text="{Binding SizeInfo}" FontSize="12" Opacity="0.6"
+                                           VerticalAlignment="Center" />
+                            </StackPanel>
                         </StackPanel>
-                    </StackPanel>
-
-                    <!-- Size -->
-                    <StackPanel Grid.Row="0" Grid.Column="1" Spacing="4" Margin="0,0,0,16">
-                        <TextBlock Text="{DynamicResource LabelSize}" FontSize="12" Opacity="0.6" />
-                        <TextBlock Text="{Binding SizeInfo}" FontSize="13" />
-                    </StackPanel>
-
-                    <!-- Speed -->
-                    <StackPanel Grid.Row="1" Grid.Column="0" Spacing="4" Margin="0,0,0,16">
-                        <TextBlock Text="{DynamicResource LabelSpeed}" FontSize="12" Opacity="0.6" />
-                        <TextBlock Text="{Binding Speed}" FontSize="13" />
-                    </StackPanel>
-
-                    <!-- Split -->
-                    <StackPanel Grid.Row="1" Grid.Column="1" Spacing="4" Margin="0,0,0,16">
-                        <TextBlock Text="{DynamicResource LabelSplit}" FontSize="12" Opacity="0.6" />
-                        <TextBlock Text="{Binding Split}" FontSize="13" />
-                    </StackPanel>
-
-                    <!-- Time Left -->
-                    <StackPanel Grid.Row="2" Grid.Column="0" Spacing="4" Margin="0,0,0,16">
-                        <TextBlock Text="{DynamicResource LabelTimeRemaining}" FontSize="12" Opacity="0.6" />
-                        <TextBlock Text="{Binding TimeLeft}" FontSize="13" />
-                    </StackPanel>
-
-                    <!-- Connections -->
-                    <StackPanel Grid.Row="2" Grid.Column="1" Spacing="4" Margin="0,0,0,16">
-                        <TextBlock Text="{DynamicResource LabelConnections}" FontSize="12" Opacity="0.6" />
-                        <TextBlock Text="{Binding Connections}" FontSize="13" />
-                    </StackPanel>
-
-                    <!-- GID -->
-                    <StackPanel Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Spacing="4">
-                        <TextBlock Text="GID" FontSize="12" Opacity="0.6" />
-                        <SelectableTextBlock Text="{Binding Id}" FontSize="12" FontFamily="Consolas, Monospace"
-                                             Opacity="0.8" />
-                    </StackPanel>
-                </Grid>
-
-                <!-- Progress Bar -->
-                <StackPanel Spacing="4" Margin="0,8,0,0">
-                    <Grid ColumnDefinitions="*, Auto">
-                        <TextBlock Grid.Column="0" Text="{DynamicResource LabelProgress}" FontSize="12" Opacity="0.6" />
-                        <TextBlock Grid.Column="1" Text="{Binding Progress, StringFormat={}{0:P1}}" FontSize="12"
-                                   Opacity="0.8" />
                     </Grid>
-                    <ProgressBar Value="{Binding Progress}" Maximum="1.0" Height="6" CornerRadius="3" />
-                </StackPanel>
 
-            </StackPanel>
+                    <StackPanel Spacing="6">
+                        <Grid ColumnDefinitions="*, Auto">
+                            <TextBlock Grid.Column="0" Classes="fieldLabel" Text="{DynamicResource LabelProgress}" />
+                            <TextBlock Grid.Column="1" Text="{Binding Progress, StringFormat={}{0:P1}}"
+                                       FontSize="12" FontWeight="SemiBold" />
+                        </Grid>
+                        <ProgressBar Value="{Binding Progress}" Maximum="1.0"
+                                     Height="6" MinHeight="6" CornerRadius="3" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Transfer metrics -->
+            <Border Classes="detailsCard">
+                <StackPanel Spacing="12">
+                    <TextBlock Classes="sectionTitle" Text="{DynamicResource LabelTransfer}" />
+                    <UniformGrid Columns="4" ColumnSpacing="8">
+                        <Border Classes="metricTile">
+                            <StackPanel Spacing="4">
+                                <TextBlock Classes="fieldLabel" Text="{DynamicResource LabelSpeed}" />
+                                <TextBlock Classes="metricValue" Text="{Binding Speed}" TextWrapping="NoWrap"
+                                           TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                        </Border>
+                        <Border Classes="metricTile">
+                            <StackPanel Spacing="4">
+                                <TextBlock Classes="fieldLabel" Text="{DynamicResource LabelTimeRemaining}" />
+                                <Panel>
+                                    <TextBlock Classes="metricValue" Text="{Binding TimeLeft}" TextWrapping="NoWrap"
+                                               TextTrimming="CharacterEllipsis"
+                                               IsVisible="{Binding TimeLeft, Converter={x:Static aconv:StringConverters.IsNotNullOrEmpty}}" />
+                                    <TextBlock Classes="metricValue" Text="--" Opacity="0.5"
+                                               IsVisible="{Binding TimeLeft, Converter={x:Static aconv:StringConverters.IsNullOrEmpty}}" />
+                                </Panel>
+                            </StackPanel>
+                        </Border>
+                        <Border Classes="metricTile">
+                            <StackPanel Spacing="4">
+                                <TextBlock Classes="fieldLabel" Text="{DynamicResource LabelConnections}" />
+                                <TextBlock Classes="metricValue" Text="{Binding Connections}" />
+                            </StackPanel>
+                        </Border>
+                        <Border Classes="metricTile">
+                            <StackPanel Spacing="4">
+                                <TextBlock Classes="fieldLabel" Text="{DynamicResource LabelSplit}" />
+                                <TextBlock Classes="metricValue" Text="{Binding Split}" />
+                            </StackPanel>
+                        </Border>
+                    </UniformGrid>
+                </StackPanel>
+            </Border>
+
+            <!-- Link, location and identifier -->
+            <Border Classes="detailsCard">
+                <StackPanel Spacing="12">
+                    <TextBlock Classes="sectionTitle" Text="{DynamicResource LabelTaskInfo}" />
+
+                    <StackPanel Spacing="10">
+                        <Grid ColumnDefinitions="76, *, Auto" ColumnSpacing="10"
+                              IsVisible="{Binding Url, Converter={x:Static aconv:StringConverters.IsNotNullOrEmpty}}">
+                            <TextBlock Grid.Column="0" Classes="fieldLabel" Text="{DynamicResource LabelUrl}" Margin="0,7,0,0" />
+                            <SelectableTextBlock Grid.Column="1" Text="{Binding Url}" FontSize="13"
+                                                 TextWrapping="Wrap" MaxLines="3" TextTrimming="CharacterEllipsis"
+                                                 Margin="0,6,0,0" />
+                            <Button Grid.Column="2" Classes="iconButton" Click="OnCopyClick" Tag="{Binding Url}"
+                                    ToolTip.Tip="{DynamicResource ToolTipCopy}">
+                                <PathIcon Data="{StaticResource IconCopy}" />
+                            </Button>
+                        </Grid>
+
+                        <Border Classes="divider"
+                                IsVisible="{Binding Url, Converter={x:Static aconv:StringConverters.IsNotNullOrEmpty}}" />
+
+                        <Grid ColumnDefinitions="76, *, Auto" ColumnSpacing="10">
+                            <TextBlock Grid.Column="0" Classes="fieldLabel" Text="{DynamicResource LabelSavePath}" Margin="0,7,0,0" />
+                            <SelectableTextBlock Grid.Column="1" Text="{Binding FilePath}" FontSize="13"
+                                                 TextWrapping="Wrap" Margin="0,6,0,0" />
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="2" VerticalAlignment="Top">
+                                <Button Classes="iconButton" Click="OnOpenFolderClick"
+                                        ToolTip.Tip="{DynamicResource ToolTipOpenFolder}">
+                                    <PathIcon Data="{StaticResource IconFolder}" />
+                                </Button>
+                                <Button Classes="iconButton" Click="OnCopyClick" Tag="{Binding FilePath}"
+                                        ToolTip.Tip="{DynamicResource ToolTipCopy}">
+                                    <PathIcon Data="{StaticResource IconCopy}" />
+                                </Button>
+                            </StackPanel>
+                        </Grid>
+
+                        <Border Classes="divider" />
+
+                        <Grid ColumnDefinitions="76, *, Auto" ColumnSpacing="10">
+                            <TextBlock Grid.Column="0" Classes="fieldLabel" Text="{DynamicResource LabelTaskId}" Margin="0,7,0,0" />
+                            <SelectableTextBlock Grid.Column="1" Text="{Binding Id}" FontSize="12"
+                                                 FontFamily="Menlo, Consolas, monospace" Opacity="0.85"
+                                                 Margin="0,7,0,0" />
+                            <Button Grid.Column="2" Classes="iconButton" Click="OnCopyClick" Tag="{Binding Id}"
+                                    ToolTip.Tip="{DynamicResource ToolTipCopy}">
+                                <PathIcon Data="{StaticResource IconCopy}" />
+                            </Button>
+                        </Grid>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
 
             <!-- Footer -->
-            <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10" Margin="0,24,0,0">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10" Margin="0,8,0,0">
+                <Button Classes="dialogButton" Click="OnOpenFolderClick">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <PathIcon Data="{StaticResource IconFolder}" Width="12" Height="12" />
+                        <TextBlock Text="{DynamicResource ToolTipOpenFolder}" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
                 <Button Content="{DynamicResource ButtonClose}" Click="OnCloseClick"
                         Classes="dialogButton accent" IsCancel="True" IsDefault="True" />
             </StackPanel>
-        </Grid>
+        </StackPanel>
     </controls:DialogHost>
 </views:DialogWindow>

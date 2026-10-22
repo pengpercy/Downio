@@ -13,6 +13,8 @@ public sealed class Ed2kFileTypeIconConverter : IValueConverter
         var category = value switch
         {
             Ed2kSearchResult result => result.FileTypeCategory,
+            // ConverterParameter="fileName" classifies a plain file name by its extension.
+            string fileName when parameter is "fileName" => Ed2kFileTypeClassifier.GetCategory(null, null, fileName),
             string type => Ed2kFileTypeClassifier.GetCategory(type, null),
             _ => "file"
         };

@@ -1,6 +1,7 @@
 using Avalonia;
 using System;
 using System.Threading.Tasks;
+using Downio.Helpers;
 using Downio.Services;
 
 namespace Downio;
@@ -14,6 +15,9 @@ sealed class Program
     public static void Main(string[] args)
     {
         // MacProcessName.TrySet("Downio");
+
+        // Must run before Avalonia brings up AppKit so native panels pick up the app language.
+        MacAppLanguage.Apply(new SettingsService().Settings.Language);
 
         AppDomain.CurrentDomain.UnhandledException += (_, e) =>
         {

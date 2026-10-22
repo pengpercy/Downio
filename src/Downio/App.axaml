@@ -173,8 +173,10 @@
                     <Color x:Key="SidebarAcrylicTintColor">#ECECEF</Color>
                     <x:Double x:Key="SidebarAcrylicTintOpacity">0.4</x:Double>
                     <x:Double x:Key="SidebarAcrylicMaterialOpacity">0.2</x:Double>
-                    <BoxShadows x:Key="CardShadow">0 2 2 0 #10000000</BoxShadows>
-                    <BoxShadows x:Key="CardHoverShadow">0 2 2 0 #406842</BoxShadows>
+                    <BoxShadows x:Key="CardShadow">0 1 3 0 #0D000000</BoxShadows>
+                    <BoxShadows x:Key="CardHoverShadow">0 4 14 0 #14000000</BoxShadows>
+                    <SolidColorBrush x:Key="CardBorderBrush" Color="#E4E6EA" />
+                    <SolidColorBrush x:Key="CardHoverBorderBrush" Color="#D2D5DB" />
                     <SolidColorBrush x:Key="InputBackgroundBrush" Color="#FFFFFFFF" />
                     <SolidColorBrush x:Key="InputFocusedBackgroundBrush" Color="#FFF7F8FA" />
                     <SolidColorBrush x:Key="TextControlBackground" Color="#FFFFFFFF" />
@@ -193,8 +195,10 @@
                     <Color x:Key="SidebarAcrylicTintColor">#1F2022</Color>
                     <x:Double x:Key="SidebarAcrylicTintOpacity">0.4</x:Double>
                     <x:Double x:Key="SidebarAcrylicMaterialOpacity">0.2</x:Double>
-                    <BoxShadows x:Key="CardShadow">0 2 2 0 #40000000</BoxShadows>
-                    <BoxShadows x:Key="CardHoverShadow">0 2 2 0 #406842</BoxShadows>
+                    <BoxShadows x:Key="CardShadow">0 1 3 0 #33000000</BoxShadows>
+                    <BoxShadows x:Key="CardHoverShadow">0 4 14 0 #59000000</BoxShadows>
+                    <SolidColorBrush x:Key="CardBorderBrush" Color="#14FFFFFF" />
+                    <SolidColorBrush x:Key="CardHoverBorderBrush" Color="#26FFFFFF" />
                     <SolidColorBrush x:Key="InputBackgroundBrush" Color="#FF3A3A3A" />
                     <SolidColorBrush x:Key="InputFocusedBackgroundBrush" Color="#FF1F1F1F" />
                     <SolidColorBrush x:Key="TextControlBackground" Color="#FF3A3A3A" />
@@ -231,6 +235,7 @@
             <StreamGeometry x:Key="IconGitHub">M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z</StreamGeometry>
             <StreamGeometry x:Key="IconCancel">M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41z</StreamGeometry>
             <StreamGeometry x:Key="IconUpload">M14,13v4h-4v-4H7l5-5l5,5H14z M19.35,10.04C18.67,6.59,15.64,4,12,4C9.11,4,6.6,5.64,5.35,8.04C2.34,8.36,0,10.91,0,14 c0,3.31,2.69,6,6,6h13c2.76,0,5-2.24,5-5C24,12.36,21.95,10.22,19.35,10.04z M19,18H6c-2.21,0-4-1.79-4-4c0-2.05,1.53-3.76,3.56-3.97 l1.07-0.11l0.5-0.95C8.08,7.14,9.94,6,12,6c2.62,0,4.88,1.86,5.39,4.43l0.3,1.5l1.53,0.11c1.56,0.1,2.78,1.41,2.78,2.96 C22,16.65,20.65,18,19,18z</StreamGeometry>
+            <StreamGeometry x:Key="IconCheck">M9,16.17L4.83,12l-1.42,1.41L9,19L21,7l-1.41-1.41L9,16.17z</StreamGeometry>
             <StreamGeometry x:Key="IconCopy">M16,1H4C2.9,1,2,1.9,2,3v14h2V3h12V1z M20,5H8C6.9,5,6,5.9,6,7v14c0,1.1,0.9,2,2,2h12c1.1,0,2-0.9,2-2V7C22,5.9,21.1,5,20,5z M20,21H8V7h12V21z</StreamGeometry>
         </ResourceDictionary>
     </Application.Resources>

@@ -37,7 +37,11 @@
     <x:String x:Key="PlaceholderAutoDetected">Auto-detected</x:String>
     <x:String x:Key="ToolTipResumeAll">Resume All</x:String>
     <x:String x:Key="ToolTipPauseAll">Pause All</x:String>
-    <x:String x:Key="ToolTipDeleteSelected">Remove Selected</x:String>
+    <x:String x:Key="ToolTipDeleteSelected">Delete selected tasks</x:String>
+    <x:String x:Key="MessageConfirmDeleteTasks">Delete the {0} selected tasks?</x:String>
+    <x:String x:Key="MessageConfirmDeleteAllTasks">No tasks are selected. Delete all {0} tasks in this list?</x:String>
+    <x:String x:Key="MessageNoTasksToDelete">There are no tasks in this list to delete.</x:String>
+    <x:String x:Key="ToolTipDeleteAll">Delete all tasks in this list</x:String>
     <x:String x:Key="ToolTipRefresh">Refresh</x:String>
 
     <!-- Settings Groups -->
@@ -158,6 +162,13 @@
     <x:String x:Key="LabelConnections">Connections</x:String>
     <x:String x:Key="LabelSplit">Split</x:String>
     <x:String x:Key="LabelProgress">Progress</x:String>
+    <x:String x:Key="LabelTransfer">Transfer</x:String>
+    <x:String x:Key="LabelTaskInfo">Task info</x:String>
+    <x:String x:Key="ToolTipCopy">Copy</x:String>
+    <x:String x:Key="LabelTaskId">Task ID</x:String>
+    <x:String x:Key="DialogSelectDownloadFolder">Select Download Folder</x:String>
+    <x:String x:Key="DialogSelectDefaultDownloadFolder">Select Default Download Folder</x:String>
+    <x:String x:Key="DialogSelectTorrentFile">Select Torrent File</x:String>
     <x:String x:Key="ButtonClose">Close</x:String>
     <x:String x:Key="LabelVersion">Version</x:String>
     <x:String x:Key="LabelDescription">A modern, open-source download manager.</x:String>

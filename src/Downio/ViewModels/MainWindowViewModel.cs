@@ -201,75 +201,91 @@ public partial class MainWindowViewModel : ViewModelBase
 
     public List<DownloadTask> SelectedTasks { get; private set; } = new();
 
+    public int SelectedTaskCount => SelectedTasks.Count;
+
+    public bool HasSelectedTasks => SelectedTasks.Count > 0;
+
     public void UpdateSelectedTasks(List<DownloadTask> tasks)
     {
         SelectedTasks = tasks;
-        DeleteSelectedTasksCommand.NotifyCanExecuteChanged();
+        OnPropertyChanged(nameof(SelectedTaskCount));
+        OnPropertyChanged(nameof(HasSelectedTasks));
     }
 
-    [RelayCommand(CanExecute = nameof(CanDeleteSelectedTasks))]
+    // Toolbar delete: removes the selection, or offers to clear the visible list when nothing is selected.
+    [RelayCommand]
     public async Task DeleteSelectedTasks()
     {
-        if (SelectedTasks.Count > 0)
+        var selected = SelectedTasks.Where(Tasks.Contains).ToList();
+        if (selected.Count > 0)
         {
-            var tasksToDelete = SelectedTasks.ToList(); // Clone list to avoid modification issues during enumeration
-
-            if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime { MainWindow: { } mainWindow })
-            {
-                var dialog = new ConfirmDeleteDialog(tasksToDelete.Count == 1 ? tasksToDelete[0].Name : $"{tasksToDelete.Count} tasks");
-                var result = await dialog.ShowDialog<bool>(mainWindow);
-                
-                if (result)
-                {
-                    var removeFailed = false;
-                    var fileDeleteFailed = false;
-                    foreach (var task in tasksToDelete)
-                    {
-                        try
-                        {
-                            await _aria2Service.RemoveAsync(task.Id);
-                        }
-                        catch (Exception ex)
-                        {
-                            removeFailed = true;
-                            AppLog.Error(ex, $"Failed to remove task: {task.Name} ({task.Id})");
-                        }
-
-                        _stoppedTaskHistoryService.Remove(task.Id);
-
-                        if (dialog.DeleteFile && !await TryDeleteTaskFilesAsync(task))
-                        {
-                            fileDeleteFailed = true;
-                        }
-                    }
-                    
-                    SelectedTask = null;
-                    await RefreshTaskListAsync();
-                    
-                    if (removeFailed)
-                    {
-                        _notificationService.ShowNotification(GetString("StatusError"), GetString("MessageTaskDeleteFailed"), ToastType.Error);
-                    }
-                    else if (fileDeleteFailed)
-                    {
-                        _notificationService.ShowNotification(GetString("StatusError"), GetString("MessageFileDeleteFailed"), ToastType.Error);
-                    }
-                    else if (tasksToDelete.Count == 1)
-                    {
-                        var msg = tasksToDelete[0].Name + (dialog.DeleteFile ? GetString("NotificationAlsoDeletedFile") : string.Empty);
-                        _notificationService.ShowNotification(GetString("NotificationTaskDeleted"), msg, ToastType.Success);
-                    }
-                    else
-                    {
-                        var msg = string.Format(GetString("NotificationTasksDeleted"), tasksToDelete.Count) + (dialog.DeleteFile ? GetString("NotificationAlsoDeletedFile") : string.Empty);
-                        _notificationService.ShowNotification(GetString("NotificationTaskDeleted"), msg, ToastType.Success);
-                    }
-                }
-            }
+            var message = selected.Count == 1
+                ? GetString("MessageConfirmDeleteTask").Replace("%s", selected[0].Name)
+                : string.Format(GetString("MessageConfirmDeleteTasks"), selected.Count);
+            await ConfirmAndDeleteTasksAsync(selected, message);
+            return;
         }
+
+        if (Tasks.Count == 0)
+        {
+            _notificationService.ShowNotification(GetString("MenuDelete"), GetString("MessageNoTasksToDelete"), ToastType.Info);
+            return;
+        }
+
+        var all = Tasks.ToList();
+        await ConfirmAndDeleteTasksAsync(all, string.Format(GetString("MessageConfirmDeleteAllTasks"), all.Count));
     }
 
-    private bool CanDeleteSelectedTasks() => SelectedTasks.Count > 0;
+    private async Task ConfirmAndDeleteTasksAsync(List<DownloadTask> tasksToDelete, string message)
+    {
+        if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime { MainWindow: { } mainWindow }) return;
+
+        var dialog = new ConfirmDeleteDialog(GetString("MenuDelete"), message, showDeleteFile: true);
+        if (!await dialog.ShowDialog<bool>(mainWindow)) return;
+
+        var removeFailed = false;
+        var fileDeleteFailed = false;
+        foreach (var task in tasksToDelete)
+        {
+            try
+            {
+                await _aria2Service.RemoveAsync(task.Id);
+            }
+            catch (Exception ex)
+            {
+                removeFailed = true;
+                AppLog.Error(ex, $"Failed to remove task: {task.Name} ({task.Id})");
+            }
+
+            _stoppedTaskHistoryService.Remove(task.Id);
+
+            if (dialog.DeleteFile && !await TryDeleteTaskFilesAsync(task))
+            {
+                fileDeleteFailed = true;
+            }
+        }
+
+        SelectedTask = null;
+        UpdateSelectedTasks([]);
+        await RefreshTaskListAsync();
+
+        if (removeFailed)
+        {
+            _notificationService.ShowNotification(GetString("StatusError"), GetString("MessageTaskDeleteFailed"), ToastType.Error);
+        }
+        else if (fileDeleteFailed)
+        {
+            _notificationService.ShowNotification(GetString("StatusError"), GetString("MessageFileDeleteFailed"), ToastType.Error);
+        }
+        else
+        {
+            var msg = (tasksToDelete.Count == 1
+                          ? tasksToDelete[0].Name
+                          : string.Format(GetString("NotificationTasksDeleted"), tasksToDelete.Count))
+                      + (dialog.DeleteFile ? GetString("NotificationAlsoDeletedFile") : string.Empty);
+            _notificationService.ShowNotification(GetString("NotificationTaskDeleted"), msg, ToastType.Success);
+        }
+    }
 
     private static async Task<bool> TryDeleteTaskFilesAsync(DownloadTask task)
     {
@@ -350,7 +366,7 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         if (task == null) return;
         if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime { MainWindow: { } mainWindow }) return;
-        var dialog = new TaskDetailsWindow(task);
+        var dialog = new TaskDetailsWindow(task, OpenFolder);
         dialog.ShowDialog(mainWindow);
     }
 
@@ -385,10 +401,9 @@ public partial class MainWindowViewModel : ViewModelBase
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 startInfo.FileName = "explorer.exe";
-                if (fileExists)
-                    startInfo.ArgumentList.Add($"/select,{filePath}");
-                else
-                    startInfo.ArgumentList.Add(directory);
+                // Explorer parses its own command line and only accepts /select,"path";
+                // ArgumentList would quote the whole switch when the path contains spaces.
+                startInfo.Arguments = fileExists ? $"/select,\"{filePath}\"" : $"\"{directory}\"";
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
@@ -1673,6 +1688,11 @@ public partial class MainWindowViewModel : ViewModelBase
                     if (existing.Connections != task.Connections) existing.Connections = task.Connections;
                     if (existing.Split != task.Split) existing.Split = task.Split;
                     if (existing.Name != task.Name && task.Name != "Unknown") existing.Name = task.Name;
+                    // Pending placeholders are created before aria2 knows the file name, so the
+                    // destination must be refreshed or "Open folder" keeps seeing an empty path.
+                    if (!string.IsNullOrWhiteSpace(task.FilePath) && existing.FilePath != task.FilePath) existing.FilePath = task.FilePath;
+                    if (task.FilePaths.Count > 0 && !existing.FilePaths.SequenceEqual(task.FilePaths, StringComparer.Ordinal)) existing.FilePaths = task.FilePaths;
+                    if (!string.IsNullOrWhiteSpace(task.Url) && existing.Url != task.Url) existing.Url = task.Url;
                 }
             }
 

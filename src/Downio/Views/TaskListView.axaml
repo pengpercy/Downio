@@ -15,6 +15,7 @@
         <localConv:StatusColorConverter x:Key="StatusColorConverter" />
         <localConv:StatusToIconConverter x:Key="StatusToIconConverter" />
         <localConv:CollectionIsEmptyConverter x:Key="CollectionIsEmptyConverter" />
+        <localConv:Ed2kFileTypeIconConverter x:Key="FileTypeIconConverter" />
     </UserControl.Resources>
 
     <UserControl.Styles>
@@ -22,16 +23,120 @@
             <Setter Property="FontSize" Value="12" />
             <Setter Property="CornerRadius" Value="4" />
         </Style>
-        
-        <!-- Task Card Selection Styles -->
+
+        <!-- Task card: hairline border and a soft shadow that lifts on hover -->
+        <Style Selector="Border.taskCard">
+            <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource CardBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1.5" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="BoxShadow" Value="{DynamicResource CardShadow}" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="0,4" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.15" />
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.15" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="ListBoxItem:pointerover Border.taskCard">
+            <Setter Property="BorderBrush" Value="{DynamicResource CardHoverBorderBrush}" />
+            <Setter Property="BoxShadow" Value="{DynamicResource CardHoverShadow}" />
+        </Style>
         <Style Selector="ListBoxItem:selected Border.taskCard">
             <Setter Property="BorderBrush" Value="{DynamicResource SystemAccentColorBrush}" />
-            <Setter Property="BorderThickness" Value="2" />
         </Style>
-        
-        <Style Selector="ListBoxItem:not(:selected) Border.taskCard">
-            <Setter Property="BorderBrush" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="2" />
+
+        <!-- Selected cards get an accent wash behind the content plus a check badge on the file tile -->
+        <Style Selector="Border.selectionTint">
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAccentBrush}" />
+            <Setter Property="CornerRadius" Value="8.5" />
+            <Setter Property="Opacity" Value="0" />
+            <Setter Property="IsHitTestVisible" Value="False" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.12" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="ListBoxItem:selected Border.selectionTint">
+            <Setter Property="Opacity" Value="0.08" />
+        </Style>
+        <Style Selector="Border.selectionCheck">
+            <Setter Property="IsVisible" Value="False" />
+        </Style>
+        <Style Selector="ListBoxItem:selected Border.selectionCheck">
+            <Setter Property="IsVisible" Value="True" />
+        </Style>
+
+        <!-- Secondary actions stay out of the way until the card is hovered or selected -->
+        <Style Selector="StackPanel.secondaryActions">
+            <Setter Property="Opacity" Value="0" />
+            <Setter Property="IsHitTestVisible" Value="False" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.12" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="ListBoxItem:pointerover StackPanel.secondaryActions, ListBoxItem:selected StackPanel.secondaryActions">
+            <Setter Property="Opacity" Value="1" />
+            <Setter Property="IsHitTestVisible" Value="True" />
+        </Style>
+
+        <Style Selector="Button.taskAction">
+            <Setter Property="Width" Value="28" />
+            <Setter Property="Height" Value="28" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Button.taskAction PathIcon">
+            <Setter Property="Width" Value="13" />
+            <Setter Property="Height" Value="13" />
+            <Setter Property="Opacity" Value="0.65" />
+        </Style>
+        <Style Selector="Button.taskAction:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundBaseLowBrush}" />
+        </Style>
+        <Style Selector="Button.taskAction:pointerover PathIcon">
+            <Setter Property="Opacity" Value="1" />
+        </Style>
+        <Style Selector="Button.taskAction.danger:pointerover PathIcon">
+            <Setter Property="Foreground" Value="#E5484D" />
+        </Style>
+
+        <!-- Primary pause/resume control -->
+        <Style Selector="Button.taskToggle">
+            <Setter Property="Width" Value="32" />
+            <Setter Property="Height" Value="32" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="CornerRadius" Value="16" />
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundBaseLowBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Button.taskToggle PathIcon">
+            <Setter Property="Width" Value="12" />
+            <Setter Property="Height" Value="12" />
+        </Style>
+        <Style Selector="Button.taskToggle:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAccentBrush}" />
+        </Style>
+        <Style Selector="Button.taskToggle:pointerover PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundChromeWhiteBrush}" />
+        </Style>
+
+        <Style Selector="TextBlock.meta">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Opacity" Value="0.6" />
+            <Setter Property="TextWrapping" Value="NoWrap" />
+            <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
 
         <!-- Override default ListBoxItem selection styles to avoid blue background -->
@@ -52,30 +157,17 @@
     <Grid>
         <ListBox x:Name="TasksListBox"
                   ItemsSource="{Binding Tasks}"
-                  SelectedItem="{Binding SelectedTask}"
-                  Margin="20,10,20,20"
+                  Margin="20,8,20,16"
                   Background="Transparent"
                    SelectionMode="Multiple"
-                   PointerPressed="OnPointerPressed"
                    KeyDown="OnKeyDown"
                   SelectionChanged="OnSelectionChanged"
                   IsVisible="{Binding Tasks.Count, Converter={StaticResource CollectionIsEmptyConverter}, ConverterParameter=not}">
             <ListBox.ItemTemplate>
                 <DataTemplate DataType="models:DownloadTask">
-                    <!-- Use CardBackgroundBrush for high contrast card effect -->
-                    <Border Classes="taskCard" Padding="15,10" CornerRadius="8"
-                            Background="{DynamicResource CardBackgroundBrush}" Margin="0,3"
-                            BoxShadow="{DynamicResource CardShadow}">
+                    <Border Classes="taskCard">
                         <Border.ContextMenu>
                             <ContextMenu>
-                                <MenuItem Header="{DynamicResource MenuDelete}"
-                                          Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).DeleteTaskCommand}"
-                                          CommandParameter="{Binding}">
-                                    <MenuItem.Icon>
-                                        <PathIcon Data="{StaticResource IconTrash}" Width="12" Height="12" />
-                                    </MenuItem.Icon>
-                                </MenuItem>
-                                <Separator />
                                 <MenuItem Header="{DynamicResource MenuDetails}"
                                           Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ShowTaskDetailsCommand}"
                                           CommandParameter="{Binding}">
@@ -83,101 +175,135 @@
                                         <PathIcon Data="{StaticResource IconInfo}" Width="12" Height="12" />
                                     </MenuItem.Icon>
                                 </MenuItem>
+                                <MenuItem Header="{DynamicResource ToolTipOpenFolder}" Click="OpenFolderButton_Click">
+                                    <MenuItem.Icon>
+                                        <PathIcon Data="{StaticResource IconFolder}" Width="12" Height="12" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem Header="{DynamicResource ToolTipCopyLink}"
+                                          Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CopyLinkCommand}"
+                                          CommandParameter="{Binding}"
+                                          IsVisible="{Binding Url, Converter={x:Static conv:StringConverters.IsNotNullOrEmpty}}">
+                                    <MenuItem.Icon>
+                                        <PathIcon Data="{StaticResource IconLink}" Width="12" Height="12" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <Separator />
+                                <MenuItem Header="{DynamicResource MenuDelete}"
+                                          Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).DeleteTaskCommand}"
+                                          CommandParameter="{Binding}">
+                                    <MenuItem.Icon>
+                                        <PathIcon Data="{StaticResource IconTrash}" Width="12" Height="12" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
                             </ContextMenu>
                         </Border.ContextMenu>
-                        
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
 
-                            <!-- Left Content -->
-                            <StackPanel Grid.Column="0" Spacing="6" VerticalAlignment="Center" Margin="0,0,10,0">
-                                <!-- Filename and Action Bar Row -->
-                                <Grid ColumnDefinitions="*, Auto">
-                                    <TextBlock Grid.Column="0" Text="{Binding Name}" FontWeight="Medium" TextWrapping="Wrap" Margin="0,0,10,2" VerticalAlignment="Center"/>
-                                    
-                                    <!-- Right Action Pill (Moved inside first row) -->
-                                    <Border Grid.Column="1" VerticalAlignment="Top" CornerRadius="5" 
-                                            Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
-                                            Padding="4,2">
-                                        <StackPanel Orientation="Horizontal" Spacing="4">
-                                            <!-- Pause/Resume -->
-                                            <Button Background="Transparent" BorderThickness="0" Padding="6"
-                                                    Command="{Binding $parent[UserControl].((vm:MainWindowViewModel)DataContext).ToggleTaskStateCommand}"
-                                                    CommandParameter="{Binding}">
-                                                <PathIcon Data="{Binding Status, Converter={StaticResource StatusToIconConverter}}"
-                                                          Width="12" Height="12" Opacity="0.7" />
-                                            </Button>
-                                            
-                                            <!-- Cancel/Remove -->
-                                            <Button Background="Transparent" BorderThickness="0" Padding="6"
-                                                    Command="{Binding $parent[UserControl].((vm:MainWindowViewModel)DataContext).DeleteTaskCommand}"
-                                                    CommandParameter="{Binding}">
-                                                <PathIcon Data="{StaticResource IconTrash}" Width="12" Height="12" Opacity="0.7" />
-                                            </Button>
-                                            
-                                            <!-- Open Folder -->
-                                            <Button Background="Transparent" BorderThickness="0" Padding="6"
-                                                    Click="OpenFolderButton_Click"
-                                                    ToolTip.Tip="{DynamicResource ToolTipOpenFolder}">
-                                                <PathIcon Data="{StaticResource IconFolder}" Width="12" Height="12" Opacity="0.7" />
-                                            </Button>
-                                            
-                                            <!-- Copy Link -->
-                                            <Button Background="Transparent" BorderThickness="0" Padding="6"
-                                                    Command="{Binding $parent[UserControl].((vm:MainWindowViewModel)DataContext).CopyLinkCommand}"
-                                                    CommandParameter="{Binding}">
-                                                <PathIcon Data="{StaticResource IconLink}" Width="12" Height="12" Opacity="0.7" />
-                                            </Button>
-                                            
-                                            <!-- Details -->
-                                            <Button Background="Transparent" BorderThickness="0" Padding="6"
-                                                    Command="{Binding $parent[UserControl].((vm:MainWindowViewModel)DataContext).ShowTaskDetailsCommand}"
-                                                    CommandParameter="{Binding}">
-                                                <PathIcon Data="{StaticResource IconInfo}" Width="12" Height="12" Opacity="0.7" />
-                                            </Button>
+                        <Panel>
+                        <Border Classes="selectionTint" />
+                        <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="14" Margin="14,12">
+                            <!-- File type tile, tinted with the task's status color -->
+                            <Panel Grid.Column="0" Width="40" Height="40" VerticalAlignment="Center">
+                                <Border CornerRadius="10" Opacity="0.13"
+                                        Background="{Binding Status, Converter={StaticResource StatusColorConverter}}" />
+                                <PathIcon Data="{Binding Name, Converter={StaticResource FileTypeIconConverter}, ConverterParameter=fileName}"
+                                          Width="18" Height="18"
+                                          Foreground="{Binding Status, Converter={StaticResource StatusColorConverter}}" />
+                                <Border Classes="selectionCheck" Width="18" Height="18" CornerRadius="9"
+                                        HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,-5,-5"
+                                        BorderThickness="2" BorderBrush="{DynamicResource CardBackgroundBrush}"
+                                        Background="{DynamicResource SystemControlBackgroundAccentBrush}">
+                                    <PathIcon Data="{StaticResource IconCheck}" Width="9" Height="9"
+                                              Foreground="{DynamicResource SystemControlForegroundChromeWhiteBrush}" />
+                                </Border>
+                            </Panel>
+
+                            <!-- Name, progress and meta line -->
+                            <StackPanel Grid.Column="1" Spacing="7" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding Name}" FontSize="13.5" FontWeight="Medium"
+                                           TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"
+                                           ToolTip.Tip="{Binding Name}" />
+
+                                <ProgressBar Value="{Binding Progress}" Maximum="1.0"
+                                             Height="4" MinHeight="4" CornerRadius="2"
+                                             IsVisible="{Binding !IsCompleted}" />
+
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <StackPanel Orientation="Horizontal" Spacing="5">
+                                        <Ellipse Width="6" Height="6" VerticalAlignment="Center"
+                                                 Fill="{Binding Status, Converter={StaticResource StatusColorConverter}}" />
+                                        <TextBlock Text="{Binding Status, Converter={StaticResource ResourceKeyToTextConverter}}"
+                                                   FontSize="12" FontWeight="Medium" TextWrapping="NoWrap"
+                                                   VerticalAlignment="Center"
+                                                   Foreground="{Binding Status, Converter={StaticResource StatusColorConverter}}" />
+                                    </StackPanel>
+
+                                    <TextBlock Classes="meta" Text="·" />
+                                    <TextBlock Classes="meta" Text="{Binding SizeInfo}" />
+
+                                    <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding IsActive}">
+                                        <TextBlock Classes="meta" Text="·" />
+                                        <TextBlock Classes="meta" Text="{Binding Progress, StringFormat={}{0:P0}}" />
+                                        <TextBlock Classes="meta" Text="·" />
+                                        <TextBlock Classes="meta" Text="{Binding Speed, StringFormat={}↓ {0}}" />
+                                        <StackPanel Orientation="Horizontal" Spacing="8"
+                                                    IsVisible="{Binding TimeLeft, Converter={x:Static conv:StringConverters.IsNotNullOrEmpty}}">
+                                            <TextBlock Classes="meta" Text="·" />
+                                            <TextBlock Classes="meta">
+                                                <Run Text="{DynamicResource LabelTimeRemaining}" />
+                                                <Run Text="{Binding TimeLeft}" />
+                                            </TextBlock>
                                         </StackPanel>
-                                    </Border>
-                                </Grid>
-
-                                <!-- Progress Bar (Second Row) -->
-                                <ProgressBar Value="{Binding Progress}" Maximum="1.0" Height="4"
-                                             MinHeight="4" CornerRadius="2" Margin="0,4,0,0"/>
-
-                                <!-- Info Bar (Third Row) -->
-                                <Grid ColumnDefinitions="*, Auto" Margin="0,6,0,0">
-                                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10">
-                                        <TextBlock Text="{Binding SizeInfo}" FontSize="12"
-                                                   Opacity="0.6" />
-                                    </StackPanel>
-                                    
-                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" IsVisible="{Binding IsActive}">
-                                        <!-- ↓ Speed -->
-                                        <PathIcon Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z" 
-                                                  Width="12" Height="12" Opacity="0.6" IsVisible="False"/> <!-- Placeholder for down arrow -->
-                                        <TextBlock Text="↓" FontSize="12" Opacity="0.6" Margin="0,0,-4,0"/>
-                                        <TextBlock Text="{Binding Speed}" FontSize="12" Opacity="0.6" Margin="-4,0,0,0"/>
-                                        
-                                        <!-- Time Left -->
-                                        <TextBlock Text="{DynamicResource LabelTimeRemaining}" FontSize="12" Opacity="0.6" IsVisible="{Binding TimeLeft, Converter={x:Static conv:StringConverters.IsNotNullOrEmpty}}" Margin="6,0,0,0"/>
-                                        <TextBlock Text="{Binding TimeLeft}" FontSize="12" Opacity="0.6" Margin="-4,0,0,0"/>
-                                        
-                                        <!-- Connections (Split) -->
-                                        <Grid ColumnDefinitions="Auto, Auto" Opacity="0.6" Margin="10,0,0,0">
-                                            <PathIcon Grid.Column="0"
-                                                      Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-1.07 3.97-2.74 5.27z"
-                                                      Width="12" Height="12"
+                                        <TextBlock Classes="meta" Text="·" />
+                                        <StackPanel Orientation="Horizontal" Spacing="4" Opacity="0.6"
+                                                    ToolTip.Tip="{DynamicResource LabelSplit}">
+                                            <PathIcon Data="{StaticResource IconNetwork}" Width="12" Height="12"
                                                       VerticalAlignment="Center" />
-                                            <TextBlock Grid.Column="1"
-                                                       Text="{Binding Split}" FontSize="12" Margin="4,0,0,0"
+                                            <TextBlock Text="{Binding Split}" FontSize="12" TextWrapping="NoWrap"
                                                        VerticalAlignment="Center" />
-                                        </Grid>
+                                        </StackPanel>
                                     </StackPanel>
-                                </Grid>
+                                </StackPanel>
+                            </StackPanel>
+
+                            <!-- Actions -->
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
+                                <StackPanel Classes="secondaryActions" Orientation="Horizontal" Spacing="2"
+                                            VerticalAlignment="Center" Margin="0,0,6,0">
+                                    <Button Classes="taskAction" Click="OpenFolderButton_Click"
+                                            ToolTip.Tip="{DynamicResource ToolTipOpenFolder}">
+                                        <PathIcon Data="{StaticResource IconFolder}" />
+                                    </Button>
+                                    <Button Classes="taskAction"
+                                            Command="{Binding $parent[UserControl].((vm:MainWindowViewModel)DataContext).CopyLinkCommand}"
+                                            CommandParameter="{Binding}"
+                                            ToolTip.Tip="{DynamicResource ToolTipCopyLink}"
+                                            IsVisible="{Binding Url, Converter={x:Static conv:StringConverters.IsNotNullOrEmpty}}">
+                                        <PathIcon Data="{StaticResource IconLink}" />
+                                    </Button>
+                                    <Button Classes="taskAction"
+                                            Command="{Binding $parent[UserControl].((vm:MainWindowViewModel)DataContext).ShowTaskDetailsCommand}"
+                                            CommandParameter="{Binding}"
+                                            ToolTip.Tip="{DynamicResource MenuDetails}">
+                                        <PathIcon Data="{StaticResource IconInfo}" />
+                                    </Button>
+                                    <Button Classes="taskAction danger"
+                                            Command="{Binding $parent[UserControl].((vm:MainWindowViewModel)DataContext).DeleteTaskCommand}"
+                                            CommandParameter="{Binding}"
+                                            ToolTip.Tip="{DynamicResource MenuDelete}">
+                                        <PathIcon Data="{StaticResource IconTrash}" />
+                                    </Button>
+                                </StackPanel>
+
+                                <Button Classes="taskToggle"
+                                        Command="{Binding $parent[UserControl].((vm:MainWindowViewModel)DataContext).ToggleTaskStateCommand}"
+                                        CommandParameter="{Binding}"
+                                        IsVisible="{Binding CanToggleState}">
+                                    <PathIcon Data="{Binding Status, Converter={StaticResource StatusToIconConverter}}" />
+                                </Button>
                             </StackPanel>
                         </Grid>
+                        </Panel>
                     </Border>
                 </DataTemplate>
             </ListBox.ItemTemplate>
@@ -188,8 +314,8 @@
                 Background="Transparent"
                 IsVisible="{Binding Tasks.Count, Converter={StaticResource CollectionIsEmptyConverter}}">
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="14" Width="420">
-                <Border Background="{DynamicResource CardBackgroundBrush}" CornerRadius="10"
-                        BorderThickness="1" BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                <Border Background="{DynamicResource CardBackgroundBrush}" CornerRadius="12"
+                        BorderThickness="1" BorderBrush="{DynamicResource CardBorderBrush}"
                         Padding="28"
                         BoxShadow="{DynamicResource CardShadow}">
                     <StackPanel Spacing="14">

@@ -37,7 +37,11 @@
     <x:String x:Key="PlaceholderAutoDetected">自动检测</x:String>
     <x:String x:Key="ToolTipResumeAll">全部开始</x:String>
     <x:String x:Key="ToolTipPauseAll">全部暂停</x:String>
-    <x:String x:Key="ToolTipDeleteSelected">移除选中</x:String>
+    <x:String x:Key="ToolTipDeleteSelected">删除选中任务</x:String>
+    <x:String x:Key="MessageConfirmDeleteTasks">确定要删除选中的 {0} 个任务吗？</x:String>
+    <x:String x:Key="MessageConfirmDeleteAllTasks">未选中任务。确定要删除当前列表中的全部 {0} 个任务吗？</x:String>
+    <x:String x:Key="MessageNoTasksToDelete">当前列表没有可删除的任务。</x:String>
+    <x:String x:Key="ToolTipDeleteAll">删除列表中的全部任务</x:String>
     <x:String x:Key="ToolTipRefresh">刷新</x:String>
 
     <!-- Settings Groups -->
@@ -158,6 +162,13 @@
     <x:String x:Key="LabelConnections">连接数</x:String>
     <x:String x:Key="LabelSplit">分片数</x:String>
     <x:String x:Key="LabelProgress">进度</x:String>
+    <x:String x:Key="LabelTransfer">传输</x:String>
+    <x:String x:Key="LabelTaskInfo">任务信息</x:String>
+    <x:String x:Key="ToolTipCopy">复制</x:String>
+    <x:String x:Key="LabelTaskId">任务 ID</x:String>
+    <x:String x:Key="DialogSelectDownloadFolder">选择下载文件夹</x:String>
+    <x:String x:Key="DialogSelectDefaultDownloadFolder">选择默认下载文件夹</x:String>
+    <x:String x:Key="DialogSelectTorrentFile">选择种子文件</x:String>
     <x:String x:Key="ButtonClose">关闭</x:String>
     <x:String x:Key="LabelVersion">版本</x:String>
     <x:String x:Key="LabelDescription">一款现代化的开源下载管理器。</x:String>

@@ -129,9 +129,9 @@
             <Setter Property="Background" Value="Transparent" />
         </Style>
 
-        <!-- Hover Effect on Task Card -->
-        <Style Selector="ListBoxItem:pointerover Border.taskCard">
-            <Setter Property="BoxShadow" Value="{DynamicResource CardHoverShadow}" />
+        <!-- Toolbar delete turns red on hover to signal a destructive action -->
+        <Style Selector="Button.toolbarDelete:pointerover PathIcon">
+            <Setter Property="Foreground" Value="#E5484D" />
         </Style>
 
         <!-- Settings Header Style -->
@@ -360,14 +360,36 @@
                                                Fill="{DynamicResource SystemControlForegroundBaseLowBrush}" 
                                                Opacity="0.7" Margin="6,0"/>
 
-                                    <Button Command="{Binding DeleteSelectedTasksCommand}"
+                                    <!-- Deletes the selection; with nothing selected it offers to clear the list -->
+                                    <Button Classes="toolbarDelete"
+                                            Command="{Binding DeleteSelectedTasksCommand}"
                                             chrome:WindowDecorationProperties.ElementRole="User"
                                             Background="Transparent"
                                             BorderThickness="0"
-                                            Padding="8"
-                                            ToolTip.Tip="{DynamicResource ToolTipDeleteSelected}">
-                                        <PathIcon Data="{StaticResource IconTrash}" Width="16" Height="16"
-                                                  Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
+                                            Padding="8">
+                                        <ToolTip.Tip>
+                                            <Panel>
+                                                <TextBlock Text="{DynamicResource ToolTipDeleteSelected}"
+                                                           IsVisible="{Binding HasSelectedTasks}" />
+                                                <TextBlock Text="{DynamicResource ToolTipDeleteAll}"
+                                                           IsVisible="{Binding !HasSelectedTasks}" />
+                                            </Panel>
+                                        </ToolTip.Tip>
+                                        <Panel>
+                                            <PathIcon Data="{StaticResource IconTrash}" Width="16" Height="16"
+                                                      Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
+                                            <!-- Selection count badge -->
+                                            <Border MinWidth="15" Height="15" CornerRadius="7.5" Padding="4,0"
+                                                    HorizontalAlignment="Right" VerticalAlignment="Top"
+                                                    Margin="0,-7,-9,0"
+                                                    Background="{DynamicResource SystemControlBackgroundAccentBrush}"
+                                                    IsVisible="{Binding HasSelectedTasks}">
+                                                <TextBlock Text="{Binding SelectedTaskCount}" FontSize="9.5" FontWeight="SemiBold"
+                                                           TextWrapping="NoWrap"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                           Foreground="{DynamicResource SystemControlForegroundChromeWhiteBrush}" />
+                                            </Border>
+                                        </Panel>
                                     </Button>
                                 </StackPanel>
                             </StackPanel>

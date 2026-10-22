@@ -681,18 +681,36 @@ public class Aria2Service : IAria2Service, IDisposable
     public async Task RemoveAsync(string gid)
     {
         if (_rpcClient == null) return;
-        // If active/waiting -> remove
-        // If stopped/error -> removeDownloadResult
-        
-        try 
+
+        var status = await GetAria2StatusAsync(gid);
+        // History-only tasks (e.g. from a previous session) are unknown to aria2.
+        if (status == null) return;
+
+        if (status is "active" or "waiting" or "paused")
         {
-             await _rpcClient.InvokeAsync<string>("remove", gid);
+            await _rpcClient.InvokeAsync<string>("forceRemove", gid);
+            // forceRemove only stops the download; wait until it settles so its result can be purged.
+            for (var attempt = 0; attempt < 30 && await GetAria2StatusAsync(gid) is "active" or "waiting" or "paused"; attempt++)
+            {
+                await Task.Delay(100);
+            }
         }
-        catch (Exception ex)
+
+        // Without this the "removed" result stays in tellStopped and the task reappears under Stopped.
+        await _rpcClient.InvokeAsync<string>("removeDownloadResult", gid);
+    }
+
+    private async Task<string?> GetAria2StatusAsync(string gid)
+    {
+        if (_rpcClient == null) return null;
+        try
         {
-            AppLog.Error(ex, $"Failed to remove task via aria2.remove, fallback to removeDownloadResult: {gid}");
-            // Try removeDownloadResult if remove fails (e.g. task is complete/error)
-            await _rpcClient.InvokeAsync<string>("removeDownloadResult", gid);
+            var result = await _rpcClient.InvokeAsync<Dictionary<string, string>>("tellStatus", gid, new[] { "status" });
+            return result != null && result.TryGetValue("status", out var status) ? status : null;
+        }
+        catch
+        {
+            return null;
         }
     }
 

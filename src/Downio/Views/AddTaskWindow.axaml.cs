@@ -88,11 +88,11 @@ public partial class AddTaskWindow : DialogWindow
 
         var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
-            Title = "Select Torrent File",
+            Title = this.TryFindResource("DialogSelectTorrentFile", out var title) ? title as string : null,
             AllowMultiple = false,
             FileTypeFilter =
             [
-                new FilePickerFileType("Torrent")
+                new FilePickerFileType(this.TryFindResource("LabelTorrentFile", out var typeName) ? typeName as string ?? "Torrent" : "Torrent")
                 {
                     Patterns = ["*.torrent"]
                 }

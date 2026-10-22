@@ -20,6 +20,7 @@ using Avalonia.Styling;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Downio.Models;
+using Downio.Helpers;
 using Downio.Services;
 using Downio.Services.Aria2;
 using Downio.Views;
@@ -191,7 +192,7 @@ public partial class MainWindowViewModel
         {
             var folders = await mainWindow.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
             {
-                Title = "Select Download Folder",
+                Title = GetString("DialogSelectDownloadFolder"),
                 AllowMultiple = false
             });
 
@@ -209,7 +210,7 @@ public partial class MainWindowViewModel
         {
             var folders = await mainWindow.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
             {
-                Title = "Select Default Download Folder",
+                Title = GetString("DialogSelectDefaultDownloadFolder"),
                 AllowMultiple = false
             });
 
@@ -734,6 +735,8 @@ public partial class MainWindowViewModel
     public void SetLanguage(string lang)
     {
         LocalizationService.SwitchLanguage(lang);
+        // Native panels read this at launch, so it only reaches them after a restart.
+        MacAppLanguage.Apply(lang);
     }
 
     [RelayCommand]
@@ -803,44 +806,7 @@ public partial class MainWindowViewModel
     public async Task DeleteTask(DownloadTask? task)
     {
         if (task == null) return;
-
-        if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime { MainWindow: { } mainWindow }) return;
-
-        var dialog = new ConfirmDeleteDialog(task.Name);
-        var result = await dialog.ShowDialog<bool>(mainWindow);
-
-        if (!result) return;
-
-        var removeSucceeded = true;
-        try
-        {
-            await _aria2Service.RemoveAsync(task.Id);
-        }
-        catch (Exception ex)
-        {
-            removeSucceeded = false;
-            AppLog.Error(ex, $"Failed to remove task: {task.Name} ({task.Id})");
-        }
-
-        _stoppedTaskHistoryService.Remove(task.Id);
-
-        var fileDeleteSucceeded = !dialog.DeleteFile ||
-            await TryDeleteTaskFilesAsync(task);
-
-        await RefreshTaskListAsync();
-        if (!removeSucceeded)
-        {
-            _notificationService.ShowNotification(GetString("StatusError"), GetString("MessageTaskDeleteFailed"), ToastType.Error);
-        }
-        else if (!fileDeleteSucceeded)
-        {
-            _notificationService.ShowNotification(GetString("StatusError"), GetString("MessageFileDeleteFailed"), ToastType.Error);
-        }
-        else
-        {
-            var message = task.Name + (dialog.DeleteFile ? GetString("NotificationAlsoDeletedFile") : string.Empty);
-            _notificationService.ShowNotification(GetString("NotificationTaskDeleted"), message, ToastType.Success);
-        }
+        await ConfirmAndDeleteTasksAsync([task], GetString("MessageConfirmDeleteTask").Replace("%s", task.Name));
     }
 
     [RelayCommand]
