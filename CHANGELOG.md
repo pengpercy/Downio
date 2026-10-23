@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.0.91 - 2026-10-23
+
+- Upgraded the bundled download engine to aria2-next 3.0.8 (from 2.5.5) on all six platforms. The rewritten 3.x core downloads ED2K, Metalink, and web-seeded torrents considerably faster, uses less CPU and memory on HTTP downloads, and keeps going when servers rate-limit or misreport ranges. ED2K searches are now stopped with the engine's dedicated `removeEd2kSearch` call, so finishing a search no longer logs spurious RPC errors.
+- Upgraded Avalonia to 12.1.4.
+- Redesigned ED2K search: a single search field with an elapsed-time bar and a Stop button, file-type chips, and sorting by sources, size, or name. Results update in place while the search runs, instead of being rebuilt every poll.
+- Added a compact table view for ED2K results (now the default) with name, type, size, source, and complete-source columns. Clicking a column header sorts by it. A switch next to the sort menu toggles between table and card views, and the choice is remembered.
+- ED2K results support batch download: click rows to check them, then “Download selected”; double-click a row to download it immediately. Each row can copy its ED2K link, files already queued show “Added”, and the save folder can be changed from the search page.
+- Added clearer ED2K empty states for the first visit, a search in progress, no results, and no results of the selected type.
+
 ## 1.0.90 - 2026-10-23
 
 - Fixed “Open Folder” doing nothing for tasks that were added before aria2 resolved the file name: the task list now picks up the destination path, file list, and URL on every refresh. On Windows, files whose path contains spaces are now selected in Explorer correctly.

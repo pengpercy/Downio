@@ -36,6 +36,7 @@ public class AppSettings
     public int Ed2kUploadSlots { get; set; } = 3;
     public int Ed2kMinSourceCount { get; set; } = 0;
     public int Ed2kSearchTimeout { get; set; } = 20;
+    public bool Ed2kCompactView { get; set; } = true;
     public string GlobalUserAgent { get; set; } = string.Empty;
     public bool DefaultClientMagnet { get; set; } = true;
     public bool DefaultClientThunder { get; set; } = true;

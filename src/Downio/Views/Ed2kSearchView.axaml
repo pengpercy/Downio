@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:Downio.ViewModels"
              xmlns:models="using:Downio.Models"
+             xmlns:conv="using:Avalonia.Data.Converters"
              xmlns:localConv="using:Downio.Converters"
              mc:Ignorable="d"
              d:DesignWidth="900" d:DesignHeight="620"
@@ -14,98 +15,662 @@
         <localConv:Ed2kFileTypeIconConverter x:Key="Ed2kFileTypeIconConverter" />
     </UserControl.Resources>
 
-    <Grid RowDefinitions="Auto,Auto,*" Margin="24,20,24,24">
-        <StackPanel Grid.Row="0" Spacing="5" Margin="0,0,0,18">
-            <TextBlock Text="{DynamicResource MenuEd2kSearch}" FontSize="22" FontWeight="SemiBold" />
-            <TextBlock Text="{DynamicResource Ed2kSearchDescription}" Opacity="0.65" TextWrapping="Wrap" />
-        </StackPanel>
+    <UserControl.Styles>
+        <!-- Search bar: one rounded field that takes an accent outline while typing -->
+        <Style Selector="Border.searchBar">
+            <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource CardBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1.5" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="BoxShadow" Value="{DynamicResource CardShadow}" />
+            <Setter Property="ClipToBounds" Value="True" />
+        </Style>
+        <Style Selector="Border.searchBar:focus-within">
+            <Setter Property="BorderBrush" Value="{DynamicResource SystemAccentColorBrush}" />
+        </Style>
+        <Style Selector="TextBox.searchInput">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Padding" Value="0,10" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="TextBox.searchInput:pointerover /template/ Border#PART_BorderElement,
+                         TextBox.searchInput:focus /template/ Border#PART_BorderElement">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
 
-        <Border Grid.Row="1" Padding="16" CornerRadius="8"
-                Background="{DynamicResource CardBackgroundBrush}" BoxShadow="{DynamicResource CardShadow}"
-                Margin="0,0,0,14">
-            <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,180,Auto" ColumnSpacing="8" RowSpacing="12">
-                <StackPanel Grid.Column="0" Spacing="6">
-                    <TextBlock Text="{DynamicResource Ed2kKeyword}" FontWeight="Medium" />
-                    <Grid RowDefinitions="Auto,Auto">
-                        <TextBox Grid.Row="0" Text="{Binding Ed2kSearchKeyword}" PlaceholderText="{DynamicResource Ed2kKeywordPlaceholder}">
-                            <TextBox.KeyBindings>
-                                <KeyBinding Gesture="Enter" Command="{Binding StartEd2kSearchCommand}" />
-                            </TextBox.KeyBindings>
-                        </TextBox>
-                        <ProgressBar Grid.Row="1" IsIndeterminate="True" Height="2" Margin="2,-1,2,0"
-                                     IsVisible="{Binding IsEd2kSearching}" IsHitTestVisible="False" />
-                    </Grid>
-                </StackPanel>
+        <!-- Type chips -->
+        <Style Selector="ListBox.chips">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Padding" Value="0" />
+        </Style>
+        <Style Selector="ListBox.chips ListBoxItem">
+            <Setter Property="Padding" Value="12,5" />
+            <Setter Property="Margin" Value="0,0,6,0" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="ListBox.chips ListBoxItem /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource CardBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="14" />
+        </Style>
+        <Style Selector="ListBox.chips ListBoxItem:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource CardHoverBorderBrush}" />
+        </Style>
+        <Style Selector="ListBox.chips ListBoxItem:selected /template/ ContentPresenter,
+                         ListBox.chips ListBoxItem:selected:pointerover /template/ ContentPresenter,
+                         ListBox.chips ListBoxItem:selected:focus /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAccentBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SystemControlBackgroundAccentBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundChromeWhiteBrush}" />
+        </Style>
 
-                <StackPanel Grid.Column="1" Spacing="6">
-                    <TextBlock Text="{DynamicResource Ed2kFileType}" FontWeight="Medium" />
-                    <ComboBox ItemsSource="{Binding Ed2kFileTypeOptions}" SelectedItem="{Binding SelectedEd2kFileType}">
-                        <ComboBox.ItemTemplate>
-                            <DataTemplate x:DataType="vm:Ed2kFileTypeOption">
-                                <StackPanel Orientation="Horizontal" Spacing="7">
-                                    <PathIcon Data="{Binding Value, Converter={StaticResource Ed2kFileTypeIconConverter}}"
-                                              Width="14" Height="14" Opacity="0.72" VerticalAlignment="Center" />
-                                    <TextBlock Text="{Binding ResourceKey, Converter={StaticResource ResourceKeyToTextConverter}}"
-                                               VerticalAlignment="Center" />
-                                </StackPanel>
-                            </DataTemplate>
-                        </ComboBox.ItemTemplate>
-                    </ComboBox>
-                </StackPanel>
+        <!-- Result rows -->
+        <Style Selector="Border.resultRow">
+            <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource CardBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1.5" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Margin" Value="0,0,0,6" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.12" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border.resultRow:pointerover">
+            <Setter Property="BorderBrush" Value="{DynamicResource CardHoverBorderBrush}" />
+        </Style>
+        <Style Selector="Border.resultRow.checked">
+            <Setter Property="BorderBrush" Value="{DynamicResource SystemAccentColorBrush}" />
+        </Style>
+        <Style Selector="Border.rowTint">
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAccentBrush}" />
+            <Setter Property="CornerRadius" Value="8.5" />
+            <Setter Property="Opacity" Value="0" />
+            <Setter Property="IsHitTestVisible" Value="False" />
+        </Style>
+        <Style Selector="Border.resultRow.checked Border.rowTint">
+            <Setter Property="Opacity" Value="0.07" />
+        </Style>
 
-                <Grid Grid.Column="2" VerticalAlignment="Bottom">
-                    <Button Command="{Binding StartEd2kSearchCommand}" IsVisible="{Binding !IsEd2kSearching}"
-                            Classes="accent" Padding="18,8">
-                        <StackPanel Orientation="Horizontal" Spacing="7">
-                            <PathIcon Data="{StaticResource IconSearch}" Width="14" Height="14" />
-                            <TextBlock Text="{DynamicResource Ed2kSearchButton}" />
-                        </StackPanel>
+        <!-- Row checkbox and copy action appear on hover, while selecting, or once checked -->
+        <Style Selector="CheckBox.rowCheck">
+            <Setter Property="Opacity" Value="0" />
+            <Setter Property="MinWidth" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Border.resultRow:pointerover CheckBox.rowCheck,
+                         ItemsControl.selecting CheckBox.rowCheck,
+                         CheckBox.rowCheck:checked">
+            <Setter Property="Opacity" Value="1" />
+        </Style>
+        <Style Selector="Button.rowAction">
+            <Setter Property="Width" Value="30" />
+            <Setter Property="Height" Value="30" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="CornerRadius" Value="7" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Opacity" Value="0" />
+        </Style>
+        <Style Selector="Border.resultRow:pointerover Button.rowAction">
+            <Setter Property="Opacity" Value="1" />
+        </Style>
+        <Style Selector="Button.rowAction:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundBaseLowBrush}" />
+        </Style>
+
+        <Style Selector="Button.downloadButton">
+            <Setter Property="Padding" Value="12,6" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundBaseLowBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+        <Style Selector="Button.downloadButton:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAccentBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundChromeWhiteBrush}" />
+        </Style>
+
+        <!-- Source availability dot: grey (few), amber (some), green (many) -->
+        <Style Selector="Ellipse.sourceDot">
+            <Setter Property="Width" Value="7" />
+            <Setter Property="Height" Value="7" />
+            <Setter Property="Fill" Value="#9CA3AF" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Ellipse.sourceDot.some">
+            <Setter Property="Fill" Value="#F59E0B" />
+        </Style>
+        <Style Selector="Ellipse.sourceDot.many">
+            <Setter Property="Fill" Value="#33D158" />
+        </Style>
+
+        <Style Selector="TextBlock.meta">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Opacity" Value="0.6" />
+            <Setter Property="TextWrapping" Value="NoWrap" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <Style Selector="Border.typeBadge">
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundBaseLowBrush}" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Padding" Value="5,1" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <!-- Card / table view switch -->
+        <Style Selector="Border.viewSwitch">
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundBaseLowBrush}" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="2" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Button.viewOption">
+            <Setter Property="Width" Value="30" />
+            <Setter Property="Height" Value="26" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Opacity" Value="0.55" />
+        </Style>
+        <Style Selector="Button.viewOption.active">
+            <Setter Property="Opacity" Value="1" />
+        </Style>
+        <Style Selector="Button.viewOption.active /template/ ContentPresenter#PART_ContentPresenter,
+                         Button.viewOption.active:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}" />
+        </Style>
+
+        <!-- Table view -->
+        <Style Selector="Border.table">
+            <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource CardBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="ClipToBounds" Value="True" />
+        </Style>
+        <Style Selector="Border.tableHeader">
+            <Setter Property="BorderBrush" Value="{DynamicResource CardBorderBrush}" />
+            <Setter Property="BorderThickness" Value="0,0,0,1" />
+            <Setter Property="Height" Value="32" />
+        </Style>
+        <Style Selector="Button.headerCell">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="4,2" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Opacity" Value="0.6" />
+        </Style>
+        <Style Selector="Button.headerCell:pointerover, Button.headerCell.sorted">
+            <Setter Property="Opacity" Value="1" />
+        </Style>
+        <Style Selector="Button.headerCell:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundBaseLowBrush}" />
+        </Style>
+        <Style Selector="Button.headerCell PathIcon.sortMark">
+            <Setter Property="IsVisible" Value="False" />
+        </Style>
+        <Style Selector="Button.headerCell.sorted PathIcon.sortMark">
+            <Setter Property="IsVisible" Value="True" />
+        </Style>
+        <Style Selector="TextBlock.headerText">
+            <Setter Property="FontSize" Value="11.5" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Opacity" Value="0.6" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="TextWrapping" Value="NoWrap" />
+        </Style>
+        <Style Selector="Button.headerCell TextBlock.headerText">
+            <Setter Property="Opacity" Value="1" />
+        </Style>
+
+        <Style Selector="Border.tableRow">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Height" Value="34" />
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+        <Style Selector="Border.tableRow:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundListLowBrush}" />
+        </Style>
+        <Style Selector="Border.tableRow Border.rowTint">
+            <Setter Property="CornerRadius" Value="0" />
+        </Style>
+        <Style Selector="Border.tableRow.checked Border.rowTint">
+            <Setter Property="Opacity" Value="0.1" />
+        </Style>
+        <Style Selector="Border.tableRow:pointerover CheckBox.rowCheck,
+                         Border.tableRow:pointerover Button.rowAction">
+            <Setter Property="Opacity" Value="1" />
+        </Style>
+        <Style Selector="Border.tableRow Button.rowAction">
+            <Setter Property="Width" Value="26" />
+            <Setter Property="Height" Value="26" />
+            <Setter Property="CornerRadius" Value="6" />
+        </Style>
+        <Style Selector="Border.tableRow Button.rowDownload">
+            <Setter Property="Opacity" Value="0.7" />
+        </Style>
+        <Style Selector="Border.tableRow Button.rowDownload:pointerover">
+            <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundAccentBrush}" />
+        </Style>
+        <Style Selector="TextBlock.cell">
+            <Setter Property="FontSize" Value="12.5" />
+            <Setter Property="Opacity" Value="0.75" />
+            <Setter Property="TextWrapping" Value="NoWrap" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <!-- Empty states -->
+        <Style Selector="StackPanel.emptyState">
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Spacing" Value="10" />
+            <Setter Property="MaxWidth" Value="380" />
+            <Setter Property="Margin" Value="0,0,0,40" />
+        </Style>
+        <Style Selector="StackPanel.emptyState TextBlock">
+            <Setter Property="TextAlignment" Value="Center" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+        </Style>
+    </UserControl.Styles>
+
+    <Grid RowDefinitions="Auto,Auto,Auto,*" Margin="24,16,24,16">
+
+        <!-- Search bar -->
+        <Border Grid.Row="0" Classes="searchBar">
+            <Panel>
+                <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="10" Margin="16,6,6,6">
+                    <PathIcon Grid.Column="0" Data="{StaticResource IconSearch}" Width="16" Height="16"
+                              Opacity="0.5" VerticalAlignment="Center" />
+                    <TextBox Grid.Column="1" x:Name="SearchBox" Classes="searchInput"
+                             Text="{Binding Ed2kSearchKeyword}"
+                             PlaceholderText="{DynamicResource Ed2kKeywordPlaceholder}">
+                        <TextBox.KeyBindings>
+                            <KeyBinding Gesture="Enter" Command="{Binding StartEd2kSearchCommand}" />
+                            <KeyBinding Gesture="Escape" Command="{Binding CancelEd2kSearchCommand}" />
+                        </TextBox.KeyBindings>
+                    </TextBox>
+                    <Button Grid.Column="2" Classes="rowAction" Opacity="1" Width="26" Height="26"
+                            VerticalAlignment="Center"
+                            Command="{Binding ClearEd2kKeywordCommand}"
+                            IsVisible="{Binding Ed2kSearchKeyword, Converter={x:Static conv:StringConverters.IsNotNullOrEmpty}}">
+                        <PathIcon Data="{StaticResource IconCancel}" Width="10" Height="10" Opacity="0.55" />
                     </Button>
-                    <Button Command="{Binding CancelEd2kSearchCommand}" IsVisible="{Binding IsEd2kSearching}"
-                            Padding="18,8">
-                        <TextBlock Text="{DynamicResource Ed2kCancelButton}" />
-                    </Button>
+                    <Panel Grid.Column="3">
+                        <Button Command="{Binding StartEd2kSearchCommand}" IsVisible="{Binding !IsEd2kSearching}"
+                                Classes="accent" Padding="18,8" CornerRadius="8">
+                            <TextBlock Text="{DynamicResource Ed2kSearchButton}" FontWeight="Medium" />
+                        </Button>
+                        <Button Command="{Binding CancelEd2kSearchCommand}" IsVisible="{Binding IsEd2kSearching}"
+                                Padding="18,8" CornerRadius="8">
+                            <StackPanel Orientation="Horizontal" Spacing="7">
+                                <PathIcon Data="{StaticResource IconStopped}" Width="12" Height="12" />
+                                <TextBlock Text="{DynamicResource Ed2kStopButton}" FontWeight="Medium" />
+                            </StackPanel>
+                        </Button>
+                    </Panel>
                 </Grid>
-
-                <TextBlock Grid.Row="1" Grid.ColumnSpan="3" Text="{Binding Ed2kSearchStatus}"
-                           Opacity="0.7" VerticalAlignment="Center" />
-            </Grid>
+                <!-- Elapsed share of the search timeout -->
+                <ProgressBar VerticalAlignment="Bottom" Height="2" MinHeight="2" CornerRadius="0"
+                             Minimum="0" Maximum="1" Value="{Binding Ed2kSearchProgress}"
+                             Background="Transparent"
+                             IsVisible="{Binding IsEd2kSearching}" IsHitTestVisible="False" />
+            </Panel>
         </Border>
 
-        <ScrollViewer Grid.Row="2">
-            <ItemsControl ItemsSource="{Binding Ed2kSearchResults}">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate x:DataType="models:Ed2kSearchResult">
-                        <Border Padding="15,12" CornerRadius="8" Margin="0,0,0,7"
-                                Background="{DynamicResource CardBackgroundBrush}" BoxShadow="{DynamicResource CardShadow}">
-                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
-                                <PathIcon Grid.Column="0" Data="{Binding Converter={StaticResource Ed2kFileTypeIconConverter}}"
-                                          Width="24" Height="24" Opacity="0.72" VerticalAlignment="Center" />
-                                <StackPanel Grid.Column="1" Spacing="7">
-                                    <TextBlock Text="{Binding Name}" FontWeight="Medium" TextWrapping="Wrap" />
-                                    <Grid ColumnDefinitions="100,120,160,*" ColumnSpacing="16" Opacity="0.65" Height="18">
-                                        <TextBlock Grid.Column="0" Text="{Binding SizeText}" VerticalAlignment="Center" />
-                                        <TextBlock Grid.Column="1" VerticalAlignment="Center">
-                                            <Run Text="{DynamicResource Ed2kSources}"/><Run Text=" "/><Run Text="{Binding SourceCount}"/>
-                                        </TextBlock>
-                                        <TextBlock Grid.Column="2" VerticalAlignment="Center">
-                                            <Run Text="{DynamicResource Ed2kCompleteSources}"/><Run Text=" "/><Run Text="{Binding CompleteSourceCount}"/>
-                                        </TextBlock>
-                                    </Grid>
-                                </StackPanel>
-                                <Button Grid.Column="2" VerticalAlignment="Center" Padding="14,7"
-                                        Command="{Binding $parent[UserControl].((vm:MainWindowViewModel)DataContext).DownloadEd2kResultCommand}"
-                                        CommandParameter="{Binding}">
-                                    <StackPanel Orientation="Horizontal" Spacing="6">
-                                        <PathIcon Data="{StaticResource IconDownloading}" Width="14" Height="14" />
-                                        <TextBlock Text="{DynamicResource Ed2kDownloadButton}" />
-                                    </StackPanel>
-                                </Button>
-                            </Grid>
-                        </Border>
+        <!-- Type chips and sort -->
+        <Grid Grid.Row="1" ColumnDefinitions="*,Auto" Margin="0,14,0,0">
+            <ListBox Grid.Column="0" Classes="chips"
+                     ItemsSource="{Binding Ed2kFileTypeOptions}"
+                     SelectedItem="{Binding SelectedEd2kFileType}">
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+                <ListBox.ItemTemplate>
+                    <DataTemplate x:DataType="vm:Ed2kFileTypeOption">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <PathIcon Data="{Binding Value, Converter={StaticResource Ed2kFileTypeIconConverter}}"
+                                      Width="12" Height="12" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding ResourceKey, Converter={StaticResource ResourceKeyToTextConverter}}"
+                                       FontSize="12.5" VerticalAlignment="Center" TextWrapping="NoWrap" />
+                        </StackPanel>
                     </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </ScrollViewer>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center"
+                        IsVisible="{Binding HasEd2kSearched}">
+                <ComboBox VerticalAlignment="Center" MinWidth="120" FontSize="12.5"
+                          ItemsSource="{Binding Ed2kSortOptions}" SelectedItem="{Binding SelectedEd2kSort}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate x:DataType="vm:Ed2kSortOption">
+                            <TextBlock Text="{Binding ResourceKey, Converter={StaticResource ResourceKeyToTextConverter}}"
+                                       FontSize="12.5" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+                <Border Classes="viewSwitch">
+                    <StackPanel Orientation="Horizontal" Spacing="2">
+                        <Button Classes="viewOption" Classes.active="{Binding IsEd2kCompactView}"
+                                Command="{Binding ShowEd2kTableCommand}" ToolTip.Tip="{DynamicResource Ed2kViewTable}">
+                            <PathIcon Data="{StaticResource IconViewList}" Width="13" Height="13" />
+                        </Button>
+                        <Button Classes="viewOption" Classes.active="{Binding !IsEd2kCompactView}"
+                                Command="{Binding ShowEd2kCardsCommand}" ToolTip.Tip="{DynamicResource Ed2kViewCards}">
+                            <PathIcon Data="{StaticResource IconViewCards}" Width="13" Height="13" />
+                        </Button>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </Grid>
+
+        <!-- Status / selection bar -->
+        <Panel Grid.Row="2" Margin="0,12,0,10" MinHeight="32">
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16" IsVisible="{Binding !HasEd2kSelection}">
+                <TextBlock Grid.Column="0" Text="{Binding Ed2kSearchStatus}" FontSize="12.5" Opacity="0.65"
+                           VerticalAlignment="Center" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                    <PathIcon Data="{StaticResource IconFolder}" Width="12" Height="12" Opacity="0.5"
+                              VerticalAlignment="Center" />
+                    <TextBlock Text="{DynamicResource Ed2kSaveTo}" Classes="meta" />
+                    <TextBlock Text="{Binding DefaultSavePath}" Classes="meta" Opacity="0.85" MaxWidth="260"
+                               TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding DefaultSavePath}" />
+                    <Button Classes="linkButton" Command="{Binding ChooseDefaultSavePathCommand}"
+                            VerticalAlignment="Center" Margin="2,0,0,0">
+                        <TextBlock Text="{DynamicResource Ed2kChangeSavePath}" FontSize="12" />
+                    </Button>
+                </StackPanel>
+            </Grid>
+
+            <Border IsVisible="{Binding HasEd2kSelection}" CornerRadius="10" Padding="14,4,4,4">
+                <Border.Background>
+                    <SolidColorBrush Color="{DynamicResource SystemAccentColor}" Opacity="0.1" />
+                </Border.Background>
+                <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="14" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Ed2kSelectionText}" FontSize="12.5" FontWeight="SemiBold"
+                                   VerticalAlignment="Center" />
+                        <Button Classes="linkButton" Command="{Binding SelectAllEd2kResultsCommand}" VerticalAlignment="Center">
+                            <TextBlock Text="{DynamicResource Ed2kSelectAll}" FontSize="12" />
+                        </Button>
+                        <Button Classes="linkButton" Command="{Binding ClearEd2kSelectionCommand}" VerticalAlignment="Center">
+                            <TextBlock Text="{DynamicResource Ed2kClearSelection}" FontSize="12" />
+                        </Button>
+                    </StackPanel>
+                    <Button Grid.Column="1" Classes="accent" Padding="14,6" CornerRadius="8"
+                            Command="{Binding DownloadSelectedEd2kResultsCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <PathIcon Data="{StaticResource IconDownloading}" Width="13" Height="13" />
+                            <TextBlock Text="{DynamicResource Ed2kDownloadSelected}" FontSize="12.5" FontWeight="Medium" />
+                        </StackPanel>
+                    </Button>
+                </Grid>
+            </Border>
+        </Panel>
+
+        <!-- Results and empty states -->
+        <Panel Grid.Row="3">
+            <!-- Table view -->
+            <Border Classes="table">
+                <Border.IsVisible>
+                    <MultiBinding Converter="{x:Static BoolConverters.And}">
+                        <Binding Path="HasEd2kResults" />
+                        <Binding Path="IsEd2kCompactView" />
+                    </MultiBinding>
+                </Border.IsVisible>
+                <Grid RowDefinitions="Auto,*">
+                    <Border Grid.Row="0" Classes="tableHeader">
+                        <Grid ColumnDefinitions="36,28,*,64,84,76,76,66" Margin="0,0,8,0">
+                            <Button Grid.Column="2" Classes="headerCell" HorizontalAlignment="Left" Margin="-4,0,0,0"
+                                    Classes.sorted="{Binding Ed2kSortValue, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=name}"
+                                    Command="{Binding SortEd2kByCommand}" CommandParameter="name">
+                                <StackPanel Orientation="Horizontal" Spacing="3">
+                                    <TextBlock Classes="headerText" Text="{DynamicResource Ed2kColumnName}" />
+                                    <PathIcon Classes="sortMark" Data="{StaticResource IconChevronDown}" Width="9" Height="9" />
+                                </StackPanel>
+                            </Button>
+                            <TextBlock Grid.Column="3" Classes="headerText" Text="{DynamicResource Ed2kColumnType}" />
+                            <Button Grid.Column="4" Classes="headerCell" HorizontalAlignment="Right"
+                                    Classes.sorted="{Binding Ed2kSortValue, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=size}"
+                                    Command="{Binding SortEd2kByCommand}" CommandParameter="size">
+                                <StackPanel Orientation="Horizontal" Spacing="3">
+                                    <TextBlock Classes="headerText" Text="{DynamicResource Ed2kColumnSize}" />
+                                    <PathIcon Classes="sortMark" Data="{StaticResource IconChevronDown}" Width="9" Height="9" />
+                                </StackPanel>
+                            </Button>
+                            <Button Grid.Column="5" Classes="headerCell" HorizontalAlignment="Right"
+                                    Classes.sorted="{Binding Ed2kSortValue, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=sources}"
+                                    Command="{Binding SortEd2kByCommand}" CommandParameter="sources">
+                                <StackPanel Orientation="Horizontal" Spacing="3">
+                                    <TextBlock Classes="headerText" Text="{DynamicResource Ed2kColumnSources}" />
+                                    <PathIcon Classes="sortMark" Data="{StaticResource IconChevronDown}" Width="9" Height="9" />
+                                </StackPanel>
+                            </Button>
+                            <TextBlock Grid.Column="6" Classes="headerText" HorizontalAlignment="Right" Margin="0,0,4,0"
+                                       Text="{DynamicResource Ed2kColumnComplete}" />
+                        </Grid>
+                    </Border>
+
+                    <ScrollViewer Grid.Row="1">
+                        <ItemsControl ItemsSource="{Binding Ed2kSearchResults}" Classes.selecting="{Binding HasEd2kSelection}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <VirtualizingStackPanel />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="models:Ed2kSearchResult">
+                                    <Border Classes="tableRow" Classes.checked="{Binding IsSelected}"
+                                            Tapped="OnResultTapped" DoubleTapped="OnResultDoubleTapped">
+                                        <Panel>
+                                            <Border Classes="rowTint" />
+                                            <Grid ColumnDefinitions="36,28,*,64,84,76,76,66" Margin="0,0,8,0">
+                                                <CheckBox Grid.Column="0" Classes="rowCheck" HorizontalAlignment="Center"
+                                                          IsChecked="{Binding IsSelected}" IsVisible="{Binding !IsAdded}" />
+                                                <PathIcon Grid.Column="1" Width="14" Height="14" HorizontalAlignment="Left"
+                                                          Data="{Binding Converter={StaticResource Ed2kFileTypeIconConverter}}"
+                                                          Foreground="{DynamicResource SystemControlForegroundAccentBrush}" />
+                                                <TextBlock Grid.Column="2" Text="{Binding Name}" FontSize="13" Margin="0,0,12,0"
+                                                           VerticalAlignment="Center" TextWrapping="NoWrap"
+                                                           TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Name}" />
+                                                <Border Grid.Column="3" Classes="typeBadge" HorizontalAlignment="Left">
+                                                    <TextBlock Text="{Binding ExtensionBadge}" FontSize="10.5" MaxWidth="52"
+                                                               FontWeight="SemiBold" Opacity="0.7" TextWrapping="NoWrap"
+                                                               TextTrimming="CharacterEllipsis" />
+                                                </Border>
+                                                <TextBlock Grid.Column="4" Classes="cell" HorizontalAlignment="Right"
+                                                           Text="{Binding SizeText}" />
+                                                <StackPanel Grid.Column="5" Orientation="Horizontal" Spacing="5"
+                                                            HorizontalAlignment="Right" Margin="0,0,4,0">
+                                                    <Ellipse Classes="sourceDot"
+                                                             Classes.some="{Binding HasSomeSources}"
+                                                             Classes.many="{Binding HasManySources}" />
+                                                    <TextBlock Classes="cell" Text="{Binding SourceCount}" />
+                                                </StackPanel>
+                                                <TextBlock Grid.Column="6" Classes="cell" HorizontalAlignment="Right" Margin="0,0,4,0"
+                                                           Text="{Binding CompleteSourceCount}" />
+                                                <StackPanel Grid.Column="7" Orientation="Horizontal" Spacing="2"
+                                                            HorizontalAlignment="Right" VerticalAlignment="Center">
+                                                    <Button Classes="rowAction"
+                                                            Command="{Binding $parent[UserControl].((vm:MainWindowViewModel)DataContext).CopyEd2kLinkCommand}"
+                                                            CommandParameter="{Binding}"
+                                                            ToolTip.Tip="{DynamicResource Ed2kCopyLink}">
+                                                        <PathIcon Data="{StaticResource IconLink}" Width="13" Height="13" Opacity="0.7" />
+                                                    </Button>
+                                                    <Button Classes="rowAction rowDownload" IsVisible="{Binding !IsAdded}"
+                                                            Command="{Binding $parent[UserControl].((vm:MainWindowViewModel)DataContext).DownloadEd2kResultCommand}"
+                                                            CommandParameter="{Binding}"
+                                                            ToolTip.Tip="{DynamicResource Ed2kDownloadButton}">
+                                                        <PathIcon Data="{StaticResource IconDownloading}" Width="13" Height="13" />
+                                                    </Button>
+                                                    <Panel Width="26" Height="26" IsVisible="{Binding IsAdded}"
+                                                           ToolTip.Tip="{DynamicResource Ed2kAdded}">
+                                                        <PathIcon Data="{StaticResource IconCheck}" Width="13" Height="13" Foreground="#33D158" />
+                                                    </Panel>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Panel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+
+            <!-- Card view -->
+            <ScrollViewer>
+                <ScrollViewer.IsVisible>
+                    <MultiBinding Converter="{x:Static BoolConverters.And}">
+                        <Binding Path="HasEd2kResults" />
+                        <Binding Path="!IsEd2kCompactView" />
+                    </MultiBinding>
+                </ScrollViewer.IsVisible>
+                <ItemsControl ItemsSource="{Binding Ed2kSearchResults}" Classes.selecting="{Binding HasEd2kSelection}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <VirtualizingStackPanel />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="models:Ed2kSearchResult">
+                            <Border Classes="resultRow" Classes.checked="{Binding IsSelected}"
+                                    Tapped="OnResultTapped" DoubleTapped="OnResultDoubleTapped">
+                                <Panel>
+                                    <Border Classes="rowTint" />
+                                    <Grid ColumnDefinitions="Auto,Auto,*,Auto" ColumnSpacing="12" Margin="12,10,10,10">
+                                        <CheckBox Grid.Column="0" Classes="rowCheck" IsChecked="{Binding IsSelected}"
+                                                  IsVisible="{Binding !IsAdded}" />
+                                        <Border Grid.Column="0" Width="20" IsVisible="{Binding IsAdded}" />
+
+                                        <Panel Grid.Column="1" Width="38" Height="38" VerticalAlignment="Center">
+                                            <Border CornerRadius="10" Opacity="0.12"
+                                                    Background="{DynamicResource SystemControlBackgroundAccentBrush}" />
+                                            <PathIcon Data="{Binding Converter={StaticResource Ed2kFileTypeIconConverter}}"
+                                                      Width="17" Height="17"
+                                                      Foreground="{DynamicResource SystemControlForegroundAccentBrush}" />
+                                        </Panel>
+
+                                        <StackPanel Grid.Column="2" Spacing="5" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Name}" FontSize="13.5" FontWeight="Medium"
+                                                       TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis"
+                                                       ToolTip.Tip="{Binding Name}" />
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <TextBlock Classes="meta" Text="{Binding SizeText}" />
+                                                <TextBlock Classes="meta" Text="·" />
+                                                <StackPanel Orientation="Horizontal" Spacing="5">
+                                                    <Ellipse Classes="sourceDot"
+                                                             Classes.some="{Binding HasSomeSources}"
+                                                             Classes.many="{Binding HasManySources}" />
+                                                    <TextBlock Classes="meta">
+                                                        <Run Text="{Binding SourceCount}" /><Run Text="{DynamicResource Ed2kSourcesSuffix}" />
+                                                    </TextBlock>
+                                                </StackPanel>
+                                                <TextBlock Classes="meta" Text="·" />
+                                                <TextBlock Classes="meta">
+                                                    <Run Text="{Binding CompleteSourceCount}" /><Run Text="{DynamicResource Ed2kCompleteSuffix}" />
+                                                </TextBlock>
+                                                <Border Classes="typeBadge">
+                                                    <TextBlock Text="{Binding ExtensionBadge}" FontSize="10.5"
+                                                               FontWeight="SemiBold" Opacity="0.7" TextWrapping="NoWrap" />
+                                                </Border>
+                                            </StackPanel>
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                            <Button Classes="rowAction"
+                                                    Command="{Binding $parent[UserControl].((vm:MainWindowViewModel)DataContext).CopyEd2kLinkCommand}"
+                                                    CommandParameter="{Binding}"
+                                                    ToolTip.Tip="{DynamicResource Ed2kCopyLink}">
+                                                <PathIcon Data="{StaticResource IconLink}" Width="13" Height="13" Opacity="0.7" />
+                                            </Button>
+                                            <Button Classes="downloadButton" IsVisible="{Binding !IsAdded}"
+                                                    Command="{Binding $parent[UserControl].((vm:MainWindowViewModel)DataContext).DownloadEd2kResultCommand}"
+                                                    CommandParameter="{Binding}">
+                                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                                    <PathIcon Data="{StaticResource IconDownloading}" Width="13" Height="13" />
+                                                    <TextBlock Text="{DynamicResource Ed2kDownloadButton}" FontSize="12.5" />
+                                                </StackPanel>
+                                            </Button>
+                                            <StackPanel Orientation="Horizontal" Spacing="5" Margin="12,0,12,0"
+                                                        IsVisible="{Binding IsAdded}">
+                                                <PathIcon Data="{StaticResource IconCheck}" Width="13" Height="13" Foreground="#33D158" />
+                                                <TextBlock Text="{DynamicResource Ed2kAdded}" FontSize="12.5" Foreground="#33D158"
+                                                           FontWeight="Medium" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Grid>
+                                </Panel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+
+            <!-- Before the first search -->
+            <StackPanel Classes="emptyState" IsVisible="{Binding IsEd2kWelcome}">
+                <Panel Width="60" Height="60" HorizontalAlignment="Center">
+                    <Border CornerRadius="18" Opacity="0.12"
+                            Background="{DynamicResource SystemControlBackgroundAccentBrush}" />
+                    <PathIcon Data="{StaticResource IconNetwork}" Width="26" Height="26"
+                              Foreground="{DynamicResource SystemControlForegroundAccentBrush}" />
+                </Panel>
+                <TextBlock Text="{DynamicResource Ed2kWelcomeTitle}" FontSize="17" FontWeight="SemiBold" Margin="0,6,0,0" />
+                <TextBlock Text="{DynamicResource Ed2kSearchDescription}" FontSize="13" Opacity="0.65" TextWrapping="Wrap" />
+                <TextBlock Text="{DynamicResource Ed2kWelcomeHint}" FontSize="12" Opacity="0.5" TextWrapping="Wrap" />
+            </StackPanel>
+
+            <!-- Searching, nothing back yet -->
+            <StackPanel Classes="emptyState" IsVisible="{Binding IsEd2kWaitingForResults}">
+                <ProgressBar IsIndeterminate="True" Width="160" Height="3" MinHeight="3" CornerRadius="2"
+                             HorizontalAlignment="Center" />
+                <TextBlock Text="{Binding Ed2kSearchStatus}" FontSize="13" Opacity="0.65" Margin="0,6,0,0" />
+            </StackPanel>
+
+            <!-- Finished with nothing -->
+            <StackPanel Classes="emptyState" IsVisible="{Binding IsEd2kNoResults}">
+                <Panel Width="60" Height="60" HorizontalAlignment="Center">
+                    <Border CornerRadius="18" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}" />
+                    <PathIcon Data="{StaticResource IconSearch}" Width="24" Height="24" Opacity="0.5" />
+                </Panel>
+                <TextBlock Text="{DynamicResource Ed2kNoResultsTitle}" FontSize="17" FontWeight="SemiBold" Margin="0,6,0,0" />
+                <TextBlock Text="{DynamicResource Ed2kNoResultsHint}" FontSize="13" Opacity="0.65" TextWrapping="Wrap" />
+            </StackPanel>
+
+            <!-- Results exist, but not of the chosen type -->
+            <StackPanel Classes="emptyState" IsVisible="{Binding IsEd2kFilteredEmpty}">
+                <Panel Width="60" Height="60" HorizontalAlignment="Center">
+                    <Border CornerRadius="18" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}" />
+                    <PathIcon Data="{Binding SelectedEd2kFileType.Value, Converter={StaticResource Ed2kFileTypeIconConverter}}"
+                              Width="24" Height="24" Opacity="0.5" />
+                </Panel>
+                <TextBlock Text="{DynamicResource Ed2kFilteredEmptyTitle}" FontSize="15" FontWeight="SemiBold" Margin="0,6,0,0" />
+                <Button Classes="accent" HorizontalAlignment="Center" Padding="16,7" CornerRadius="8" Margin="0,4,0,0"
+                        Command="{Binding StartEd2kSearchCommand}" IsVisible="{Binding !IsEd2kSearching}">
+                    <StackPanel Orientation="Horizontal" Spacing="7">
+                        <PathIcon Data="{StaticResource IconSearch}" Width="13" Height="13" />
+                        <TextBlock Text="{DynamicResource Ed2kSearchWithType}" />
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </Panel>
     </Grid>
 </UserControl>

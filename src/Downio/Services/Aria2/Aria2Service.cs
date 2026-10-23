@@ -575,22 +575,14 @@ public class Aria2Service : IAria2Service, IDisposable
     {
         if (_rpcClient != null && !string.IsNullOrWhiteSpace(gid))
         {
+            // aria2-next 3.x keeps searches outside the download queue; this stops one and drops its results.
             try
             {
-                await _rpcClient.InvokeAsync<string>("forceRemove", gid).ConfigureAwait(false);
+                await _rpcClient.InvokeAsync<string>("removeEd2kSearch", gid).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
-                AppLog.Warn($"Failed to stop ED2K search task {gid}: {ex.Message}");
-            }
-
-            try
-            {
-                await _rpcClient.InvokeAsync<string>("removeDownloadResult", gid).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                AppLog.Warn($"Failed to remove ED2K search result {gid}: {ex.Message}");
+                AppLog.Warn($"Failed to remove ED2K search {gid}: {ex.Message}");
             }
         }
 

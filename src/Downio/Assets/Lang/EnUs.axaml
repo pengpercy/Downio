@@ -237,6 +237,35 @@
     <x:String x:Key="Ed2kDownloadStartedTitle">ED2K download started</x:String>
     <x:String x:Key="Ed2kDownloadStartedMessage">Added “{0}” to the download queue.</x:String>
     <x:String x:Key="Ed2kDownloadFailedTitle">ED2K download failed</x:String>
+    <x:String x:Key="Ed2kStopButton">Stop</x:String>
+    <x:String x:Key="Ed2kStatusStopped">Search stopped with {0} results.</x:String>
+    <x:String x:Key="Ed2kSortBySources">Most sources</x:String>
+    <x:String x:Key="Ed2kSortBySize">Largest</x:String>
+    <x:String x:Key="Ed2kSortByName">Name</x:String>
+    <x:String x:Key="Ed2kSaveTo">Save to</x:String>
+    <x:String x:Key="Ed2kChangeSavePath">Change</x:String>
+    <x:String x:Key="Ed2kSelectedCount">{0} selected</x:String>
+    <x:String x:Key="Ed2kDownloadSelected">Download selected</x:String>
+    <x:String x:Key="Ed2kClearSelection">Clear</x:String>
+    <x:String x:Key="Ed2kSelectAll">Select all</x:String>
+    <x:String x:Key="Ed2kAdded">Added</x:String>
+    <x:String x:Key="Ed2kCopyLink">Copy ED2K link</x:String>
+    <x:String x:Key="Ed2kViewTable">Table view</x:String>
+    <x:String x:Key="Ed2kViewCards">Card view</x:String>
+    <x:String x:Key="Ed2kColumnName">Name</x:String>
+    <x:String x:Key="Ed2kColumnType">Type</x:String>
+    <x:String x:Key="Ed2kColumnSize">Size</x:String>
+    <x:String x:Key="Ed2kColumnSources">Sources</x:String>
+    <x:String x:Key="Ed2kColumnComplete">Complete</x:String>
+    <x:String x:Key="Ed2kSourcesSuffix"> sources</x:String>
+    <x:String x:Key="Ed2kCompleteSuffix"> complete</x:String>
+    <x:String x:Key="Ed2kWelcomeTitle">Search the eD2K / Kad network</x:String>
+    <x:String x:Key="Ed2kWelcomeHint">Type a keyword and press Enter. Click results to select several, double-click to download.</x:String>
+    <x:String x:Key="Ed2kNoResultsTitle">No results</x:String>
+    <x:String x:Key="Ed2kNoResultsHint">Try another keyword or file type, or check the ED2K servers and bootstrap files in Settings.</x:String>
+    <x:String x:Key="Ed2kFilteredEmptyTitle">This search has no results of this type</x:String>
+    <x:String x:Key="Ed2kSearchWithType">Search again with this type</x:String>
+    <x:String x:Key="Ed2kDownloadsStartedMessage">Added {0} files to the download queue.</x:String>
 
     <!-- ED2K Settings -->
     <x:String x:Key="Ed2kSettingsDescription">Configure aria2-next ED2K networking, bootstrap sources, and search behavior.</x:String>

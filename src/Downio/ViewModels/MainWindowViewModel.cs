@@ -1252,6 +1252,12 @@ public partial class MainWindowViewModel : ViewModelBase
         foreach (var syncInterval in syncIntervals) Ed2kSyncIntervalOptions.Add(syncInterval);
         SelectedEd2kSyncInterval = selectedSyncInterval;
 
+        var selectedSort = SelectedEd2kSort;
+        var sortOptions = Ed2kSortOptions.ToList();
+        Ed2kSortOptions.Clear();
+        foreach (var sortOption in sortOptions) Ed2kSortOptions.Add(sortOption);
+        SelectedEd2kSort = selectedSort;
+
         var searchResults = Ed2kSearchResults.ToList();
         Ed2kSearchResults.Clear();
         foreach (var result in searchResults) Ed2kSearchResults.Add(result);
@@ -1262,6 +1268,7 @@ public partial class MainWindowViewModel : ViewModelBase
         OnPropertyChanged(nameof(CurrentSettingsTitleKey));
         OnPropertyChanged(nameof(LastSyncTrackerTimeText));
         OnPropertyChanged(nameof(Ed2kBootstrapLastSyncText));
+        OnPropertyChanged(nameof(Ed2kSelectionText));
         RefreshEd2kSearchStatusText();
     }
 
@@ -1282,6 +1289,7 @@ public partial class MainWindowViewModel : ViewModelBase
         _taskListView = new TaskListView();
         _ed2kSearchView = new Ed2kSearchView();
         SelectedEd2kFileType = Ed2kFileTypeOptions[0];
+        SelectedEd2kSort = Ed2kSortOptions[0];
         
         ShowDownloading();
         

@@ -237,6 +237,35 @@
     <x:String x:Key="Ed2kDownloadStartedTitle">ED2K 下载已开始</x:String>
     <x:String x:Key="Ed2kDownloadStartedMessage">已将“{0}”添加到下载队列。</x:String>
     <x:String x:Key="Ed2kDownloadFailedTitle">ED2K 下载失败</x:String>
+    <x:String x:Key="Ed2kStopButton">停止</x:String>
+    <x:String x:Key="Ed2kStatusStopped">已停止搜索，共找到 {0} 个结果。</x:String>
+    <x:String x:Key="Ed2kSortBySources">源最多</x:String>
+    <x:String x:Key="Ed2kSortBySize">文件最大</x:String>
+    <x:String x:Key="Ed2kSortByName">按名称</x:String>
+    <x:String x:Key="Ed2kSaveTo">保存到</x:String>
+    <x:String x:Key="Ed2kChangeSavePath">更改</x:String>
+    <x:String x:Key="Ed2kSelectedCount">已选 {0} 项</x:String>
+    <x:String x:Key="Ed2kDownloadSelected">下载所选</x:String>
+    <x:String x:Key="Ed2kClearSelection">取消选择</x:String>
+    <x:String x:Key="Ed2kSelectAll">全选</x:String>
+    <x:String x:Key="Ed2kAdded">已添加</x:String>
+    <x:String x:Key="Ed2kCopyLink">复制 ED2K 链接</x:String>
+    <x:String x:Key="Ed2kViewTable">列表视图</x:String>
+    <x:String x:Key="Ed2kViewCards">卡片视图</x:String>
+    <x:String x:Key="Ed2kColumnName">名称</x:String>
+    <x:String x:Key="Ed2kColumnType">类型</x:String>
+    <x:String x:Key="Ed2kColumnSize">大小</x:String>
+    <x:String x:Key="Ed2kColumnSources">源</x:String>
+    <x:String x:Key="Ed2kColumnComplete">完整源</x:String>
+    <x:String x:Key="Ed2kSourcesSuffix"> 个源</x:String>
+    <x:String x:Key="Ed2kCompleteSuffix"> 个完整源</x:String>
+    <x:String x:Key="Ed2kWelcomeTitle">搜索 eD2K / Kad 网络</x:String>
+    <x:String x:Key="Ed2kWelcomeHint">输入关键词后按回车。单击结果可多选，双击直接下载。</x:String>
+    <x:String x:Key="Ed2kNoResultsTitle">没有找到结果</x:String>
+    <x:String x:Key="Ed2kNoResultsHint">换个关键词或文件类型试试，也可以在设置中检查 ED2K 服务器与引导文件。</x:String>
+    <x:String x:Key="Ed2kFilteredEmptyTitle">这次搜索没有该类型的结果</x:String>
+    <x:String x:Key="Ed2kSearchWithType">按此类型重新搜索</x:String>
+    <x:String x:Key="Ed2kDownloadsStartedMessage">已将 {0} 个文件添加到下载队列。</x:String>
 
     <!-- ED2K 设置 -->
     <x:String x:Key="Ed2kSettingsDescription">配置 aria2-next 的 ED2K 网络、引导数据源和搜索行为。</x:String>

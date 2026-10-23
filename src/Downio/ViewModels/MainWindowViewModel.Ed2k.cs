@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -15,6 +17,7 @@ namespace Downio.ViewModels;
 
 public sealed record Ed2kFileTypeOption(string ResourceKey, string Value);
 public sealed record Ed2kSyncIntervalOption(string ResourceKey, int Hours);
+public sealed record Ed2kSortOption(string ResourceKey, string Value);
 
 public partial class MainWindowViewModel
 {
@@ -185,6 +188,7 @@ public partial class MainWindowViewModel
                                    ?? Ed2kSyncIntervalOptions.First(x => x.Hours == 24);
         Ed2kMinSourceCount = Math.Clamp(settings.Ed2kMinSourceCount, 0, 999999);
         Ed2kSearchTimeoutSeconds = Math.Clamp(settings.Ed2kSearchTimeout, 10, 600);
+        IsEd2kCompactView = settings.Ed2kCompactView;
         Ed2kSettingsRestartRequired = false;
         _suppressEd2kSettingsChanges = false;
         OnPropertyChanged(nameof(Ed2kBootstrapLastSyncText));
@@ -381,8 +385,10 @@ public partial class MainWindowViewModel
 
         var timeoutSeconds = Math.Clamp(Ed2kSearchTimeoutSeconds, 10, 600);
         Ed2kSearchTimeoutSeconds = timeoutSeconds;
-        Ed2kSearchResults.Clear();
+        ClearEd2kResults();
+        HasEd2kSearched = true;
         IsEd2kSearching = true;
+        Ed2kSearchProgress = 0;
         SetEd2kSearchStatus("Ed2kStatusSearching");
         _ed2kSearchCancellation = new CancellationTokenSource();
         var token = _ed2kSearchCancellation.Token;
@@ -395,30 +401,26 @@ public partial class MainWindowViewModel
                 SelectedEd2kFileType?.Value ?? string.Empty,
                 Math.Max(0, Ed2kMinSourceCount));
 
-            var deadline = DateTimeOffset.UtcNow.AddSeconds(timeoutSeconds);
+            var started = DateTimeOffset.UtcNow;
+            var deadline = started.AddSeconds(timeoutSeconds);
             while (DateTimeOffset.UtcNow < deadline)
             {
                 token.ThrowIfCancellationRequested();
                 var payload = await _aria2Service.GetEd2kSearchResultsAsync(gid);
-                var ordered = payload.Results
-                    .OrderByDescending(x => int.TryParse(x.SourceCount, out var count) ? count : 0)
-                    .ThenBy(x => x.Name, StringComparer.CurrentCultureIgnoreCase)
-                    .ToList();
-
-                Ed2kSearchResults.Clear();
-                foreach (var result in ordered) Ed2kSearchResults.Add(result);
-                SetEd2kSearchStatus("Ed2kStatusSearchingCount", Ed2kSearchResults.Count);
+                MergeEd2kResults(payload.Results);
+                Ed2kSearchProgress = Math.Clamp((DateTimeOffset.UtcNow - started).TotalSeconds / timeoutSeconds, 0, 1);
+                SetEd2kSearchStatus("Ed2kStatusSearchingCount", Ed2kTotalResultCount);
                 await Task.Delay(TimeSpan.FromSeconds(1), token);
             }
 
-            if (Ed2kSearchResults.Count == 0)
+            if (Ed2kTotalResultCount == 0)
                 SetEd2kSearchStatus("Ed2kStatusNoResults");
             else
-                SetEd2kSearchStatus("Ed2kStatusCompleted", Ed2kSearchResults.Count);
+                SetEd2kSearchStatus("Ed2kStatusCompleted", Ed2kTotalResultCount);
         }
         catch (OperationCanceledException)
         {
-            SetEd2kSearchStatus("Ed2kStatusCancelled");
+            SetEd2kSearchStatus(Ed2kTotalResultCount == 0 ? "Ed2kStatusCancelled" : "Ed2kStatusStopped", Ed2kTotalResultCount);
         }
         catch (Exception ex)
         {
@@ -430,7 +432,9 @@ public partial class MainWindowViewModel
             if (!string.IsNullOrWhiteSpace(gid)) await _aria2Service.CleanupEd2kSearchAsync(gid);
             _ed2kSearchCancellation?.Dispose();
             _ed2kSearchCancellation = null;
+            Ed2kSearchProgress = 1;
             IsEd2kSearching = false;
+            NotifyEd2kResultState();
         }
     }
 
@@ -441,9 +445,241 @@ public partial class MainWindowViewModel
     }
 
     [RelayCommand]
-    private async Task DownloadEd2kResult(Ed2kSearchResult? result)
+    private void ClearEd2kKeyword()
+    {
+        Ed2kSearchKeyword = string.Empty;
+    }
+
+    // ---- Result list -------------------------------------------------------------------------
+    // Every result of the current search, keyed by hash. Instances are reused across polls so the
+    // visible rows update in place instead of being torn down and rebuilt every second.
+    private readonly Dictionary<string, Ed2kSearchResult> _ed2kResultIndex = new(StringComparer.OrdinalIgnoreCase);
+
+    // Links queued during this session, so "Added" survives a new search for the same file.
+    private readonly HashSet<string> _ed2kAddedLinks = new(StringComparer.OrdinalIgnoreCase);
+
+    public ObservableCollection<Ed2kSortOption> Ed2kSortOptions { get; } =
+    [
+        new("Ed2kSortBySources", "sources"),
+        new("Ed2kSortBySize", "size"),
+        new("Ed2kSortByName", "name")
+    ];
+
+    [ObservableProperty]
+    private Ed2kSortOption? _selectedEd2kSort;
+
+    partial void OnSelectedEd2kSortChanged(Ed2kSortOption? value)
+    {
+        OnPropertyChanged(nameof(Ed2kSortValue));
+        ApplyEd2kResultView();
+    }
+
+    /// <summary>Lets the table header mark the column currently sorted on.</summary>
+    public string Ed2kSortValue => SelectedEd2kSort?.Value ?? "sources";
+
+    /// <summary>Dense table rows instead of cards.</summary>
+    [ObservableProperty]
+    private bool _isEd2kCompactView = true;
+
+    partial void OnIsEd2kCompactViewChanged(bool value) =>
+        SaveEd2kImmediateSetting(() => _settingsService.Settings.Ed2kCompactView = value);
+
+    [RelayCommand]
+    private void ShowEd2kTable() => IsEd2kCompactView = true;
+
+    [RelayCommand]
+    private void ShowEd2kCards() => IsEd2kCompactView = false;
+
+    // Table column headers sort by their column.
+    [RelayCommand]
+    private void SortEd2kBy(string value) =>
+        SelectedEd2kSort = Ed2kSortOptions.FirstOrDefault(o => o.Value == value) ?? SelectedEd2kSort;
+
+    partial void OnSelectedEd2kFileTypeChanged(Ed2kFileTypeOption? value) => ApplyEd2kResultView();
+
+    [ObservableProperty]
+    private bool _hasEd2kSearched;
+
+    [ObservableProperty]
+    private double _ed2kSearchProgress;
+
+    public int Ed2kTotalResultCount => _ed2kResultIndex.Count;
+
+    public bool HasEd2kResults => Ed2kSearchResults.Count > 0;
+
+    /// <summary>The search found files, but none match the selected type chip.</summary>
+    public bool IsEd2kFilteredEmpty => _ed2kResultIndex.Count > 0 && Ed2kSearchResults.Count == 0;
+
+    /// <summary>A finished search with nothing at all to show.</summary>
+    public bool IsEd2kNoResults => HasEd2kSearched && !IsEd2kSearching && _ed2kResultIndex.Count == 0;
+
+    public bool IsEd2kWelcome => !HasEd2kSearched;
+
+    /// <summary>Searching, but nothing has come back yet.</summary>
+    public bool IsEd2kWaitingForResults => IsEd2kSearching && _ed2kResultIndex.Count == 0;
+
+    partial void OnIsEd2kSearchingChanged(bool value) => NotifyEd2kResultState();
+
+    partial void OnHasEd2kSearchedChanged(bool value) => NotifyEd2kResultState();
+
+    public int Ed2kSelectedCount => Ed2kSearchResults.Count(r => r.IsSelected);
+
+    public bool HasEd2kSelection => Ed2kSelectedCount > 0;
+
+    public string Ed2kSelectionText => string.Format(CultureInfo.CurrentCulture, GetString("Ed2kSelectedCount"), Ed2kSelectedCount);
+
+    private void ClearEd2kResults()
+    {
+        foreach (var result in _ed2kResultIndex.Values) result.PropertyChanged -= OnEd2kResultPropertyChanged;
+        _ed2kResultIndex.Clear();
+        Ed2kSearchResults.Clear();
+        NotifyEd2kResultState();
+    }
+
+    private void MergeEd2kResults(IEnumerable<Ed2kSearchResult> incoming)
+    {
+        foreach (var result in incoming)
+        {
+            var key = result.Key;
+            if (string.IsNullOrWhiteSpace(key)) continue;
+
+            if (_ed2kResultIndex.TryGetValue(key, out var existing))
+            {
+                existing.UpdateCountsFrom(result);
+                continue;
+            }
+
+            result.IsAdded = _ed2kAddedLinks.Contains(result.Ed2kLink);
+            result.PropertyChanged += OnEd2kResultPropertyChanged;
+            _ed2kResultIndex[key] = result;
+        }
+
+        ApplyEd2kResultView();
+    }
+
+    private void ApplyEd2kResultView()
+    {
+        var type = SelectedEd2kFileType?.Value ?? string.Empty;
+        var query = _ed2kResultIndex.Values.Where(r => type.Length == 0 || r.FileTypeCategory == type);
+        var ordered = (SelectedEd2kSort?.Value) switch
+        {
+            "size" => query.OrderByDescending(r => r.SizeBytes),
+            "name" => query.OrderBy(r => r.Name, StringComparer.CurrentCultureIgnoreCase),
+            _ => query.OrderByDescending(r => r.SourceCountValue).ThenByDescending(r => r.CompleteSourceCountValue)
+        };
+        var desired = ordered.ThenBy(r => r.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
+
+        // Hidden rows drop out of a batch so "Download selected" only acts on what is visible.
+        foreach (var hidden in Ed2kSearchResults.Except(desired)) hidden.IsSelected = false;
+
+        // Move/insert rather than Clear+Add, which keeps scroll position and hover state.
+        for (var i = 0; i < desired.Count; i++)
+        {
+            var item = desired[i];
+            if (i < Ed2kSearchResults.Count && ReferenceEquals(Ed2kSearchResults[i], item)) continue;
+            var oldIndex = Ed2kSearchResults.IndexOf(item);
+            if (oldIndex >= 0) Ed2kSearchResults.Move(oldIndex, i);
+            else Ed2kSearchResults.Insert(i, item);
+        }
+        while (Ed2kSearchResults.Count > desired.Count) Ed2kSearchResults.RemoveAt(Ed2kSearchResults.Count - 1);
+
+        NotifyEd2kResultState();
+    }
+
+    private void OnEd2kResultPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(Ed2kSearchResult.IsSelected)) NotifyEd2kSelection();
+    }
+
+    private void NotifyEd2kResultState()
+    {
+        OnPropertyChanged(nameof(Ed2kTotalResultCount));
+        OnPropertyChanged(nameof(HasEd2kResults));
+        OnPropertyChanged(nameof(IsEd2kFilteredEmpty));
+        OnPropertyChanged(nameof(IsEd2kNoResults));
+        OnPropertyChanged(nameof(IsEd2kWelcome));
+        OnPropertyChanged(nameof(IsEd2kWaitingForResults));
+        NotifyEd2kSelection();
+    }
+
+    private void NotifyEd2kSelection()
+    {
+        OnPropertyChanged(nameof(Ed2kSelectedCount));
+        OnPropertyChanged(nameof(HasEd2kSelection));
+        OnPropertyChanged(nameof(Ed2kSelectionText));
+    }
+
+    [RelayCommand]
+    private void SelectAllEd2kResults()
+    {
+        foreach (var result in Ed2kSearchResults.Where(r => !r.IsAdded)) result.IsSelected = true;
+    }
+
+    [RelayCommand]
+    private void ClearEd2kSelection()
+    {
+        foreach (var result in Ed2kSearchResults) result.IsSelected = false;
+    }
+
+    [RelayCommand]
+    private async Task CopyEd2kLink(Ed2kSearchResult? result)
     {
         if (result == null || string.IsNullOrWhiteSpace(result.Ed2kLink)) return;
+        if (Avalonia.Application.Current?.ApplicationLifetime is not Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime { MainWindow.Clipboard: { } clipboard }) return;
+
+        try
+        {
+            var data = new Avalonia.Input.DataTransfer();
+            data.Add(Avalonia.Input.DataTransferItem.CreateText(result.Ed2kLink));
+            await clipboard.SetDataAsync(data);
+            _notificationService.ShowNotification(GetString("NotificationCopied"), GetString("MessageLinkCopied"), ToastType.Success);
+        }
+        catch (Exception ex)
+        {
+            AppLog.Error(ex, $"Copy ED2K link failed: {result.Name}");
+        }
+    }
+
+    // ---- Downloads ---------------------------------------------------------------------------
+
+    [RelayCommand]
+    private async Task DownloadEd2kResult(Ed2kSearchResult? result)
+    {
+        if (result == null || result.IsAdded) return;
+
+        if (await TryAddEd2kDownloadAsync(result))
+        {
+            _notificationService.ShowNotification(
+                GetString("Ed2kDownloadStartedTitle"),
+                string.Format(GetString("Ed2kDownloadStartedMessage"), result.Name),
+                ToastType.Success);
+        }
+    }
+
+    [RelayCommand]
+    private async Task DownloadSelectedEd2kResults()
+    {
+        var selected = Ed2kSearchResults.Where(r => r.IsSelected && !r.IsAdded).ToList();
+        if (selected.Count == 0) return;
+
+        var added = 0;
+        foreach (var result in selected)
+        {
+            if (await TryAddEd2kDownloadAsync(result)) added++;
+        }
+
+        if (added > 0)
+        {
+            _notificationService.ShowNotification(
+                GetString("Ed2kDownloadStartedTitle"),
+                string.Format(GetString("Ed2kDownloadsStartedMessage"), added),
+                ToastType.Success);
+        }
+    }
+
+    private async Task<bool> TryAddEd2kDownloadAsync(Ed2kSearchResult result)
+    {
+        if (string.IsNullOrWhiteSpace(result.Ed2kLink)) return false;
 
         try
         {
@@ -455,15 +691,16 @@ public partial class MainWindowViewModel
                 DefaultDownloadSplit);
             if (string.IsNullOrWhiteSpace(gid)) throw new InvalidOperationException("aria2 did not return a download GID.");
 
-            _notificationService.ShowNotification(
-                GetString("Ed2kDownloadStartedTitle"),
-                string.Format(GetString("Ed2kDownloadStartedMessage"), string.IsNullOrWhiteSpace(fileName) ? result.Name : fileName),
-                ToastType.Success);
+            _ed2kAddedLinks.Add(result.Ed2kLink);
+            result.IsAdded = true;
+            result.IsSelected = false;
+            return true;
         }
         catch (Exception ex)
         {
             AppLog.Error(ex, $"Failed to download ED2K result: {result.Ed2kLink}");
-            _notificationService.ShowNotification(GetString("Ed2kDownloadFailedTitle"), ex.Message, ToastType.Error);
+            _notificationService.ShowNotification(GetString("Ed2kDownloadFailedTitle"), $"{result.Name}: {ex.Message}", ToastType.Error);
+            return false;
         }
     }
 }
