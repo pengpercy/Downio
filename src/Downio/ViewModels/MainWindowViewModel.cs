@@ -150,6 +150,9 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     private Thickness _titleBarToolsMargin = new(0);
 
+    // Toolbar content spanning the title bar keeps clear of the Windows caption buttons on the right.
+    public Thickness TitleBarTrailingMargin => new(24, 0, IsWindowsLikeLayout ? 150 : 16, 0);
+
     partial void OnIsPaneOpenChanged(bool value)
     {
         UpdateTitleBarToolsMargin();
@@ -1093,6 +1096,17 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(TotalDownloadSpeedText))]
+    private long _totalDownloadSpeed;
+
+    public string TotalDownloadSpeedText => TotalDownloadSpeed switch
+    {
+        < 1024 => $"{TotalDownloadSpeed} B/s",
+        < 1024 * 1024 => $"{TotalDownloadSpeed / 1024.0:F1} KB/s",
+        _ => $"{TotalDownloadSpeed / 1024.0 / 1024.0:F1} MB/s"
+    };
+
+    [ObservableProperty]
     private bool _isDownloadSpeedBadgeVisible = true;
 
     partial void OnIsDownloadSpeedBadgeVisibleChanged(bool value)
@@ -1612,6 +1626,7 @@ public partial class MainWindowViewModel : ViewModelBase
             _currentTotalDownloadSpeed = allTasks
                 .Where(task => task.Status == "StatusDownloading")
                 .Sum(task => task.DownloadSpeedBytesPerSecond);
+            TotalDownloadSpeed = _currentTotalDownloadSpeed;
             if (IsDownloadSpeedBadgeVisible)
             {
                 _taskbarBadgeService.Update(_currentTotalDownloadSpeed);

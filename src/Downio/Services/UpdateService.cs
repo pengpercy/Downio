@@ -3,7 +3,9 @@ using System.IO;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Net;
+using System.Security.Cryptography;
 using System.Text.Json;
+using System.Threading;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using System.Diagnostics;
@@ -95,29 +97,42 @@ public class UpdateService
             .FirstOrDefault();
     }
 
-    public async Task DownloadUpdateAsync(string downloadUrl, string destinationPath, IProgress<double> progress)
+    /// <summary>
+    /// Streams the asset to <paramref name="destinationPath"/>, reporting (bytes so far, total bytes or -1),
+    /// and checks it against the SHA-256 digest GitHub publishes for release assets when there is one.
+    /// </summary>
+    public async Task DownloadUpdateAsync(ReleaseAsset asset, string destinationPath, IProgress<(long Received, long Total)> progress,
+        CancellationToken cancellationToken)
     {
-        using var response = await _httpClient.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead);
+        using var response = await _httpClient.GetAsync(asset.BrowserDownloadUrl, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
         response.EnsureSuccessStatusCode();
 
-        var totalBytes = response.Content.Headers.ContentLength ?? -1L;
-        var canReportProgress = totalBytes != -1;
+        var totalBytes = response.Content.Headers.ContentLength ?? (asset.Size > 0 ? asset.Size : -1L);
 
-        await using var stream = await response.Content.ReadAsStreamAsync();
-        await using var fileStream = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.None);
-
-        var buffer = new byte[8192];
-        long totalRead = 0;
-        int bytesRead;
-
-        while ((bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+        using var sha256 = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+        await using (var stream = await response.Content.ReadAsStreamAsync(cancellationToken))
+        await using (var fileStream = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.None))
         {
-            await fileStream.WriteAsync(buffer, 0, bytesRead);
-            totalRead += bytesRead;
-
-            if (canReportProgress)
+            var buffer = new byte[81920];
+            long totalRead = 0;
+            int bytesRead;
+            while ((bytesRead = await stream.ReadAsync(buffer, cancellationToken)) > 0)
             {
-                progress.Report((double)totalRead / totalBytes);
+                await fileStream.WriteAsync(buffer.AsMemory(0, bytesRead), cancellationToken);
+                sha256.AppendData(buffer, 0, bytesRead);
+                totalRead += bytesRead;
+                progress.Report((totalRead, totalBytes));
+            }
+        }
+
+        const string digestPrefix = "sha256:";
+        if (asset.Digest?.StartsWith(digestPrefix, StringComparison.OrdinalIgnoreCase) == true)
+        {
+            var actual = Convert.ToHexStringLower(sha256.GetHashAndReset());
+            if (!actual.Equals(asset.Digest[digestPrefix.Length..], StringComparison.OrdinalIgnoreCase))
+            {
+                File.Delete(destinationPath);
+                throw new InvalidDataException($"Checksum mismatch for {asset.Name}.");
             }
         }
     }
@@ -151,6 +166,13 @@ public class ReleaseAsset
 
     [JsonPropertyName("browser_download_url")]
     public string BrowserDownloadUrl { get; set; } = "";
+
+    [JsonPropertyName("size")]
+    public long Size { get; set; }
+
+    // "sha256:<hex>", published by GitHub for release assets.
+    [JsonPropertyName("digest")]
+    public string? Digest { get; set; }
 }
 
 [JsonSourceGenerationOptions(WriteIndented = false, PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]

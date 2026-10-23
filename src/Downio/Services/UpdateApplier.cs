@@ -1,89 +1,178 @@
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Runtime.InteropServices;
+using System.IO.Compression;
+using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Downio.Services;
 
+/// <summary>
+/// Turns a downloaded release asset into something ready to swap in, then performs the swap.
+/// <see cref="PrepareAsync"/> runs inside the app (the "Extracting update" step, with progress);
+/// <see cref="TryInstallAndRelaunch"/> hands the final file swap to a small script that waits
+/// for this process to exit, replaces the installation and starts the new version.
+/// </summary>
 public static class UpdateApplier
 {
-    public static async Task<bool> TryApplyUpdateAsync(string downloadedFilePath, string releaseVersion)
+    private static string UpdaterDirectory => Path.Combine(Path.GetTempPath(), "Downio", "updater");
+
+    /// <summary>
+    /// Extracts the download and returns the staged update: the new app folder on Windows,
+    /// the new .app bundle on macOS, or the executable AppImage on Linux.
+    /// </summary>
+    public static async Task<string> PrepareAsync(string downloadedFilePath, IProgress<double> progress, CancellationToken cancellationToken)
     {
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        var stagingDir = Path.Combine(UpdaterDirectory, "staged");
+        if (Directory.Exists(stagingDir)) Directory.Delete(stagingDir, true);
+        Directory.CreateDirectory(stagingDir);
+
+        if (OperatingSystem.IsLinux())
         {
-            return await TryApplyWindowsZipAsync(downloadedFilePath);
+            var appImage = Path.Combine(stagingDir, Path.GetFileName(downloadedFilePath));
+            File.Copy(downloadedFilePath, appImage, true);
+            File.SetUnixFileMode(appImage, File.GetUnixFileMode(appImage) | UnixFileMode.UserExecute | UnixFileMode.GroupExecute | UnixFileMode.OtherExecute);
+            progress.Report(1);
+            return appImage;
         }
 
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+        if (downloadedFilePath.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
         {
-            return await TryApplyMacZipAsync(downloadedFilePath);
+            await Task.Run(() => ExtractZip(downloadedFilePath, stagingDir, progress, cancellationToken), cancellationToken);
+        }
+        else if (OperatingSystem.IsMacOS() && downloadedFilePath.EndsWith(".dmg", StringComparison.OrdinalIgnoreCase))
+        {
+            await CopyAppFromDmgAsync(downloadedFilePath, stagingDir, cancellationToken);
+            progress.Report(1);
+        }
+        else
+        {
+            throw new NotSupportedException($"Unsupported update package: {Path.GetFileName(downloadedFilePath)}");
         }
 
-        return await TryApplyLinuxAppImageAsync(downloadedFilePath, releaseVersion);
+        if (OperatingSystem.IsMacOS())
+        {
+            return Directory.EnumerateDirectories(stagingDir, "*.app", SearchOption.AllDirectories).FirstOrDefault()
+                   ?? throw new InvalidDataException("The update package contains no .app bundle.");
+        }
+
+        // Release zips may wrap everything in one top-level folder.
+        var entries = Directory.EnumerateFileSystemEntries(stagingDir).ToList();
+        return entries.Count == 1 && Directory.Exists(entries[0]) ? entries[0] : stagingDir;
     }
 
-    private static Task<bool> TryApplyWindowsZipAsync(string zipPath)
+    public static bool TryInstallAndRelaunch(string stagedPath)
     {
-        if (!zipPath.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+        try
         {
-            return Task.FromResult(false);
+            if (OperatingSystem.IsWindows()) return InstallWindows(stagedPath);
+            if (OperatingSystem.IsMacOS()) return InstallMac(stagedPath);
+            return InstallLinux(stagedPath);
         }
+        catch (Exception ex)
+        {
+            AppLog.Error(ex, "Starting the update installer failed");
+            return false;
+        }
+    }
 
+    // Entry by entry so progress can be reported, restoring Unix permissions and symlinks from the zip metadata.
+    private static void ExtractZip(string zipPath, string destination, IProgress<double> progress, CancellationToken cancellationToken)
+    {
+        using var archive = ZipFile.OpenRead(zipPath);
+        var root = Path.GetFullPath(destination) + Path.DirectorySeparatorChar;
+        var total = Math.Max(1, archive.Entries.Count);
+        var done = 0;
+
+        foreach (var entry in archive.Entries)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var target = Path.GetFullPath(Path.Combine(destination, entry.FullName));
+            if (!target.StartsWith(root, StringComparison.Ordinal))
+                throw new InvalidDataException($"Unsafe path in update package: {entry.FullName}");
+
+            if (entry.FullName.EndsWith('/') || entry.FullName.EndsWith('\\'))
+            {
+                Directory.CreateDirectory(target);
+            }
+            else
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+                var unixMode = (entry.ExternalAttributes >> 16) & 0xFFFF;
+                const int symlinkType = 0xA000;
+                if (!OperatingSystem.IsWindows() && (unixMode & 0xF000) == symlinkType)
+                {
+                    using var reader = new StreamReader(entry.Open());
+                    File.CreateSymbolicLink(target, reader.ReadToEnd());
+                }
+                else
+                {
+                    entry.ExtractToFile(target, true);
+                    if (!OperatingSystem.IsWindows() && (unixMode & 0x1FF) != 0)
+                        File.SetUnixFileMode(target, (UnixFileMode)(unixMode & 0x1FF));
+                }
+            }
+
+            progress.Report(++done / (double)total);
+        }
+    }
+
+    private static async Task CopyAppFromDmgAsync(string dmgPath, string destination, CancellationToken cancellationToken)
+    {
+        var mountPoint = Path.Combine(UpdaterDirectory, "mount");
+        Directory.CreateDirectory(mountPoint);
+        await RunAsync("/usr/bin/hdiutil", cancellationToken, "attach", "-nobrowse", "-readonly", "-mountpoint", mountPoint, dmgPath);
+        try
+        {
+            var app = Directory.EnumerateDirectories(mountPoint, "*.app").FirstOrDefault()
+                      ?? throw new InvalidDataException("The disk image contains no .app bundle.");
+            await RunAsync("/usr/bin/ditto", cancellationToken, app, Path.Combine(destination, Path.GetFileName(app)));
+        }
+        finally
+        {
+            await RunAsync("/usr/bin/hdiutil", CancellationToken.None, "detach", mountPoint, "-force");
+        }
+    }
+
+    private static async Task RunAsync(string fileName, CancellationToken cancellationToken, params string[] arguments)
+    {
+        var info = new ProcessStartInfo(fileName) { UseShellExecute = false, RedirectStandardError = true };
+        foreach (var argument in arguments) info.ArgumentList.Add(argument);
+        using var process = Process.Start(info) ?? throw new IOException($"{fileName} could not be started.");
+        var error = await process.StandardError.ReadToEndAsync(cancellationToken);
+        await process.WaitForExitAsync(cancellationToken);
+        if (process.ExitCode != 0)
+            throw new IOException($"{Path.GetFileName(fileName)} exited with code {process.ExitCode}: {error.Trim()}");
+    }
+
+    private static bool InstallWindows(string stagedDir)
+    {
         var processPath = Environment.ProcessPath;
-        if (string.IsNullOrWhiteSpace(processPath))
-        {
-            return Task.FromResult(false);
-        }
-
         var targetDir = Path.GetDirectoryName(processPath);
-        if (string.IsNullOrWhiteSpace(targetDir))
-        {
-            return Task.FromResult(false);
-        }
+        if (string.IsNullOrWhiteSpace(processPath) || string.IsNullOrWhiteSpace(targetDir)) return false;
 
-        var updaterDir = Path.Combine(Path.GetTempPath(), "Downio", "updater");
-        Directory.CreateDirectory(updaterDir);
-
-        var extractedDir = Path.Combine(updaterDir, "extracted");
-        var scriptPath = Path.Combine(updaterDir, "apply_update.bat");
-        var pid = Environment.ProcessId;
-
-        if (Directory.Exists(extractedDir))
-        {
-            try { Directory.Delete(extractedDir, true); } catch { }
-        }
-
-        var exeName = Path.GetFileName(processPath);
-        var restartExe = Path.Combine(targetDir, exeName);
-
+        var scriptPath = Path.Combine(UpdaterDirectory, "apply_update.bat");
         var bat = new StringBuilder();
         bat.AppendLine("@echo off");
-        bat.AppendLine("setlocal enabledelayedexpansion");
-        bat.AppendLine($"set PID={pid}");
-        bat.AppendLine($"set \"ZIP={EscapeForBatValue(zipPath)}\"");
-        bat.AppendLine($"set \"EXTRACTED={EscapeForBatValue(extractedDir)}\"");
+        bat.AppendLine($"set PID={Environment.ProcessId}");
+        bat.AppendLine($"set \"SOURCE={EscapeForBatValue(stagedDir)}\"");
         bat.AppendLine($"set \"TARGET={EscapeForBatValue(targetDir)}\"");
-        bat.AppendLine($"set \"RESTART={EscapeForBatValue(restartExe)}\"");
+        bat.AppendLine($"set \"RESTART={EscapeForBatValue(processPath)}\"");
         bat.AppendLine(":wait");
         bat.AppendLine("tasklist /fi \"PID eq %PID%\" | find \"%PID%\" >nul");
         bat.AppendLine("if \"%ERRORLEVEL%\"==\"0\" (");
         bat.AppendLine("  timeout /t 1 /nobreak >nul");
         bat.AppendLine("  goto wait");
         bat.AppendLine(")");
-        bat.AppendLine("rmdir /s /q \"%EXTRACTED%\" 2>nul");
-        bat.AppendLine("mkdir \"%EXTRACTED%\"");
-        bat.AppendLine("powershell -NoProfile -ExecutionPolicy Bypass -Command \"Expand-Archive -LiteralPath '%ZIP%' -DestinationPath '%EXTRACTED%' -Force\"");
-        bat.AppendLine("set \"SOURCE=%EXTRACTED%\"");
-        bat.AppendLine("for /f %%F in ('dir /b /a-d \"%EXTRACTED%\" 2^>nul ^| find /c /v \"\"') do set FILECOUNT=%%F");
-        bat.AppendLine("for /f %%D in ('dir /b /ad \"%EXTRACTED%\" 2^>nul ^| find /c /v \"\"') do set DIRCOUNT=%%D");
-        bat.AppendLine("if \"%FILECOUNT%\"==\"0\" if \"%DIRCOUNT%\"==\"1\" (");
-        bat.AppendLine("  for /f \"delims=\" %%D in ('dir /b /ad \"%EXTRACTED%\"') do set \"SOURCE=%EXTRACTED%\\%%D\"");
-        bat.AppendLine(")");
-        bat.AppendLine("robocopy \"%SOURCE%\" \"%TARGET%\" /E /NFL /NDL /NJH /NJS /NP");
+        // Mirror the new build over the old one; files that no longer ship are left alone.
+        bat.AppendLine("robocopy \"%SOURCE%\" \"%TARGET%\" /E /R:3 /W:1 /NFL /NDL /NJH /NJS /NP");
+        // Builds before 1.0.92 kept their data under Assets\; it now lives in resources\.
+        bat.AppendLine("if exist \"%SOURCE%\\resources\" if exist \"%TARGET%\\Assets\" rmdir /s /q \"%TARGET%\\Assets\"");
         bat.AppendLine("start \"\" \"%RESTART%\"");
-        File.WriteAllText(scriptPath, bat.ToString(), Encoding.UTF8);
+        File.WriteAllText(scriptPath, bat.ToString(), new UTF8Encoding(false));
 
         Process.Start(new ProcessStartInfo
         {
@@ -91,150 +180,73 @@ public static class UpdateApplier
             Arguments = $"/c \"{scriptPath}\"",
             UseShellExecute = false,
             CreateNoWindow = true,
-            WorkingDirectory = updaterDir
+            WorkingDirectory = UpdaterDirectory
         });
-
-        return Task.FromResult(true);
+        return true;
     }
 
-    private static Task<bool> TryApplyMacZipAsync(string zipOrDmgPath)
+    private static bool InstallMac(string stagedApp)
     {
-        var processPath = Environment.ProcessPath;
-        if (string.IsNullOrWhiteSpace(processPath))
-        {
-            return Task.FromResult(false);
-        }
+        var appBundlePath = FindAppBundlePath(Environment.ProcessPath);
+        if (string.IsNullOrWhiteSpace(appBundlePath)) return false;
 
-        var appBundlePath = FindAppBundlePath(processPath);
-        if (string.IsNullOrWhiteSpace(appBundlePath))
-        {
-            return Task.FromResult(false);
-        }
-
-        var parentDir = Path.GetDirectoryName(appBundlePath);
-        if (string.IsNullOrWhiteSpace(parentDir))
-        {
-            return Task.FromResult(false);
-        }
-
-        var updaterDir = Path.Combine(Path.GetTempPath(), "Downio", "updater");
-        Directory.CreateDirectory(updaterDir);
-        var scriptPath = Path.Combine(updaterDir, "apply_update.sh");
-        var pid = Environment.ProcessId;
-
+        var scriptPath = Path.Combine(UpdaterDirectory, "apply_update.sh");
         var sb = new StringBuilder();
-        sb.AppendLine("#!/usr/bin/env bash");
-        sb.AppendLine("set -e");
-        sb.AppendLine($"PID={pid}");
-        sb.AppendLine($"ARCHIVE='{QuoteForSh(zipOrDmgPath)}'");
+        sb.AppendLine("#!/bin/bash");
+        sb.AppendLine($"PID={Environment.ProcessId}");
+        sb.AppendLine($"NEW_APP='{QuoteForSh(stagedApp)}'");
         sb.AppendLine($"TARGET_APP='{QuoteForSh(appBundlePath)}'");
-        sb.AppendLine($"PARENT_DIR='{QuoteForSh(parentDir)}'");
-        sb.AppendLine("while kill -0 \"$PID\" 2>/dev/null; do sleep 1; done");
-        sb.AppendLine("TMPDIR=$(mktemp -d)");
-        sb.AppendLine("cleanup() { rm -rf \"$TMPDIR\"; }");
-        sb.AppendLine("trap cleanup EXIT");
-        sb.AppendLine("if [[ \"$ARCHIVE\" == *.zip ]]; then");
-        sb.AppendLine("  ditto -x -k \"$ARCHIVE\" \"$TMPDIR\"");
-        sb.AppendLine("elif [[ \"$ARCHIVE\" == *.dmg ]]; then");
-        sb.AppendLine("  MOUNT_OUTPUT=$(hdiutil attach -nobrowse -readonly \"$ARCHIVE\")");
-        sb.AppendLine("  MOUNT_POINT=$(echo \"$MOUNT_OUTPUT\" | awk -F'\\t' '/\\/Volumes\\//{print $NF; exit}')");
-        sb.AppendLine("  cp -R \"$MOUNT_POINT\"/*.app \"$TMPDIR\"/ || true");
-        sb.AppendLine("  hdiutil detach \"$MOUNT_POINT\" || true");
-        sb.AppendLine("else");
-        sb.AppendLine("  exit 1");
-        sb.AppendLine("fi");
-        sb.AppendLine("NEW_APP=$(find \"$TMPDIR\" -maxdepth 2 -name '*.app' -print -quit)");
-        sb.AppendLine("if [[ -z \"$NEW_APP\" ]]; then exit 1; fi");
         sb.AppendLine("BACKUP_APP=\"$TARGET_APP.bak\"");
-        sb.AppendLine("rm -rf \"$BACKUP_APP\" || true");
-        sb.AppendLine("mv \"$TARGET_APP\" \"$BACKUP_APP\"");
-        sb.AppendLine("ditto \"$NEW_APP\" \"$TARGET_APP\"");
-        sb.AppendLine("xattr -dr com.apple.quarantine \"$TARGET_APP\" >/dev/null 2>&1 || true");
-        sb.AppendLine("open \"$TARGET_APP\"");
-        // Preserve the previous bundle until the replacement has been copied and launched,
-        // then remove it so automatic updates do not leave Downio.app.bak in Finder.
+        sb.AppendLine("while kill -0 \"$PID\" 2>/dev/null; do sleep 0.5; done");
         sb.AppendLine("rm -rf \"$BACKUP_APP\"");
+        sb.AppendLine("mv \"$TARGET_APP\" \"$BACKUP_APP\" || exit 1");
+        // Put the old bundle back if the copy fails, so a failed update never leaves the app missing.
+        sb.AppendLine("if ! ditto \"$NEW_APP\" \"$TARGET_APP\"; then rm -rf \"$TARGET_APP\"; mv \"$BACKUP_APP\" \"$TARGET_APP\"; open \"$TARGET_APP\"; exit 1; fi");
+        sb.AppendLine("xattr -dr com.apple.quarantine \"$TARGET_APP\" >/dev/null 2>&1");
+        sb.AppendLine("rm -rf \"$BACKUP_APP\"");
+        sb.AppendLine("open \"$TARGET_APP\"");
         File.WriteAllText(scriptPath, sb.ToString(), new UTF8Encoding(false));
-
-        try
-        {
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = "chmod",
-                Arguments = $"+x \"{scriptPath}\"",
-                UseShellExecute = false,
-                CreateNoWindow = true
-            })?.WaitForExit();
-        }
-        catch
-        {
-        }
 
         Process.Start(new ProcessStartInfo
         {
             FileName = "/bin/bash",
-            Arguments = $"\"{scriptPath}\"",
+            ArgumentList = { scriptPath },
             UseShellExecute = false,
             CreateNoWindow = true,
-            WorkingDirectory = updaterDir
+            WorkingDirectory = UpdaterDirectory
         });
-
-        return Task.FromResult(true);
+        return true;
     }
 
-    private static Task<bool> TryApplyLinuxAppImageAsync(string downloadedPath, string releaseVersion)
+    private static bool InstallLinux(string stagedAppImage)
     {
         var appImagePath = Environment.GetEnvironmentVariable("APPIMAGE");
-        if (string.IsNullOrWhiteSpace(appImagePath))
-        {
-            var processPath = Environment.ProcessPath;
-            if (!string.IsNullOrWhiteSpace(processPath) && processPath.EndsWith(".AppImage", StringComparison.OrdinalIgnoreCase))
-            {
-                appImagePath = processPath;
-            }
-        }
+        if (string.IsNullOrWhiteSpace(appImagePath)) return false;
 
-        if (string.IsNullOrWhiteSpace(appImagePath))
-        {
-            return Task.FromResult(false);
-        }
-
-        if (!downloadedPath.EndsWith(".AppImage", StringComparison.OrdinalIgnoreCase))
-        {
-            return Task.FromResult(false);
-        }
-
-        var updaterDir = Path.Combine(Path.GetTempPath(), "Downio", "updater");
-        Directory.CreateDirectory(updaterDir);
-        var scriptPath = Path.Combine(updaterDir, "apply_update.sh");
-        var pid = Environment.ProcessId;
-
+        var scriptPath = Path.Combine(UpdaterDirectory, "apply_update.sh");
         var sb = new StringBuilder();
-        sb.AppendLine("#!/usr/bin/env bash");
-        sb.AppendLine("set -e");
-        sb.AppendLine($"PID={pid}");
-        sb.AppendLine($"NEW_APPIMAGE='{QuoteForSh(downloadedPath)}'");
+        sb.AppendLine("#!/bin/bash");
+        sb.AppendLine($"PID={Environment.ProcessId}");
+        sb.AppendLine($"NEW_APPIMAGE='{QuoteForSh(stagedAppImage)}'");
         sb.AppendLine($"TARGET_APPIMAGE='{QuoteForSh(appImagePath)}'");
-        sb.AppendLine("while kill -0 \"$PID\" 2>/dev/null; do sleep 1; done");
-        sb.AppendLine("chmod +x \"$NEW_APPIMAGE\" || true");
-        sb.AppendLine("mv -f \"$NEW_APPIMAGE\" \"$TARGET_APPIMAGE\"");
-        sb.AppendLine("chmod +x \"$TARGET_APPIMAGE\" || true");
+        sb.AppendLine("while kill -0 \"$PID\" 2>/dev/null; do sleep 0.5; done");
+        sb.AppendLine("mv -f \"$NEW_APPIMAGE\" \"$TARGET_APPIMAGE\" || exit 1");
+        sb.AppendLine("chmod +x \"$TARGET_APPIMAGE\"");
         sb.AppendLine("\"$TARGET_APPIMAGE\" >/dev/null 2>&1 &");
         File.WriteAllText(scriptPath, sb.ToString(), new UTF8Encoding(false));
 
         Process.Start(new ProcessStartInfo
         {
             FileName = "/bin/bash",
-            Arguments = $"\"{scriptPath}\"",
+            ArgumentList = { scriptPath },
             UseShellExecute = false,
             CreateNoWindow = true,
-            WorkingDirectory = updaterDir
+            WorkingDirectory = UpdaterDirectory
         });
-
-        return Task.FromResult(true);
+        return true;
     }
 
-    private static string? FindAppBundlePath(string processPath)
+    private static string? FindAppBundlePath(string? processPath)
     {
         var dir = Path.GetDirectoryName(processPath);
         while (!string.IsNullOrWhiteSpace(dir))
@@ -250,13 +262,7 @@ public static class UpdateApplier
         return null;
     }
 
-    private static string EscapeForBatValue(string value)
-    {
-        return value.Replace("\"", "\"\"");
-    }
+    private static string EscapeForBatValue(string value) => value.Replace("\"", "\"\"");
 
-    private static string QuoteForSh(string path)
-    {
-        return path.Replace("'", "'\"'\"'");
-    }
+    private static string QuoteForSh(string path) => path.Replace("'", "'\"'\"'");
 }

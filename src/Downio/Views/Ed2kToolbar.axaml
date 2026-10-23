@@ -1,0 +1,225 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:Downio.ViewModels"
+             xmlns:localConv="using:Downio.Converters"
+             xmlns:chrome="using:Avalonia.Controls.Chrome"
+             mc:Ignorable="d"
+             d:DesignWidth="860" d:DesignHeight="52"
+             x:Class="Downio.Views.Ed2kToolbar"
+             x:DataType="vm:MainWindowViewModel">
+    <UserControl.Resources>
+        <localConv:ResourceKeyToTextConverter x:Key="ResourceKeyToTextConverter" />
+        <localConv:Ed2kFileTypeIconConverter x:Key="Ed2kFileTypeIconConverter" />
+    </UserControl.Resources>
+
+    <UserControl.Styles>
+        <!-- One 30px field: type scope | keyword | search button, outlined in accent while typing -->
+        <Style Selector="Border.searchField">
+            <Setter Property="Height" Value="30" />
+            <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource CardBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="7" />
+            <Setter Property="ClipToBounds" Value="True" />
+        </Style>
+        <Style Selector="Border.searchField:focus-within">
+            <Setter Property="BorderBrush" Value="{DynamicResource SystemAccentColorBrush}" />
+        </Style>
+
+        <Style Selector="TextBox.searchInput">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="TextBox.searchInput:pointerover /template/ Border#PART_BorderElement,
+                         TextBox.searchInput:focus /template/ Border#PART_BorderElement">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+
+        <!-- Borderless type picker at the head of the field -->
+        <Style Selector="ComboBox.scope">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="Height" Value="24" />
+            <Setter Property="Padding" Value="8,0,0,0" />
+            <Setter Property="Margin" Value="3,0,0,0" />
+            <Setter Property="CornerRadius" Value="5" />
+            <Setter Property="FontSize" Value="12.5" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="ComboBox.scope:pointerover /template/ Border#Background,
+                         ComboBox.scope:dropdownopen /template/ Border#Background">
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundBaseLowBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+        <Style Selector="ComboBox.scope:focus-visible /template/ Border#Background">
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+
+        <Style Selector="Button.fieldAction">
+            <Setter Property="Width" Value="22" />
+            <Setter Property="Height" Value="22" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="CornerRadius" Value="5" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Button.fieldAction:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundBaseLowBrush}" />
+        </Style>
+
+        <!-- Search / stop button tucked inside the field's right edge -->
+        <Style Selector="Button.fieldButton">
+            <Setter Property="Height" Value="24" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="Padding" Value="12,0" />
+            <Setter Property="Margin" Value="0,0,3,0" />
+            <Setter Property="CornerRadius" Value="5" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+
+        <Style Selector="ComboBox.sort">
+            <Setter Property="Height" Value="30" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="MinWidth" Value="112" />
+            <Setter Property="Padding" Value="10,0" />
+            <Setter Property="CornerRadius" Value="7" />
+            <Setter Property="FontSize" Value="12.5" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <!-- Card / table view switch -->
+        <Style Selector="Border.viewSwitch">
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundBaseLowBrush}" />
+            <Setter Property="CornerRadius" Value="7" />
+            <Setter Property="Padding" Value="2" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Button.viewOption">
+            <Setter Property="Width" Value="30" />
+            <Setter Property="Height" Value="26" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="CornerRadius" Value="5" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Opacity" Value="0.55" />
+        </Style>
+        <Style Selector="Button.viewOption.active">
+            <Setter Property="Opacity" Value="1" />
+        </Style>
+        <Style Selector="Button.viewOption.active /template/ ContentPresenter#PART_ContentPresenter,
+                         Button.viewOption.active:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}" />
+        </Style>
+    </UserControl.Styles>
+
+    <!-- The field grows with the window up to a comfortable width; leftover space stays empty -->
+    <Grid ColumnSpacing="12">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="4*" MinWidth="260" MaxWidth="500" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+
+        <Border Grid.Column="0" Classes="searchField" VerticalAlignment="Center"
+                chrome:WindowDecorationProperties.ElementRole="User">
+            <Panel>
+                <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto" ColumnSpacing="6">
+                    <ComboBox Grid.Column="0" Classes="scope"
+                              ItemsSource="{Binding Ed2kFileTypeOptions}"
+                              SelectedItem="{Binding SelectedEd2kFileType}"
+                              ToolTip.Tip="{DynamicResource Ed2kFileType}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate x:DataType="vm:Ed2kFileTypeOption">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <PathIcon Data="{Binding Value, Converter={StaticResource Ed2kFileTypeIconConverter}}"
+                                              Width="12" Height="12" VerticalAlignment="Center" />
+                                    <TextBlock Text="{Binding ResourceKey, Converter={StaticResource ResourceKeyToTextConverter}}"
+                                               VerticalAlignment="Center" TextWrapping="NoWrap" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+
+                    <Rectangle Grid.Column="1" Width="1" Height="14" VerticalAlignment="Center"
+                               Fill="{DynamicResource CardBorderBrush}" />
+
+                    <TextBox Grid.Column="2" x:Name="SearchBox" Classes="searchInput" Margin="4,0,0,0"
+                             Text="{Binding Ed2kSearchKeyword}"
+                             PlaceholderText="{DynamicResource Ed2kKeywordPlaceholder}">
+                        <TextBox.KeyBindings>
+                            <KeyBinding Gesture="Enter" Command="{Binding StartEd2kSearchCommand}" />
+                            <KeyBinding Gesture="Escape" Command="{Binding CancelEd2kSearchCommand}" />
+                        </TextBox.KeyBindings>
+                    </TextBox>
+
+                    <Button Grid.Column="3" Classes="fieldAction"
+                            Command="{Binding ClearEd2kKeywordCommand}"
+                            IsVisible="{Binding Ed2kSearchKeyword, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                        <PathIcon Data="{StaticResource IconCancel}" Width="9" Height="9" Opacity="0.55" />
+                    </Button>
+
+                    <Panel Grid.Column="4">
+                        <Button Classes="fieldButton accent" Command="{Binding StartEd2kSearchCommand}"
+                                IsVisible="{Binding !IsEd2kSearching}">
+                            <TextBlock Text="{DynamicResource Ed2kSearchButton}" FontWeight="Medium" />
+                        </Button>
+                        <Button Classes="fieldButton" Command="{Binding CancelEd2kSearchCommand}"
+                                IsVisible="{Binding IsEd2kSearching}">
+                            <StackPanel Orientation="Horizontal" Spacing="5">
+                                <PathIcon Data="{StaticResource IconStopped}" Width="11" Height="11" />
+                                <TextBlock Text="{DynamicResource Ed2kStopButton}" FontWeight="Medium" />
+                            </StackPanel>
+                        </Button>
+                    </Panel>
+                </Grid>
+
+                <!-- Elapsed share of the search timeout -->
+                <ProgressBar VerticalAlignment="Bottom" Height="2" MinHeight="2" CornerRadius="0"
+                             Minimum="0" Maximum="1" Value="{Binding Ed2kSearchProgress}"
+                             Background="Transparent"
+                             IsVisible="{Binding IsEd2kSearching}" IsHitTestVisible="False" />
+            </Panel>
+        </Border>
+
+        <!-- Result presentation -->
+        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center"
+                    IsVisible="{Binding HasEd2kSearched}"
+                    chrome:WindowDecorationProperties.ElementRole="User">
+            <ComboBox Classes="sort" ItemsSource="{Binding Ed2kSortOptions}" SelectedItem="{Binding SelectedEd2kSort}">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate x:DataType="vm:Ed2kSortOption">
+                        <TextBlock Text="{Binding ResourceKey, Converter={StaticResource ResourceKeyToTextConverter}}" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+            <Border Classes="viewSwitch">
+                <StackPanel Orientation="Horizontal" Spacing="2">
+                    <Button Classes="viewOption" Classes.active="{Binding IsEd2kCompactView}"
+                            Command="{Binding ShowEd2kTableCommand}" ToolTip.Tip="{DynamicResource Ed2kViewTable}">
+                        <PathIcon Data="{StaticResource IconViewList}" Width="13" Height="13" />
+                    </Button>
+                    <Button Classes="viewOption" Classes.active="{Binding !IsEd2kCompactView}"
+                            Command="{Binding ShowEd2kCardsCommand}" ToolTip.Tip="{DynamicResource Ed2kViewCards}">
+                        <PathIcon Data="{StaticResource IconViewCards}" Width="13" Height="13" />
+                    </Button>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </Grid>
+</UserControl>

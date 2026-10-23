@@ -4,17 +4,28 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Threading.Tasks;
+using Avalonia;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Platform;
+using Microsoft.Win32;
 using Windows.Data.Xml.Dom;
 using Windows.UI.Notifications;
 
 namespace Downio.Services.Notifications;
 
+/// <summary>
+/// Windows 10 and 11 toasts for an unpackaged app. Toasts are attributed through the AppUserModelID,
+/// registered both on a Start menu shortcut (what Windows 10 requires) and under
+/// HKCU\Software\Classes\AppUserModelId (display name and icon, honoured by Windows 10 1903+ and 11).
+/// .NET 10 doesn't run on Windows 7/8/8.1, so the legacy balloon is only a fallback for when toasts fail.
+/// </summary>
 internal static class WindowsSystemNotification
 {
     private const string AppUserModelId = "pengpercy.Downio";
     private const int LegacyBalloonId = 1001;
     private static readonly object SyncRoot = new();
     private static bool _initialized;
+    private static string? _logoPath;
 
     public static void Initialize()
     {
@@ -26,7 +37,9 @@ internal static class WindowsSystemNotification
             }
 
             Marshal.ThrowExceptionForHR(SetCurrentProcessExplicitAppUserModelID(AppUserModelId));
-            EnsureStartMenuShortcut();
+            _logoPath = ExtractLogo();
+            TryRun(EnsureStartMenuShortcut, "Creating the Start menu shortcut for notifications failed");
+            TryRun(RegisterAppUserModelId, "Registering the notification AppUserModelID failed");
             _initialized = true;
         }
     }
@@ -36,6 +49,7 @@ internal static class WindowsSystemNotification
         try
         {
             var data = CreateLegacyNotifyIconData(title, message);
+            if (data.hWnd == IntPtr.Zero) return;
             Shell_NotifyIcon(NIM_DELETE, ref data);
 
             if (!Shell_NotifyIcon(NIM_ADD, ref data))
@@ -68,9 +82,8 @@ internal static class WindowsSystemNotification
         {
             Initialize();
 
-            var appLogoPath = Path.Combine(AppContext.BaseDirectory, "Assets", "Branding", "app_icon.png");
-            var imageXml = File.Exists(appLogoPath)
-                ? $@"<image placement=""appLogoOverride"" hint-crop=""circle"" src=""{EscapeXml(new Uri(appLogoPath).AbsoluteUri)}"" alt=""Downio""/>"
+            var imageXml = _logoPath != null
+                ? $@"<image placement=""appLogoOverride"" src=""{EscapeXml(new Uri(_logoPath).AbsoluteUri)}"" alt=""Downio""/>"
                 : string.Empty;
 
             var xml = $"""
@@ -82,6 +95,7 @@ internal static class WindowsSystemNotification
                              <text>{EscapeXml(message)}</text>
                            </binding>
                          </visual>
+                         <audio src="ms-winsoundevent:Notification.Default"/>
                        </toast>
                        """;
 
@@ -92,10 +106,52 @@ internal static class WindowsSystemNotification
             ToastNotificationManager.CreateToastNotifier(AppUserModelId).Show(toast);
             return true;
         }
-        catch
+        catch (Exception ex)
         {
+            AppLog.Error(ex, "Showing Windows toast failed");
             return false;
         }
+    }
+
+    private static void TryRun(Action action, string failureMessage)
+    {
+        try
+        {
+            action();
+        }
+        catch (Exception ex)
+        {
+            AppLog.Error(ex, failureMessage);
+        }
+    }
+
+    // The branding PNG is an embedded resource; toasts need a real file to show it.
+    private static string? ExtractLogo()
+    {
+        try
+        {
+            var directory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Downio");
+            Directory.CreateDirectory(directory);
+            var path = Path.Combine(directory, "notification-logo.png");
+            using (var source = AssetLoader.Open(new Uri("avares://Downio/Assets/Branding/app_icon.png")))
+            using (var target = File.Create(path))
+            {
+                source.CopyTo(target);
+            }
+            return path;
+        }
+        catch (Exception ex)
+        {
+            AppLog.Error(ex, "Extracting the notification logo failed");
+            return null;
+        }
+    }
+
+    private static void RegisterAppUserModelId()
+    {
+        using var key = Registry.CurrentUser.CreateSubKey($@"Software\Classes\AppUserModelId\{AppUserModelId}");
+        key.SetValue("DisplayName", "Downio");
+        if (_logoPath != null) key.SetValue("IconUri", _logoPath);
     }
 
     private static void EnsureStartMenuShortcut()
@@ -120,11 +176,8 @@ internal static class WindowsSystemNotification
             Marshal.ThrowExceptionForHR(shellLink.SetArguments(string.Empty));
             Marshal.ThrowExceptionForHR(shellLink.SetWorkingDirectory(Path.GetDirectoryName(exePath)));
 
-            var iconPath = Path.Combine(AppContext.BaseDirectory, "Assets", "Branding", "app_ico.ico");
-            if (File.Exists(iconPath))
-            {
-                Marshal.ThrowExceptionForHR(shellLink.SetIconLocation(iconPath, 0));
-            }
+            // The application icon is embedded in the executable.
+            Marshal.ThrowExceptionForHR(shellLink.SetIconLocation(exePath, 0));
 
             var propertyStore = (IPropertyStore)shellLink;
             using var appId = new PropVariant(AppUserModelId);
@@ -152,7 +205,8 @@ internal static class WindowsSystemNotification
         var data = new NotifyIconData
         {
             cbSize = Marshal.SizeOf<NotifyIconData>(),
-            hWnd = GetDesktopWindow(),
+            // Shell_NotifyIcon only accepts a window owned by this process.
+            hWnd = MainWindowHandle(),
             uID = LegacyBalloonId,
             uFlags = NIF_ICON | NIF_TIP | NIF_INFO,
             hIcon = LoadIcon(IntPtr.Zero, IDI_INFORMATION),
@@ -184,8 +238,10 @@ internal static class WindowsSystemNotification
     [DllImport("shell32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
     private static extern bool Shell_NotifyIcon(uint dwMessage, ref NotifyIconData lpData);
 
-    [DllImport("user32.dll")]
-    private static extern IntPtr GetDesktopWindow();
+    private static IntPtr MainWindowHandle() =>
+        Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime { MainWindow: { } window }
+            ? window.TryGetPlatformHandle()?.Handle ?? IntPtr.Zero
+            : IntPtr.Zero;
 
     [DllImport("user32.dll", SetLastError = true)]
     private static extern IntPtr LoadIcon(IntPtr hInstance, int lpIconName);

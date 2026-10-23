@@ -41,6 +41,23 @@ if [[ ! -f "$MACOS/aria2c" ]]; then
 fi
 chmod +x "$MACOS/aria2c"
 
+# Read-only data (CA bundle, ED2K lists, licenses) belongs in Contents/Resources.
+if [ -d "$MACOS/resources" ]; then
+    cp -R "$MACOS/resources/" "$RESOURCES/"
+    rm -rf "$MACOS/resources"
+fi
+
+# Keep only the slice for this runtime from universal dylibs.
+case "$RID" in
+    osx-arm64) ARCH=arm64;;
+    *) ARCH=x86_64;;
+esac
+for lib in "$MACOS"/*.dylib; do
+    if [[ "$(lipo -archs "$lib")" == *" "* ]]; then
+        lipo -thin "$ARCH" "$lib" -output "$lib.thin" && mv "$lib.thin" "$lib"
+    fi
+done
+
 # Create Info.plist
 echo "Creating Info.plist..."
 sed "s/Downio_VERSION/$VERSION/g" build/resources/app/App.plist > "$CONTENTS/Info.plist"

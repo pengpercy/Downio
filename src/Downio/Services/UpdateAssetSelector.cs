@@ -25,10 +25,11 @@ public static class UpdateAssetSelector
             var zipExact = $"Downio_{version}.{runtime}.zip";
             var dmgExact = $"Downio_{version}.{runtime}.dmg";
 
-            return release.Assets.FirstOrDefault(a => a.Name.Equals(dmgExact, StringComparison.OrdinalIgnoreCase))
-                   ?? release.Assets.FirstOrDefault(a => a.Name.Equals(zipExact, StringComparison.OrdinalIgnoreCase))
-                   ?? release.Assets.FirstOrDefault(a => a.Name.EndsWith($".{runtime}.dmg", StringComparison.OrdinalIgnoreCase))
-                   ?? release.Assets.FirstOrDefault(a => a.Name.EndsWith($".{runtime}.zip", StringComparison.OrdinalIgnoreCase));
+            // The zip is preferred: it can be extracted in-process with progress, while the dmg needs hdiutil.
+            return release.Assets.FirstOrDefault(a => a.Name.Equals(zipExact, StringComparison.OrdinalIgnoreCase))
+                   ?? release.Assets.FirstOrDefault(a => a.Name.Equals(dmgExact, StringComparison.OrdinalIgnoreCase))
+                   ?? release.Assets.FirstOrDefault(a => a.Name.EndsWith($".{runtime}.zip", StringComparison.OrdinalIgnoreCase))
+                   ?? release.Assets.FirstOrDefault(a => a.Name.EndsWith($".{runtime}.dmg", StringComparison.OrdinalIgnoreCase));
         }
 
         var linuxRuntime = arch == Architecture.Arm64 ? "aarch64" : "x86_64";

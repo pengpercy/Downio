@@ -56,9 +56,9 @@ sealed class Program
             .LogToTrace()
             .With(new MacOSPlatformOptions
             {
-                // Keep Avalonia's standard macOS application menu items so the
-                // framework appends the native entries to the explicit app menu.
-                DisableDefaultApplicationMenuItems = false,
+                // Avalonia's standard app menu items (Hide / Hide Others / Show All / Quit) are
+                // English-only; App.axaml supplies localized replacements instead.
+                DisableDefaultApplicationMenuItems = true,
                 DisableSetProcessName = true,
                 DisableAvaloniaAppDelegate = false 
             });

@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
+using Downio.Helpers;
 using Downio.Models;
 
 namespace Downio.Services.Aria2;
@@ -152,7 +153,7 @@ public class Aria2Service : IAria2Service, IDisposable
             // bundled CA bundle when their TLS backend does not have a system trust store.
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                var caBundlePath = Path.Combine(AppContext.BaseDirectory, "Assets", "cacert.pem");
+                var caBundlePath = AppPaths.Resource("cacert.pem");
                 if (File.Exists(caBundlePath))
                 {
                     args.Add($"--ca-certificate={caBundlePath}");
@@ -231,7 +232,7 @@ public class Aria2Service : IAria2Service, IDisposable
     private void PrepareEd2kBootstrapFiles()
     {
         CleanupStaleEd2kSearchDirectories();
-        var sourceDirectory = Path.Combine(AppContext.BaseDirectory, "Assets", "Ed2k");
+        var sourceDirectory = AppPaths.Resource("ed2k");
         var targetDirectory = Path.Combine(_configDir, "ed2k");
         Directory.CreateDirectory(targetDirectory);
 

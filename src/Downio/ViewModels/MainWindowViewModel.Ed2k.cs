@@ -10,6 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Downio.Helpers;
 using Downio.Models;
 using Downio.Services;
 
@@ -30,7 +31,7 @@ public partial class MainWindowViewModel
         new("Ed2kTypeArchive", "archive")
     ];
 
-    public ObservableCollection<Ed2kSearchResult> Ed2kSearchResults { get; } = new();
+    public ResettableObservableCollection<Ed2kSearchResult> Ed2kSearchResults { get; } = new();
 
     public ObservableCollection<Ed2kSyncIntervalOption> Ed2kSyncIntervalOptions { get; } =
     [
@@ -522,7 +523,11 @@ public partial class MainWindowViewModel
 
     partial void OnHasEd2kSearchedChanged(bool value) => NotifyEd2kResultState();
 
-    public int Ed2kSelectedCount => Ed2kSearchResults.Count(r => r.IsSelected);
+    // Kept as a running count: recounting on every IsSelected change made "Select all" quadratic.
+    private int _ed2kSelectedCount;
+    private bool _isBatchSelectingEd2k;
+
+    public int Ed2kSelectedCount => _ed2kSelectedCount;
 
     public bool HasEd2kSelection => Ed2kSelectedCount > 0;
 
@@ -532,6 +537,7 @@ public partial class MainWindowViewModel
     {
         foreach (var result in _ed2kResultIndex.Values) result.PropertyChanged -= OnEd2kResultPropertyChanged;
         _ed2kResultIndex.Clear();
+        _ed2kSelectedCount = 0;
         Ed2kSearchResults.Clear();
         NotifyEd2kResultState();
     }
@@ -570,25 +576,66 @@ public partial class MainWindowViewModel
         var desired = ordered.ThenBy(r => r.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
 
         // Hidden rows drop out of a batch so "Download selected" only acts on what is visible.
-        foreach (var hidden in Ed2kSearchResults.Except(desired)) hidden.IsSelected = false;
-
-        // Move/insert rather than Clear+Add, which keeps scroll position and hover state.
-        for (var i = 0; i < desired.Count; i++)
+        RunEd2kSelectionBatch(() =>
         {
-            var item = desired[i];
-            if (i < Ed2kSearchResults.Count && ReferenceEquals(Ed2kSearchResults[i], item)) continue;
-            var oldIndex = Ed2kSearchResults.IndexOf(item);
-            if (oldIndex >= 0) Ed2kSearchResults.Move(oldIndex, i);
-            else Ed2kSearchResults.Insert(i, item);
+            foreach (var hidden in Ed2kSearchResults.Except(desired)) hidden.IsSelected = false;
+        });
+
+        var misplaced = 0;
+        for (var i = 0; i < desired.Count && misplaced <= Ed2kIncrementalMoveLimit; i++)
+        {
+            if (i >= Ed2kSearchResults.Count || !ReferenceEquals(Ed2kSearchResults[i], desired[i])) misplaced++;
         }
-        while (Ed2kSearchResults.Count > desired.Count) Ed2kSearchResults.RemoveAt(Ed2kSearchResults.Count - 1);
+
+        if (misplaced == 0 && Ed2kSearchResults.Count == desired.Count)
+        {
+            // Nothing moved: counts update in place through the rows' own bindings.
+        }
+        else if (misplaced > Ed2kIncrementalMoveLimit)
+        {
+            // A big reshuffle (every poll re-sorts by sources): one Reset and the virtualizing panel
+            // re-realizes only the visible rows, instead of n Move notifications with O(n) lookups each.
+            Ed2kSearchResults.ResetTo(desired);
+        }
+        else
+        {
+            // Small changes move in place, which keeps hover and focus on untouched rows.
+            for (var i = 0; i < desired.Count; i++)
+            {
+                var item = desired[i];
+                if (i < Ed2kSearchResults.Count && ReferenceEquals(Ed2kSearchResults[i], item)) continue;
+                var oldIndex = Ed2kSearchResults.IndexOf(item);
+                if (oldIndex >= 0) Ed2kSearchResults.Move(oldIndex, i);
+                else Ed2kSearchResults.Insert(i, item);
+            }
+            while (Ed2kSearchResults.Count > desired.Count) Ed2kSearchResults.RemoveAt(Ed2kSearchResults.Count - 1);
+        }
 
         NotifyEd2kResultState();
     }
 
+    private const int Ed2kIncrementalMoveLimit = 24;
+
     private void OnEd2kResultPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(Ed2kSearchResult.IsSelected)) NotifyEd2kSelection();
+        if (e.PropertyName != nameof(Ed2kSearchResult.IsSelected) || sender is not Ed2kSearchResult result) return;
+        _ed2kSelectedCount += result.IsSelected ? 1 : -1;
+        if (!_isBatchSelectingEd2k) NotifyEd2kSelection();
+    }
+
+    private void RunEd2kSelectionBatch(Action change)
+    {
+        var before = _ed2kSelectedCount;
+        _isBatchSelectingEd2k = true;
+        try
+        {
+            change();
+        }
+        finally
+        {
+            _isBatchSelectingEd2k = false;
+        }
+        if (_ed2kSelectedCount != before) NotifyEd2kSelection();
     }
 
     private void NotifyEd2kResultState()
@@ -612,13 +659,19 @@ public partial class MainWindowViewModel
     [RelayCommand]
     private void SelectAllEd2kResults()
     {
-        foreach (var result in Ed2kSearchResults.Where(r => !r.IsAdded)) result.IsSelected = true;
+        RunEd2kSelectionBatch(() =>
+        {
+            foreach (var result in Ed2kSearchResults.Where(r => !r.IsAdded)) result.IsSelected = true;
+        });
     }
 
     [RelayCommand]
     private void ClearEd2kSelection()
     {
-        foreach (var result in Ed2kSearchResults) result.IsSelected = false;
+        RunEd2kSelectionBatch(() =>
+        {
+            foreach (var result in Ed2kSearchResults) result.IsSelected = false;
+        });
     }
 
     [RelayCommand]

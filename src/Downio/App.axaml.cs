@@ -81,7 +81,8 @@ public partial class App : Application
         };
         
         desktop.MainWindow = mainWindow;
-        mainWindow.Opened += (_, _) => taskbarBadgeService.Attach(mainWindow);
+        // Before the window is shown, so the first TaskbarButtonCreated message is not missed.
+        taskbarBadgeService.Attach(mainWindow);
 
         _singleInstance?.SetActivateHandler(viewModel.ToggleMainWindow);
 
@@ -124,21 +125,7 @@ public partial class App : Application
         {
             if (updateChecked) return;
             updateChecked = true;
-
-            var currentVersion = AppVersionProvider.GetCurrentVersion();
-            var updateService = new UpdateService(viewModel.SettingsService.Settings);
-            ReleaseInfo? release = null;
-            try
-            {
-                release = await updateService.CheckForUpdatesAsync(currentVersion);
-            }
-            catch (Exception ex)
-            {
-                AppLog.Error(ex, "Update check failed");
-            }
-            if (release is null) return;
-
-            await UpdateWindowService.ShowAsync(release, viewModel.SettingsService, mainWindow);
+            await UpdateWindowService.CheckAutomaticallyAsync(viewModel.SettingsService, mainWindow);
         };
     }
 

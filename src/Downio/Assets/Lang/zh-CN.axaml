@@ -5,6 +5,7 @@
     <x:String x:Key="MenuWaiting">等待中</x:String>
     <x:String x:Key="MenuStopped">已停止</x:String>
     <x:String x:Key="MenuEd2kSearch">ED2K 搜索</x:String>
+    <x:String x:Key="SidebarDownloadSpeed">下载速度</x:String>
     <x:String x:Key="MenuSettings">设置</x:String>
     <x:String x:Key="LabelTheme">主题</x:String>
     <x:String x:Key="LabelLanguage">语言</x:String>
@@ -129,12 +130,34 @@
     <x:String x:Key="MenuDelete">删除</x:String>
     <x:String x:Key="ToolTipOpenFolder">打开所在文件夹</x:String>
     <x:String x:Key="MenuDetails">详情</x:String>
+    <x:String x:Key="MenuCheckForUpdates">检查更新…</x:String>
+    <x:String x:Key="MenuSettingsEllipsis">设置…</x:String>
+    <x:String x:Key="MenuHideApp">隐藏 Downio</x:String>
+    <x:String x:Key="MenuHideOthers">隐藏其他</x:String>
+    <x:String x:Key="MenuShowAll">全部显示</x:String>
+    <x:String x:Key="MenuQuitApp">退出 Downio</x:String>
+    <x:String x:Key="MenuNewTask">新建任务…</x:String>
+    <x:String x:Key="MenuOpenDownloadFolder">打开下载文件夹</x:String>
+    <x:String x:Key="MenuCloseWindow">关闭窗口</x:String>
+    <x:String x:Key="MenuTasks">任务</x:String>
+    <x:String x:Key="MenuResumeAll">全部开始</x:String>
+    <x:String x:Key="MenuPauseAll">全部暂停</x:String>
+    <x:String x:Key="MenuDeleteSelected">删除所选任务…</x:String>
+    <x:String x:Key="MenuToggleSidebar">显示/隐藏侧边栏</x:String>
+    <x:String x:Key="MenuWindow">窗口</x:String>
+    <x:String x:Key="MenuMinimize">最小化</x:String>
+    <x:String x:Key="MenuZoom">缩放</x:String>
+    <x:String x:Key="MenuMainWindow">主窗口</x:String>
+    <x:String x:Key="MenuHelp">帮助</x:String>
+    <x:String x:Key="MenuProjectHome">项目主页</x:String>
 
     <!-- Status -->
     <x:String x:Key="StatusDownloading">下载中</x:String>
     <x:String x:Key="StatusCompleted">已完成</x:String>
     <x:String x:Key="StatusPaused">已暂停</x:String>
     <x:String x:Key="StatusError">错误</x:String>
+    <x:String x:Key="StatusWaiting">等待中</x:String>
+    <x:String x:Key="StatusStopped">已停止</x:String>
     <x:String x:Key="NotificationDownloadComplete">下载完成</x:String>
     <x:String x:Key="NotificationDownloadFailed">下载失败</x:String>
     <x:String x:Key="NotificationTaskDeleted">任务已删除</x:String>
@@ -181,7 +204,7 @@
     <x:String x:Key="LabelDownloadingUpdate">正在下载更新...</x:String>
     <x:String x:Key="ButtonUpdateNow">立即下载</x:String>
     <x:String x:Key="ButtonLater">稍后</x:String>
-    <x:String x:Key="ButtonInstallAndRelaunch">安装并重启</x:String>
+    <x:String x:Key="ButtonInstallAndRelaunch">安装并重启应用</x:String>
     <x:String x:Key="LabelCurrentVersion">当前版本</x:String>
     <x:String x:Key="LabelNewVersion">新版本</x:String>
     <x:String x:Key="LabelUpdateReady">更新已下载完成</x:String>
@@ -189,10 +212,10 @@
     <x:String x:Key="TitleUpdateCheck">检查更新</x:String>
     <x:String x:Key="MessageNoUpdates">当前已是最新版本。</x:String>
     <x:String x:Key="MessageUpdateCheckFailed">检查更新失败：</x:String>
-    <x:String x:Key="TitleNewVersionAvailable">发现新版本 {0}！</x:String>
-    <x:String x:Key="UpdateDescription">{0} {1} 现已可用 - 您当前版本为 {2}。是否立即下载？</x:String>
-    <x:String x:Key="ButtonSkipVersion">跳过此版本</x:String>
-    <x:String x:Key="ButtonRemindLater">稍后提醒我</x:String>
+    <x:String x:Key="TitleNewVersionAvailable">新版本的 {0} 已经发布</x:String>
+    <x:String x:Key="UpdateDescription">{0} {1} 可供下载，您现在的版本是 {2}。要现在下载吗？</x:String>
+    <x:String x:Key="ButtonSkipVersion">跳过这个版本</x:String>
+    <x:String x:Key="ButtonRemindLater">稍后提示我</x:String>
     <x:String x:Key="ButtonInstallUpdate">安装更新</x:String>
     <x:String x:Key="LabelAutoUpdate">以后自动下载并安装更新</x:String>
     <x:String x:Key="LabelSwitchOn">开启</x:String>
@@ -202,6 +225,17 @@
     <x:String x:Key="UpdateStatusApplying">正在应用更新...</x:String>
     <x:String x:Key="UpdateStatusNoPackage">未找到适用于当前系统的安装包。</x:String>
     <x:String x:Key="UpdateStatusFailed">更新失败。</x:String>
+    <x:String x:Key="UpdateWindowTitlePrompt">软件更新</x:String>
+    <x:String x:Key="UpdateWindowTitleProgress">正在更新 {0}</x:String>
+    <x:String x:Key="LabelReleaseNotes">更新信息：</x:String>
+    <x:String x:Key="UpdateStageChecking">正在检查更新…</x:String>
+    <x:String x:Key="UpdateStageDownloading">正在下载更新…</x:String>
+    <x:String x:Key="UpdateStageExtracting">正在解压更新…</x:String>
+    <x:String x:Key="UpdateStageReady">可以开始安装了</x:String>
+    <x:String x:Key="UpdateStageUpToDate">你使用的已是最新版本！</x:String>
+    <x:String x:Key="UpdateUpToDateDetail">{0} {1} 是目前可用的最新版本。</x:String>
+    <x:String x:Key="UpdateStageFailed">更新失败</x:String>
+    <x:String x:Key="ButtonOK">好</x:String>
 
     <x:String x:Key="EmptyStateTitleNoTasks">还没有下载任务</x:String>
     <x:String x:Key="EmptyStateSubtitleDownloading">点击左侧“新建任务”，或按 {0} 开始下载。</x:String>
@@ -242,8 +276,6 @@
     <x:String x:Key="Ed2kSortBySources">源最多</x:String>
     <x:String x:Key="Ed2kSortBySize">文件最大</x:String>
     <x:String x:Key="Ed2kSortByName">按名称</x:String>
-    <x:String x:Key="Ed2kSaveTo">保存到</x:String>
-    <x:String x:Key="Ed2kChangeSavePath">更改</x:String>
     <x:String x:Key="Ed2kSelectedCount">已选 {0} 项</x:String>
     <x:String x:Key="Ed2kDownloadSelected">下载所选</x:String>
     <x:String x:Key="Ed2kClearSelection">取消选择</x:String>

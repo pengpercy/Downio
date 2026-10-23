@@ -2,7 +2,6 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
-using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Downio.Models;
 using Downio.ViewModels;
@@ -14,13 +13,6 @@ public partial class Ed2kSearchView : UserControl
     public Ed2kSearchView()
     {
         InitializeComponent();
-    }
-
-    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
-    {
-        base.OnAttachedToVisualTree(e);
-        // Land in the search box whenever the page is opened.
-        Dispatcher.UIThread.Post(() => SearchBox.Focus(), DispatcherPriority.Input);
     }
 
     // A single click on a row toggles it for batch download.

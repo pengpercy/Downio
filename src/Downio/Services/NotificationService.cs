@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Avalonia;
+using Avalonia.Threading;
 using Downio.Models;
 using Downio.Services.Notifications;
 
@@ -16,17 +17,37 @@ public class NotificationService
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
 #if WINDOWS
-            WindowsSystemNotification.Initialize();
+            try
+            {
+                WindowsSystemNotification.Initialize();
+            }
+            catch (Exception ex)
+            {
+                AppLog.Error(ex, "Windows notification setup failed");
+            }
 #endif
+        }
+        else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+        {
+            MacSystemNotification.Initialize();
         }
     }
 
     public void ShowNotification(string title, string message, ToastType type = ToastType.Info)
     {
+        if (!Dispatcher.UIThread.CheckAccess())
+        {
+            Dispatcher.UIThread.Post(() => ShowNotification(title, message, type));
+            return;
+        }
+
         // Always show in-app Toast notification
         ToastRequested?.Invoke(this, new ToastMessage { Title = title, Message = message, Type = type });
 
-        // Always show native system notification
+        // The in-app toast already covers a focused window; the system notification is for when
+        // Downio is in the background or hidden to the tray (macOS suppresses it for the frontmost app anyway).
+        if (IsMainWindowActive()) return;
+
         if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
         {
             ShowMacNotification(title, message);

@@ -5,6 +5,7 @@
     <x:String x:Key="MenuWaiting">Waiting</x:String>
     <x:String x:Key="MenuStopped">Stopped</x:String>
     <x:String x:Key="MenuEd2kSearch">ED2K Search</x:String>
+    <x:String x:Key="SidebarDownloadSpeed">Download</x:String>
     <x:String x:Key="MenuSettings">Settings</x:String>
     <x:String x:Key="LabelTheme">Theme</x:String>
     <x:String x:Key="LabelLanguage">Language</x:String>
@@ -129,12 +130,34 @@
     <x:String x:Key="MenuDelete">Delete</x:String>
     <x:String x:Key="ToolTipOpenFolder">Open containing folder</x:String>
     <x:String x:Key="MenuDetails">Details</x:String>
+    <x:String x:Key="MenuCheckForUpdates">Check for Updates…</x:String>
+    <x:String x:Key="MenuSettingsEllipsis">Settings…</x:String>
+    <x:String x:Key="MenuHideApp">Hide Downio</x:String>
+    <x:String x:Key="MenuHideOthers">Hide Others</x:String>
+    <x:String x:Key="MenuShowAll">Show All</x:String>
+    <x:String x:Key="MenuQuitApp">Quit Downio</x:String>
+    <x:String x:Key="MenuNewTask">New Task…</x:String>
+    <x:String x:Key="MenuOpenDownloadFolder">Open Download Folder</x:String>
+    <x:String x:Key="MenuCloseWindow">Close Window</x:String>
+    <x:String x:Key="MenuTasks">Tasks</x:String>
+    <x:String x:Key="MenuResumeAll">Resume All</x:String>
+    <x:String x:Key="MenuPauseAll">Pause All</x:String>
+    <x:String x:Key="MenuDeleteSelected">Delete Selected Tasks…</x:String>
+    <x:String x:Key="MenuToggleSidebar">Toggle Sidebar</x:String>
+    <x:String x:Key="MenuWindow">Window</x:String>
+    <x:String x:Key="MenuMinimize">Minimize</x:String>
+    <x:String x:Key="MenuZoom">Zoom</x:String>
+    <x:String x:Key="MenuMainWindow">Main Window</x:String>
+    <x:String x:Key="MenuHelp">Help</x:String>
+    <x:String x:Key="MenuProjectHome">Project Homepage</x:String>
 
     <!-- Status -->
     <x:String x:Key="StatusDownloading">Downloading</x:String>
     <x:String x:Key="StatusCompleted">Completed</x:String>
     <x:String x:Key="StatusPaused">Paused</x:String>
     <x:String x:Key="StatusError">Error</x:String>
+    <x:String x:Key="StatusWaiting">Waiting</x:String>
+    <x:String x:Key="StatusStopped">Stopped</x:String>
     <x:String x:Key="NotificationDownloadComplete">Download Complete</x:String>
     <x:String x:Key="NotificationDownloadFailed">Download Failed</x:String>
     <x:String x:Key="NotificationTaskDeleted">Task Deleted</x:String>
@@ -190,7 +213,7 @@
     <x:String x:Key="MessageNoUpdates">You're already on the latest version.</x:String>
     <x:String x:Key="MessageUpdateCheckFailed">Update check failed:</x:String>
     <x:String x:Key="TitleNewVersionAvailable">A new version of {0} is available!</x:String>
-    <x:String x:Key="UpdateDescription">{0} {1} is now available - you have {2}. Would you like to download it now?</x:String>
+    <x:String x:Key="UpdateDescription">{0} {1} is now available—you have {2}. Would you like to download it now?</x:String>
     <x:String x:Key="ButtonSkipVersion">Skip This Version</x:String>
     <x:String x:Key="ButtonRemindLater">Remind Me Later</x:String>
     <x:String x:Key="ButtonInstallUpdate">Install Update</x:String>
@@ -202,6 +225,17 @@
     <x:String x:Key="UpdateStatusApplying">Applying update...</x:String>
     <x:String x:Key="UpdateStatusNoPackage">No compatible update package found.</x:String>
     <x:String x:Key="UpdateStatusFailed">Update failed.</x:String>
+    <x:String x:Key="UpdateWindowTitlePrompt">Software Update</x:String>
+    <x:String x:Key="UpdateWindowTitleProgress">Updating {0}</x:String>
+    <x:String x:Key="LabelReleaseNotes">Release Notes:</x:String>
+    <x:String x:Key="UpdateStageChecking">Checking for updates…</x:String>
+    <x:String x:Key="UpdateStageDownloading">Downloading update…</x:String>
+    <x:String x:Key="UpdateStageExtracting">Extracting update…</x:String>
+    <x:String x:Key="UpdateStageReady">Ready to Install</x:String>
+    <x:String x:Key="UpdateStageUpToDate">You're up to date!</x:String>
+    <x:String x:Key="UpdateUpToDateDetail">{0} {1} is currently the newest version available.</x:String>
+    <x:String x:Key="UpdateStageFailed">Update Failed</x:String>
+    <x:String x:Key="ButtonOK">OK</x:String>
 
     <x:String x:Key="EmptyStateTitleNoTasks">No tasks yet</x:String>
     <x:String x:Key="EmptyStateSubtitleDownloading">Click “New Task” on the left, or press {0} to start.</x:String>
@@ -242,8 +276,6 @@
     <x:String x:Key="Ed2kSortBySources">Most sources</x:String>
     <x:String x:Key="Ed2kSortBySize">Largest</x:String>
     <x:String x:Key="Ed2kSortByName">Name</x:String>
-    <x:String x:Key="Ed2kSaveTo">Save to</x:String>
-    <x:String x:Key="Ed2kChangeSavePath">Change</x:String>
     <x:String x:Key="Ed2kSelectedCount">{0} selected</x:String>
     <x:String x:Key="Ed2kDownloadSelected">Download selected</x:String>
     <x:String x:Key="Ed2kClearSelection">Clear</x:String>

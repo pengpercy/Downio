@@ -267,10 +267,11 @@
                                 <ToggleSwitch Grid.Row="6" Grid.Column="1" IsChecked="{Binding IsExitOnClose}" HorizontalAlignment="Right"
                                               OnContent="{DynamicResource LabelExitApp}" OffContent="{DynamicResource LabelKeepInBackground}"/>
 
-                                <Border Grid.Row="7" Grid.ColumnSpan="2" Grid.Column="0" Classes="settingsRowDivider"/>
+                                <!-- No taskbar badge on Linux, so the option is hidden there -->
+                                <Border Grid.Row="7" Grid.ColumnSpan="2" Grid.Column="0" Classes="settingsRowDivider" IsVisible="{Binding !IsLinux}"/>
 
-                                <TextBlock Grid.Row="8" Grid.Column="0" Text="{DynamicResource LabelDownloadSpeedBadge}" VerticalAlignment="Center" Opacity="0.85" FontSize="13"/>
-                                <ToggleSwitch Grid.Row="8" Grid.Column="1" IsChecked="{Binding IsDownloadSpeedBadgeVisible}" HorizontalAlignment="Right"/>
+                                <TextBlock Grid.Row="8" Grid.Column="0" Text="{DynamicResource LabelDownloadSpeedBadge}" VerticalAlignment="Center" Opacity="0.85" FontSize="13" IsVisible="{Binding !IsLinux}"/>
+                                <ToggleSwitch Grid.Row="8" Grid.Column="1" IsChecked="{Binding IsDownloadSpeedBadgeVisible}" HorizontalAlignment="Right" IsVisible="{Binding !IsLinux}"/>
 
                                 <Border Grid.Row="9" Grid.ColumnSpan="2" Grid.Column="0" Classes="settingsRowDivider"/>
 

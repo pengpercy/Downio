@@ -6,6 +6,8 @@
         xmlns:views="using:Downio.Views"
         xmlns:localConv="using:Downio.Converters"
         xmlns:chrome="using:Avalonia.Controls.Chrome"
+        xmlns:controls="using:Downio.Controls"
+        xmlns:helpers="using:Downio.Helpers"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
         Width="1080" Height="720"
         MinWidth="800" MinHeight="600"
@@ -15,7 +17,7 @@
         Title=""
         ExtendClientAreaToDecorationsHint="True"
         ExtendClientAreaTitleBarHeightHint="52"
-        TransparencyLevelHint="AcrylicBlur"
+        TransparencyLevelHint="Mica, AcrylicBlur, Blur"
         Background="Transparent"
         WindowStartupLocation="CenterScreen">
 
@@ -26,7 +28,79 @@
         <KeyBinding Gesture="Ctrl+," Command="{Binding ShowSettingsCommand}" />
         <KeyBinding Gesture="Cmd+Q" Command="{Binding QuitAppCommand}" />
         <KeyBinding Gesture="Ctrl+Q" Command="{Binding QuitAppCommand}" />
+        <!-- Windows / Linux have no menu bar, so the menu shortcuts are bound here too -->
+        <KeyBinding Gesture="Ctrl+1" Command="{Binding ShowDownloadingCommand}" />
+        <KeyBinding Gesture="Ctrl+2" Command="{Binding ShowWaitingCommand}" />
+        <KeyBinding Gesture="Ctrl+3" Command="{Binding ShowStoppedCommand}" />
+        <KeyBinding Gesture="Ctrl+4" Command="{Binding ShowEd2kSearchCommand}" />
+        <KeyBinding Gesture="Ctrl+Shift+O" Command="{Binding OpenDownloadFolderCommand}" />
+        <KeyBinding Gesture="Ctrl+Alt+R" Command="{Binding ResumeAllCommand}" />
+        <KeyBinding Gesture="Ctrl+Alt+P" Command="{Binding PauseAllCommand}" />
     </Window.KeyBindings>
+
+    <!-- macOS menu bar (after the application menu defined in App.axaml) -->
+    <NativeMenu.Menu>
+        <NativeMenu>
+            <NativeMenuItem Header="{DynamicResource MenuFile}">
+                <NativeMenu>
+                    <NativeMenuItem Header="{DynamicResource MenuNewTask}" Gesture="{x:Static helpers:MenuGestures.NewTask}"
+                                    Command="{Binding ShowAddTaskCommand}" />
+                    <NativeMenuItem Header="{DynamicResource MenuOpenDownloadFolder}" Gesture="{x:Static helpers:MenuGestures.OpenDownloadFolder}"
+                                    Command="{Binding OpenDownloadFolderCommand}" />
+                    <NativeMenuItemSeparator />
+                    <NativeMenuItem Header="{DynamicResource MenuCloseWindow}" Gesture="{x:Static helpers:MenuGestures.CloseWindow}"
+                                    Command="{Binding CloseWindowCommand}" />
+                </NativeMenu>
+            </NativeMenuItem>
+            <NativeMenuItem Header="{DynamicResource MenuTasks}">
+                <NativeMenu>
+                    <NativeMenuItem Header="{DynamicResource MenuResumeAll}" Gesture="{x:Static helpers:MenuGestures.ResumeAll}"
+                                    Command="{Binding ResumeAllCommand}" />
+                    <NativeMenuItem Header="{DynamicResource MenuPauseAll}" Gesture="{x:Static helpers:MenuGestures.PauseAll}"
+                                    Command="{Binding PauseAllCommand}" />
+                    <NativeMenuItemSeparator />
+                    <NativeMenuItem Header="{DynamicResource MenuDeleteSelected}" Command="{Binding DeleteSelectedTasksCommand}" />
+                </NativeMenu>
+            </NativeMenuItem>
+            <NativeMenuItem Header="{DynamicResource MenuView}">
+                <NativeMenu>
+                    <NativeMenuItem Header="{DynamicResource MenuDownloading}" Gesture="{x:Static helpers:MenuGestures.ShowDownloading}"
+                                    ToggleType="Radio" IsChecked="{Binding IsDownloading}"
+                                    Command="{Binding ShowDownloadingCommand}" />
+                    <NativeMenuItem Header="{DynamicResource MenuWaiting}" Gesture="{x:Static helpers:MenuGestures.ShowWaiting}"
+                                    ToggleType="Radio" IsChecked="{Binding IsWaiting}"
+                                    Command="{Binding ShowWaitingCommand}" />
+                    <NativeMenuItem Header="{DynamicResource MenuStopped}" Gesture="{x:Static helpers:MenuGestures.ShowStopped}"
+                                    ToggleType="Radio" IsChecked="{Binding IsStopped}"
+                                    Command="{Binding ShowStoppedCommand}" />
+                    <NativeMenuItem Header="{DynamicResource MenuEd2kSearch}" Gesture="{x:Static helpers:MenuGestures.ShowEd2kSearch}"
+                                    ToggleType="Radio" IsChecked="{Binding IsEd2kSearch}"
+                                    Command="{Binding ShowEd2kSearchCommand}" />
+                    <NativeMenuItemSeparator />
+                    <NativeMenuItem Header="{DynamicResource MenuToggleSidebar}" Gesture="{x:Static helpers:MenuGestures.ToggleSidebar}"
+                                    Command="{Binding TogglePaneCommand}" />
+                </NativeMenu>
+            </NativeMenuItem>
+            <NativeMenuItem Header="{DynamicResource MenuWindow}">
+                <NativeMenu>
+                    <NativeMenuItem Header="{DynamicResource MenuMinimize}" Gesture="{x:Static helpers:MenuGestures.Minimize}"
+                                    Command="{Binding MinimizeWindowCommand}" />
+                    <NativeMenuItem Header="{DynamicResource MenuZoom}" Command="{Binding ZoomWindowCommand}" />
+                    <NativeMenuItemSeparator />
+                    <NativeMenuItem Header="{DynamicResource MenuMainWindow}" Gesture="{x:Static helpers:MenuGestures.MainWindow}"
+                                    Command="{Binding ToggleMainWindowCommand}" />
+                </NativeMenu>
+            </NativeMenuItem>
+            <NativeMenuItem Header="{DynamicResource MenuHelp}">
+                <NativeMenu>
+                    <NativeMenuItem Header="{DynamicResource MenuFeedback}" Command="{Binding OpenFeedbackUrlCommand}" />
+                    <NativeMenuItem Header="{DynamicResource MenuProjectHome}" Command="{Binding OpenRepoUrlCommand}" />
+                    <NativeMenuItemSeparator />
+                    <NativeMenuItem Header="{DynamicResource MenuCheckForUpdates}" Command="{Binding CheckForUpdatesCommand}" />
+                </NativeMenu>
+            </NativeMenuItem>
+        </NativeMenu>
+    </NativeMenu.Menu>
 
     <Design.DataContext>
         <vm:MainWindowViewModel />
@@ -39,6 +113,18 @@
         <!-- Caption buttons use App.axaml styles (native height, top-aligned).
              Do not force Height to the 52px title bar — that stretches Windows
              minimize/maximize/close buttons taller than the platform default. -->
+
+        <!-- Sidebar backdrop. On Windows 11 the window gets real Mica (Window.mica, set in code-behind),
+             so the simulated acrylic layers step aside and the sidebar only adds a light tint. -->
+        <Style Selector="Border.sidebarTint">
+            <Setter Property="Background" Value="{DynamicResource SidebarBackgroundBrush}" />
+        </Style>
+        <Style Selector="Window.mica ExperimentalAcrylicBorder.simulatedMaterial">
+            <Setter Property="IsVisible" Value="False" />
+        </Style>
+        <Style Selector="Window.mica Border.sidebarTint">
+            <Setter Property="Background" Value="{DynamicResource SidebarMicaTintBrush}" />
+        </Style>
 
         <Style Selector="Button.sidebar">
             <Setter Property="Cursor" Value="Hand" />
@@ -191,7 +277,7 @@
     </Window.Styles>
 
     <Panel>
-        <ExperimentalAcrylicBorder IsHitTestVisible="False">
+        <ExperimentalAcrylicBorder Classes="simulatedMaterial" IsHitTestVisible="False">
             <ExperimentalAcrylicBorder.Material>
                 <ExperimentalAcrylicMaterial
                     BackgroundSource="Digger"
@@ -211,7 +297,7 @@
                 <!-- Add PointerPressed event handler for drag -->
                 <Grid RowDefinitions="Auto, *, Auto" Margin="0" Background="Transparent"
                       PointerPressed="Sidebar_PointerPressed">
-                    <ExperimentalAcrylicBorder IsHitTestVisible="False" Grid.RowSpan="3">
+                    <ExperimentalAcrylicBorder Classes="simulatedMaterial" IsHitTestVisible="False" Grid.RowSpan="3">
                         <ExperimentalAcrylicBorder.Material>
                             <ExperimentalAcrylicMaterial BackgroundSource="Digger"
                                                          TintColor="{DynamicResource SidebarAcrylicTintColor}"
@@ -220,7 +306,7 @@
                         </ExperimentalAcrylicBorder.Material>
                     </ExperimentalAcrylicBorder>
 
-                    <Border Background="{DynamicResource SidebarBackgroundBrush}" IsHitTestVisible="False" Grid.RowSpan="3" />
+                    <Border Classes="sidebarTint" IsHitTestVisible="False" Grid.RowSpan="3" />
                     <!-- TitleBar Placeholder in Sidebar (52px height) -->
                     <Grid Grid.Row="0" Height="52">
                         <Button Command="{Binding TogglePaneCommand}"
@@ -296,6 +382,29 @@
                     </StackPanel>
 
                     <StackPanel Grid.Row="2" Spacing="4" Margin="0,0,0,20">
+                        <!-- Live download bandwidth -->
+                        <Border Margin="12,0,12,6" Padding="10,8,10,6" CornerRadius="8"
+                                Background="{DynamicResource SidebarItemHoverBackgroundBrush}"
+                                IsVisible="{Binding IsPaneOpen}">
+                            <StackPanel Spacing="6">
+                                <Grid ColumnDefinitions="Auto,*">
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
+                                        <PathIcon Data="{StaticResource IconDownloading}" Width="11" Height="11"
+                                                  Foreground="{DynamicResource SystemControlForegroundAccentBrush}" />
+                                        <TextBlock Text="{DynamicResource SidebarDownloadSpeed}" FontSize="11.5" Opacity="0.6"
+                                                   Foreground="{DynamicResource SidebarTextForegroundBrush}"
+                                                   VerticalAlignment="Center" />
+                                    </StackPanel>
+                                    <TextBlock Grid.Column="1" Text="{Binding TotalDownloadSpeedText}"
+                                               FontSize="12" FontWeight="SemiBold" TextWrapping="NoWrap"
+                                               Foreground="{DynamicResource SidebarTextForegroundBrush}"
+                                               HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                </Grid>
+                                <controls:SpeedGraph Height="34" Value="{Binding TotalDownloadSpeed}"
+                                                     Stroke="{DynamicResource SystemControlForegroundAccentBrush}" />
+                            </StackPanel>
+                        </Border>
+
                         <Button Classes="sidebar settingsBtn" Classes.active="{Binding IsSettings}">
                             <Button.Flyout>
                                 <MenuFlyout Placement="Top">
@@ -330,8 +439,13 @@
                             <StackPanel Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Left"
                                         VerticalAlignment="Center" Margin="24,0,0,0"
                                         chrome:WindowDecorationProperties.ElementRole="User">
-                                <StackPanel Orientation="Horizontal" IsVisible="{Binding !IsSettingsVisible}"
-                                            Margin="{Binding TitleBarToolsMargin}">
+                                <StackPanel Orientation="Horizontal" Margin="{Binding TitleBarToolsMargin}">
+                                    <StackPanel.IsVisible>
+                                        <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                            <Binding Path="!IsSettingsVisible" />
+                                            <Binding Path="!IsEd2kSearch" />
+                                        </MultiBinding>
+                                    </StackPanel.IsVisible>
                                     <Button Command="{Binding ResumeAllCommand}"
                                             chrome:WindowDecorationProperties.ElementRole="User"
                                             Background="Transparent"
@@ -393,6 +507,14 @@
                                     </Button>
                                 </StackPanel>
                             </StackPanel>
+
+                            <!-- ED2K search, filters and view options take over the toolbar on that page -->
+                            <Border Grid.Column="0" Grid.ColumnSpan="2"
+                                    Margin="{Binding TitleBarTrailingMargin}"
+                                    Padding="{Binding TitleBarToolsMargin}"
+                                    IsVisible="{Binding IsEd2kSearch}">
+                                <views:Ed2kToolbar x:Name="Ed2kToolbar" />
+                            </Border>
                         </Grid>
                     </Border>
 

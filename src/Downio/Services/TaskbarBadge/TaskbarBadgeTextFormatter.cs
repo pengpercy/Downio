@@ -4,11 +4,12 @@ namespace Downio.Services.TaskbarBadge;
 
 internal static class TaskbarBadgeTextFormatter
 {
+    /// <summary>Dock badge text, kept short so the pill stays small: "856K/s", "3.4M/s".</summary>
     public static string Format(long bytesPerSecond)
     {
         if (bytesPerSecond <= 0)
         {
-            return "0 B/s";
+            return "0B/s";
         }
 
         const double kilobyte = 1024d;
@@ -18,19 +19,19 @@ internal static class TaskbarBadgeTextFormatter
         if (bytesPerSecond < megabyte)
         {
             var kilobytes = bytesPerSecond / kilobyte;
-            return kilobytes < 1000 ? $"{Math.Max(1, Math.Round(kilobytes)):0} K/s" : "1 M/s";
+            return kilobytes < 1000 ? $"{Math.Max(1, Math.Round(kilobytes)):0}K/s" : "1M/s";
         }
 
         if (bytesPerSecond < gigabyte)
         {
             var megabytes = bytesPerSecond / megabyte;
             return megabytes < 1000
-                ? megabytes < 10 ? $"{megabytes:0.#} M/s" : $"{megabytes:0} M/s"
-                : "1 G/s";
+                ? megabytes < 10 ? $"{megabytes:0.#}M/s" : $"{megabytes:0}M/s"
+                : "1G/s";
         }
 
         var gigabytes = bytesPerSecond / gigabyte;
-        return gigabytes < 10 ? $"{gigabytes:0.#} G/s" : $"{gigabytes:0} G/s";
+        return gigabytes < 10 ? $"{gigabytes:0.#}G/s" : $"{gigabytes:0}G/s";
     }
 
     public static string FormatOverlay(long bytesPerSecond)

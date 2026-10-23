@@ -7,6 +7,8 @@
         <TargetFramework Condition="'$(IsWindowsTarget)' != 'true'">net10.0</TargetFramework>
         <EnableWindowsTargeting Condition="'$(IsWindowsTarget)' == 'true'">true</EnableWindowsTargeting>
         <Nullable>enable</Nullable>
+        <!-- Function pointers for native callbacks (macOS notification permission block) -->
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <SuppressTrimAnalysisWarnings>false</SuppressTrimAnalysisWarnings>
         <TreatAsLocalProperty>PublishAot;DisableAOT</TreatAsLocalProperty>
         <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
@@ -14,7 +16,7 @@
         <ApplicationManifest>app.manifest</ApplicationManifest>
         <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
         <ApplicationIcon>Assets/Branding/app_ico.ico</ApplicationIcon>
-        <Version>1.0.91</Version>
+        <Version>1.0.92</Version>
         <InformationalVersion>$(Version)</InformationalVersion>
         <!-- Avoid NU1900 when a developer is building offline; CI retains package vulnerability auditing. -->
         <NuGetAudit Condition="'$(CI)' != 'true'">false</NuGetAudit>
@@ -75,12 +77,12 @@
     <ItemGroup>
         <Folder Include="Models\" />
         <Folder Include="Services\" />
-        <AvaloniaResource Include="Assets\**" Exclude="Assets\**\*.axaml;Assets\Binaries\**;Assets\Ed2k\**;Assets\Licenses\**" />
-        <Content Include="Assets\Branding\app_icon.png">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-            <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-        </Content>
+        <!-- Branding\macOS holds the 2048px icns master used only by the packaging scripts. -->
+        <AvaloniaResource Include="Assets\**" Exclude="Assets\**\*.axaml;Assets\**\.DS_Store;Assets\Binaries\**;Assets\Ed2k\**;Assets\Licenses\**;Assets\cacert.pem;Assets\Branding\macOS\**" />
+        <!-- Read-only runtime data goes to resources/ next to the executable (see Helpers/AppPaths.cs);
+             the macOS packaging script moves that folder's contents into Contents/Resources. -->
         <Content Include="Assets\cacert.pem">
+            <Link>resources\cacert.pem</Link>
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
         </Content>
@@ -120,11 +122,13 @@
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
         </Content>
-        <Content Include="Assets\Ed2k\**">
+        <Content Include="Assets\Ed2k\**" Exclude="Assets\**\.DS_Store">
+            <Link>resources\ed2k\%(RecursiveDir)%(Filename)%(Extension)</Link>
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
         </Content>
-        <Content Include="Assets\Licenses\**">
+        <Content Include="Assets\Licenses\**" Exclude="Assets\**\.DS_Store">
+            <Link>resources\licenses\%(RecursiveDir)%(Filename)%(Extension)</Link>
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
         </Content>
@@ -136,7 +140,6 @@
         <PackageReference Include="Avalonia.Desktop" Version="12.1.4" />
         <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.4" />
         <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.4" />
-        <PackageReference Include="Avalonia.Controls.DataGrid" Version="12.1.2" />
         <PackageReference Include="Avalonia.Controls.ColorPicker" Version="12.1.4" />
         <PackageReference Include="LiveMarkdown.Avalonia" Version="2.2.2" />
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />

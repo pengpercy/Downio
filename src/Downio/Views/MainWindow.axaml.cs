@@ -1,7 +1,9 @@
 using System;
+using System.ComponentModel;
 using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Downio.Helpers;
 using Downio.ViewModels;
@@ -21,7 +23,26 @@ public partial class MainWindow : Window
             {
                 UpdateMacTitleBarInsets();
             }
+            else if (e.Property == ActualTransparencyLevelProperty)
+            {
+                // Only Windows 11 grants Mica; elsewhere the hint falls back to acrylic blur.
+                Classes.Set("mica", ActualTransparencyLevel == WindowTransparencyLevel.Mica);
+            }
         };
+        DataContextChanged += (_, _) =>
+        {
+            if (DataContext is MainWindowViewModel vm) vm.PropertyChanged += ViewModel_PropertyChanged;
+        };
+    }
+
+    private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        // Land in the toolbar search box whenever the ED2K page is opened.
+        if (e.PropertyName == nameof(MainWindowViewModel.IsEd2kSearch) &&
+            sender is MainWindowViewModel { IsEd2kSearch: true })
+        {
+            Dispatcher.UIThread.Post(() => Ed2kToolbar.FocusSearchBox(), DispatcherPriority.Input);
+        }
     }
 
     private void Sidebar_PointerPressed(object? sender, PointerPressedEventArgs e)
@@ -51,7 +72,7 @@ public partial class MainWindow : Window
     private static bool IsInteractiveTitleBarElement(object? source)
     {
         return source is Control control &&
-               control.GetSelfAndVisualAncestors().OfType<Button>().Any();
+               control.GetSelfAndVisualAncestors().Any(v => v is Button or TextBox or ComboBox);
     }
 
     private void UpdateMacTitleBarInsets()

@@ -225,78 +225,48 @@ public partial class MainWindowViewModel
     public async Task CheckForUpdates(object? parameter)
     {
         if (UpdateWindowService.ActivateExisting()) return;
-        if (IsCheckingForUpdates) return;
-        
-        var isFromAbout = parameter?.ToString() == "About";
-        
-        if (isFromAbout)
+        if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime { MainWindow: { } mainWindow }) return;
+
+        // Menus, tray and settings use the update window's own "Checking for updates…" stage.
+        if (parameter?.ToString() != "About")
         {
-            IsUpdateCheckStatusVisible = false;
+            UpdateWindowService.CheckInteractively(_settingsService, mainWindow);
+            return;
         }
 
+        // The About window reports the result inline and only opens the updater when there is something new.
+        if (IsCheckingForUpdates) return;
+        IsUpdateCheckStatusVisible = false;
         IsCheckingForUpdates = true;
-        var updateService = new UpdateService(_settingsService.Settings);
-        var currentVersion = AppVersion.TrimStart('v');
-
         ReleaseInfo? release = null;
-        Exception? updateError = null;
         try
         {
-            release = await updateService.CheckForUpdatesAsync(currentVersion);
+            release = await new UpdateService(_settingsService.Settings).CheckForUpdatesAsync(AppVersion.TrimStart('v'));
+            if (release == null)
+            {
+                UpdateCheckStatusText = GetString("MessageNoUpdates");
+                UpdateCheckStatusBrush = Brushes.Gray;
+            }
         }
         catch (Exception ex)
         {
-            updateError = ex;
-            Debug.WriteLine($"Update check failed: {ex.Message}");
             AppLog.Error(ex, "Update check failed");
-
-            if (isFromAbout)
-            {
-                UpdateCheckStatusText = $"{GetString("MessageUpdateCheckFailed")} {ex.Message}";
-                UpdateCheckStatusBrush = Brushes.Red;
-                IsUpdateCheckStatusVisible = true;
-                _ = Task.Delay(8000).ContinueWith(_ => IsUpdateCheckStatusVisible = false, TaskScheduler.FromCurrentSynchronizationContext());
-            }
+            UpdateCheckStatusText = $"{GetString("MessageUpdateCheckFailed")} {ex.Message}";
+            UpdateCheckStatusBrush = Brushes.Red;
         }
         finally
         {
             IsCheckingForUpdates = false;
         }
 
-        if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime { MainWindow: { } mainWindow }) return;
-
         if (release != null)
         {
-            await UpdateWindowService.ShowAsync(release, _settingsService, mainWindow);
+            UpdateWindowService.ShowAvailable(release, _settingsService, mainWindow);
+            return;
         }
-        else
-        {
-            if (isFromAbout)
-            {
-                if (UpdateCheckStatusBrush == Brushes.Red && !string.IsNullOrWhiteSpace(UpdateCheckStatusText))
-                {
-                    IsUpdateCheckStatusVisible = true;
-                }
-                else
-                {
-                    UpdateCheckStatusText = GetString("MessageNoUpdates");
-                    UpdateCheckStatusBrush = Brushes.Gray;
-                    IsUpdateCheckStatusVisible = true;
-                }
-                
-                // Hide after 5 seconds
-                _ = Task.Delay(5000).ContinueWith(_ => IsUpdateCheckStatusVisible = false, TaskScheduler.FromCurrentSynchronizationContext());
-            }
-            else
-            {
-                var title = GetString("TitleUpdateCheck");
-                var message = updateError is not null
-                    ? $"{GetString("MessageUpdateCheckFailed")} {updateError.Message}"
-                    : GetString("MessageNoUpdates");
-                var dialog = new InfoDialog(title, message);
-                await dialog.ShowDialog(mainWindow);
-            }
-        }
+
+        IsUpdateCheckStatusVisible = true;
+        _ = Task.Delay(6000).ContinueWith(_ => IsUpdateCheckStatusVisible = false, TaskScheduler.FromCurrentSynchronizationContext());
     }
 
     private static string GetString(string key)

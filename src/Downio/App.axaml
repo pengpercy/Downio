@@ -4,6 +4,7 @@
              Name="Downio"
              xmlns:local="using:Downio"
              xmlns:controls="using:Downio.Controls"
+             xmlns:helpers="using:Downio.Helpers"
              xmlns:vm="using:Downio.ViewModels"
              x:DataType="vm:MainWindowViewModel"
              RequestedThemeVariant="Default">
@@ -14,7 +15,6 @@
 
     <Application.Styles>
         <FluentTheme />
-        <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
         <StyleInclude Source="avares://Avalonia.Controls.ColorPicker/Themes/Fluent/Fluent.xaml" />
         <StyleInclude Source="avares://LiveMarkdown.Avalonia/Styles.axaml" />
 
@@ -144,15 +144,24 @@
         </Style>
     </Application.Styles>
 
+    <!-- macOS application menu. Avalonia's own Hide / Hide Others / Show All / Quit items are
+         English-only, so they are disabled in Program.cs and provided here with localized headers. -->
     <NativeMenu.Menu>
         <NativeMenu>
             <NativeMenuItem Header="{DynamicResource MenuAbout}" Command="{Binding ShowAboutCommand}" />
+            <NativeMenuItem Header="{DynamicResource MenuCheckForUpdates}" Command="{Binding CheckForUpdatesCommand}" />
             <NativeMenuItemSeparator />
-            <NativeMenuItem Header="{DynamicResource MenuSettings}" Gesture="Cmd+,"
+            <NativeMenuItem Header="{DynamicResource MenuSettingsEllipsis}" Gesture="{x:Static helpers:MenuGestures.Settings}"
                             Command="{Binding ShowSettingsCommand}" />
-            <NativeMenuItem Header="{DynamicResource MenuCheckUpdate}" Command="{Binding CheckForUpdatesCommand}" />
-            <NativeMenuItem Header="{DynamicResource BtnNewTask}" Gesture="Cmd+N"
-                            Command="{Binding ShowAddTaskCommand}" />
+            <NativeMenuItemSeparator />
+            <NativeMenuItem Header="{DynamicResource MenuHideApp}" Gesture="{x:Static helpers:MenuGestures.Hide}"
+                            Command="{Binding HideAppCommand}" />
+            <NativeMenuItem Header="{DynamicResource MenuHideOthers}" Gesture="{x:Static helpers:MenuGestures.HideOthers}"
+                            Command="{Binding HideOtherAppsCommand}" />
+            <NativeMenuItem Header="{DynamicResource MenuShowAll}" Command="{Binding ShowAllAppsCommand}" />
+            <NativeMenuItemSeparator />
+            <NativeMenuItem Header="{DynamicResource MenuQuitApp}" Gesture="{x:Static helpers:MenuGestures.Quit}"
+                            Command="{Binding QuitAppCommand}" />
         </NativeMenu>
     </NativeMenu.Menu>
 
@@ -167,6 +176,7 @@
                     <SolidColorBrush x:Key="WorkspaceBackgroundBrush" Color="#F2F3F5" />
                     <SolidColorBrush x:Key="CardBackgroundBrush" Color="#FFFFFF" />
                     <SolidColorBrush x:Key="SidebarBackgroundBrush" Color="#CFECECEF" />
+                    <SolidColorBrush x:Key="SidebarMicaTintBrush" Color="#14FFFFFF" />
                     <SolidColorBrush x:Key="SidebarItemHoverBackgroundBrush" Color="#0D000000" />
                     <SolidColorBrush x:Key="SidebarItemSelectedBackgroundBrush" Color="#14000000" />
                     <SolidColorBrush x:Key="SidebarTextForegroundBrush" Color="#1F1F1F" />
@@ -182,6 +192,18 @@
                     <SolidColorBrush x:Key="TextControlBackground" Color="#FFFFFFFF" />
                     <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="#FFFAFBFC" />
                     <SolidColorBrush x:Key="TextControlBackgroundFocused" Color="#FFF7F8FA" />
+                    <!-- Dropdowns: same surface as text inputs, neutral hover for items -->
+                    <SolidColorBrush x:Key="ComboBoxBackground" Color="#FFFFFFFF" />
+                    <SolidColorBrush x:Key="ComboBoxBackgroundUnfocused" Color="#FFFFFFFF" />
+                    <SolidColorBrush x:Key="ComboBoxBackgroundPointerOver" Color="#FFFAFBFC" />
+                    <SolidColorBrush x:Key="ComboBoxBackgroundPressed" Color="#FFF3F4F6" />
+                    <SolidColorBrush x:Key="ComboBoxBorderBrush" Color="#FFDDE0E5" />
+                    <SolidColorBrush x:Key="ComboBoxBorderBrushPointerOver" Color="#FFCDD1D7" />
+                    <SolidColorBrush x:Key="ComboBoxBorderBrushPressed" Color="#FFC3C7CE" />
+                    <SolidColorBrush x:Key="ComboBoxDropDownBackground" Color="#FFFFFFFF" />
+                    <SolidColorBrush x:Key="ComboBoxDropDownBorderBrush" Color="#FFE4E6EA" />
+                    <SolidColorBrush x:Key="ComboBoxItemBackgroundPointerOver" Color="#0F000000" />
+                    <SolidColorBrush x:Key="ComboBoxItemBackgroundPressed" Color="#17000000" />
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Dark">
                     <SolidColorBrush x:Key="TitleBarBackgroundBrush" Color="#242424" />
@@ -189,6 +211,7 @@
                     <SolidColorBrush x:Key="CardBackgroundBrush" Color="#343434" />
                     <SolidColorBrush x:Key="SystemControlHighlightBaseLowBrush" Color="#000000" />
                     <SolidColorBrush x:Key="SidebarBackgroundBrush" Color="#C01F2022" />
+                    <SolidColorBrush x:Key="SidebarMicaTintBrush" Color="#0A000000" />
                     <SolidColorBrush x:Key="SidebarItemHoverBackgroundBrush" Color="#1AFFFFFF" />
                     <SolidColorBrush x:Key="SidebarItemSelectedBackgroundBrush" Color="#24FFFFFF" />
                     <SolidColorBrush x:Key="SidebarTextForegroundBrush" Color="#F4F4F4" />
@@ -204,8 +227,23 @@
                     <SolidColorBrush x:Key="TextControlBackground" Color="#FF3A3A3A" />
                     <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="#FF3E3E3E" />
                     <SolidColorBrush x:Key="TextControlBackgroundFocused" Color="#FF1F1F1F" />
+                    <!-- Dropdowns: same surface as text inputs, neutral hover for items -->
+                    <SolidColorBrush x:Key="ComboBoxBackground" Color="#FF3A3A3A" />
+                    <SolidColorBrush x:Key="ComboBoxBackgroundUnfocused" Color="#FF3A3A3A" />
+                    <SolidColorBrush x:Key="ComboBoxBackgroundPointerOver" Color="#FF404040" />
+                    <SolidColorBrush x:Key="ComboBoxBackgroundPressed" Color="#FF363636" />
+                    <SolidColorBrush x:Key="ComboBoxBorderBrush" Color="#1FFFFFFF" />
+                    <SolidColorBrush x:Key="ComboBoxBorderBrushPointerOver" Color="#2EFFFFFF" />
+                    <SolidColorBrush x:Key="ComboBoxBorderBrushPressed" Color="#26FFFFFF" />
+                    <SolidColorBrush x:Key="ComboBoxDropDownBackground" Color="#FF333333" />
+                    <SolidColorBrush x:Key="ComboBoxDropDownBorderBrush" Color="#1FFFFFFF" />
+                    <SolidColorBrush x:Key="ComboBoxItemBackgroundPointerOver" Color="#14FFFFFF" />
+                    <SolidColorBrush x:Key="ComboBoxItemBackgroundPressed" Color="#1FFFFFFF" />
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
+
+            <!-- Inset the dropdown list so the rounded item highlights don't touch the popup edge -->
+            <Thickness x:Key="ComboBoxDropdownBorderPadding">0,4</Thickness>
 
             <!-- Icons -->
             <StreamGeometry x:Key="IconAdd">M19,13h-6v6h-2v-6H5v-2h6V5h2v6h6V13z</StreamGeometry>
@@ -271,19 +309,40 @@
          <Style Selector="MenuItem:pointerover /template/ TextBlock#PART_InputGestureText">
              <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundChromeWhiteBrush}" />
          </Style>
+        <!-- Dropdown items: rounded highlight, inset from the popup edge -->
+        <Style Selector="ComboBoxItem">
+            <Setter Property="CornerRadius" Value="5" />
+            <Setter Property="Margin" Value="4,1" />
+        </Style>
+        <Style Selector="ComboBox">
+            <Setter Property="CornerRadius" Value="6" />
+        </Style>
     </Application.Styles>
     <TrayIcon.Icons>
         <TrayIcons>
             <TrayIcon Icon="/Assets/Branding/app_ico.ico" ToolTipText="Downio" Clicked="TrayIcon_OnClicked">
                 <TrayIcon.Menu>
                     <NativeMenu>
+                        <!-- Live total, refreshed with the task list -->
+                        <NativeMenuItem Header="{Binding TotalDownloadSpeedText, StringFormat='↓ {0}'}" IsEnabled="False" />
+                        <NativeMenuItemSeparator />
                         <NativeMenuItem Header="{DynamicResource MenuOpenDownio}" Command="{Binding ToggleMainWindowCommand}" />
+                        <NativeMenuItem Header="{DynamicResource MenuNewTask}" Gesture="{x:Static helpers:MenuGestures.NewTask}"
+                                        Command="{Binding ShowAddTaskCommand}" />
+                        <NativeMenuItem Header="{DynamicResource MenuOpenDownloadFolder}" Gesture="{x:Static helpers:MenuGestures.OpenDownloadFolder}"
+                                        Command="{Binding OpenDownloadFolderCommand}" />
                         <NativeMenuItemSeparator />
-                        <NativeMenuItem Header="{DynamicResource BtnNewTask}" Gesture="Cmd+N" Command="{Binding ShowAddTaskCommand}" />
-                        <NativeMenuItem Header="{DynamicResource MenuSettings}" Gesture="Cmd+," Command="{Binding ShowSettingsCommand}" />
-                        <NativeMenuItem Header="{DynamicResource MenuCheckUpdate}" Command="{Binding CheckForUpdatesCommand}" />
+                        <NativeMenuItem Header="{DynamicResource MenuResumeAll}" Gesture="{x:Static helpers:MenuGestures.ResumeAll}"
+                                        Command="{Binding ResumeAllCommand}" />
+                        <NativeMenuItem Header="{DynamicResource MenuPauseAll}" Gesture="{x:Static helpers:MenuGestures.PauseAll}"
+                                        Command="{Binding PauseAllCommand}" />
                         <NativeMenuItemSeparator />
-                        <NativeMenuItem Header="{DynamicResource MenuQuit}" Gesture="Cmd+Q" Command="{Binding QuitAppCommand}" />
+                        <NativeMenuItem Header="{DynamicResource MenuSettingsEllipsis}" Gesture="{x:Static helpers:MenuGestures.Settings}"
+                                        Command="{Binding ShowSettingsCommand}" />
+                        <NativeMenuItem Header="{DynamicResource MenuCheckForUpdates}" Command="{Binding CheckForUpdatesCommand}" />
+                        <NativeMenuItemSeparator />
+                        <NativeMenuItem Header="{DynamicResource MenuQuitApp}" Gesture="{x:Static helpers:MenuGestures.Quit}"
+                                        Command="{Binding QuitAppCommand}" />
                     </NativeMenu>
                 </TrayIcon.Menu>
             </TrayIcon>

@@ -8,7 +8,7 @@ its local JSON-RPC interface. That executable remains under its own license.
 - Project: <https://github.com/AnInsomniacy/aria2-next>
 - Release/source: <https://github.com/AnInsomniacy/aria2-next/releases/tag/v3.0.8>
 - License: GNU General Public License, version 2 or (at your option) any later version
-- License copy in packaged applications: `Assets/Licenses/aria2-next-GPL-2.0.txt`
+- License copy in packaged applications: `licenses/aria2-next-GPL-2.0.txt` (in `Contents/Resources` on macOS, in `resources/` next to the executable on Windows and Linux)
 
 The bundled `aria2c` executables are unmodified official binaries from the
 v3.0.8 release. Downio's MIT license does not replace or restrict the license

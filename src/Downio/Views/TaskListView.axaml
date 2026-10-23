@@ -16,6 +16,7 @@
         <localConv:StatusToIconConverter x:Key="StatusToIconConverter" />
         <localConv:CollectionIsEmptyConverter x:Key="CollectionIsEmptyConverter" />
         <localConv:Ed2kFileTypeIconConverter x:Key="FileTypeIconConverter" />
+        <localConv:SystemFileIconConverter x:Key="SystemFileIconConverter" />
     </UserControl.Resources>
 
     <UserControl.Styles>
@@ -29,7 +30,7 @@
             <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}" />
             <Setter Property="BorderBrush" Value="{DynamicResource CardBorderBrush}" />
             <Setter Property="BorderThickness" Value="1.5" />
-            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="CornerRadius" Value="6" />
             <Setter Property="BoxShadow" Value="{DynamicResource CardShadow}" />
             <Setter Property="Padding" Value="0" />
             <Setter Property="Margin" Value="0,4" />
@@ -51,7 +52,7 @@
         <!-- Selected cards get an accent wash behind the content plus a check badge on the file tile -->
         <Style Selector="Border.selectionTint">
             <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAccentBrush}" />
-            <Setter Property="CornerRadius" Value="8.5" />
+            <Setter Property="CornerRadius" Value="4.5" />
             <Setter Property="Opacity" Value="0" />
             <Setter Property="IsHitTestVisible" Value="False" />
             <Setter Property="Transitions">
@@ -202,13 +203,18 @@
                         <Panel>
                         <Border Classes="selectionTint" />
                         <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="14" Margin="14,12">
-                            <!-- File type tile, tinted with the task's status color -->
+                            <!-- File type tile: neutral glyph, or the file manager's own icon for unrecognised types -->
                             <Panel Grid.Column="0" Width="40" Height="40" VerticalAlignment="Center">
-                                <Border CornerRadius="10" Opacity="0.13"
-                                        Background="{Binding Status, Converter={StaticResource StatusColorConverter}}" />
+                                <Border CornerRadius="7" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
+                                        IsVisible="{Binding !#SystemIcon.IsVisible}" />
                                 <PathIcon Data="{Binding Name, Converter={StaticResource FileTypeIconConverter}, ConverterParameter=fileName}"
-                                          Width="18" Height="18"
-                                          Foreground="{Binding Status, Converter={StaticResource StatusColorConverter}}" />
+                                          Width="18" Height="18" Opacity="0.7"
+                                          IsVisible="{Binding !#SystemIcon.IsVisible}"
+                                          Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
+                                <Image x:Name="SystemIcon" Width="36" Height="36"
+                                       Source="{Binding Name, Converter={StaticResource SystemFileIconConverter}}"
+                                       IsVisible="{Binding $self.Source, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                       RenderOptions.BitmapInterpolationMode="HighQuality" />
                                 <Border Classes="selectionCheck" Width="18" Height="18" CornerRadius="9"
                                         HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,-5,-5"
                                         BorderThickness="2" BorderBrush="{DynamicResource CardBackgroundBrush}"

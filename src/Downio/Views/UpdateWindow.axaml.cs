@@ -1,272 +1,289 @@
-using Avalonia.Controls;
-using Avalonia.Interactivity;
-using Downio.Services;
 using System;
+using System.Globalization;
 using System.IO;
-using System.Linq;
-using System.Diagnostics;
+using System.Threading;
 using System.Threading.Tasks;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Avalonia;
-using System.Globalization;
+using Downio.Services;
 using LiveMarkdown.Avalonia;
 
 namespace Downio.Views;
 
 public partial class UpdateWindow : DialogWindow
 {
-    private readonly UpdateViewModel _viewModel;
+    public UpdateWindow() : this(new UpdateViewModel())
+    {
+    }
 
-    public UpdateWindow()
+    public UpdateWindow(UpdateViewModel viewModel)
     {
         InitializeComponent();
-        _viewModel = new UpdateViewModel();
-        DataContext = _viewModel;
+        DataContext = viewModel;
+        viewModel.CloseRequested += (_, _) => Close();
+        // Closing the window (Esc, close button) abandons whatever is in flight.
+        Closed += (_, _) => viewModel.Cancel();
 
         if (Design.IsDesignMode)
         {
             LocalizationService.SwitchLanguage("zh-CN");
         }
     }
+}
 
-    public UpdateWindow(ReleaseInfo release, SettingsService? settingsService = null) : this()
-    {
-        _viewModel.Release = release;
-        _viewModel.CurrentVersion = AppVersionProvider.GetCurrentVersion();
-        _viewModel.SettingsService = settingsService;
-        
-        if (settingsService != null)
-        {
-            _viewModel.AutoInstallUpdates = settingsService.Settings.AutoInstallUpdates;
-        }
-    }
-
-    private void OnLaterClick(object sender, RoutedEventArgs e)
-    {
-        _viewModel.SaveSettings();
-        Close();
-    }
-
-    private async void OnUpdateClick(object sender, RoutedEventArgs e)
-    {
-        _viewModel.SaveSettings();
-        // Change window size when starting download
-        this.Width = 480;
-        this.Height = 240;
-        this.MinWidth = 480;
-        this.MinHeight = 240;
-        
-        // Center window again after resize
-        WindowStartupLocation = WindowStartupLocation.CenterScreen;
-
-        await _viewModel.StartDownloadAsync(this);
-    }
-
-    private async void OnInstallClick(object sender, RoutedEventArgs e)
-    {
-        await _viewModel.ApplyUpdateAndRelaunchAsync();
-    }
+/// <summary>The stages of an update, matching the Sparkle-style flow the window walks through.</summary>
+public enum UpdateStage
+{
+    Checking,
+    Available,
+    UpToDate,
+    Failed,
+    Downloading,
+    Extracting,
+    ReadyToInstall
 }
 
 public partial class UpdateViewModel : ObservableObject
 {
-    public SettingsService? SettingsService { get; set; }
+    private const string AppName = "Downio";
+    private readonly SettingsService? _settingsService;
+    private CancellationTokenSource? _cts;
+    private string? _stagedUpdatePath;
+
+    public UpdateViewModel() : this(null)
+    {
+    }
+
+    public UpdateViewModel(SettingsService? settingsService)
+    {
+        _settingsService = settingsService;
+        CurrentVersion = AppVersionProvider.GetCurrentVersion().TrimStart('v');
+        AutoInstallUpdates = settingsService?.Settings.AutoInstallUpdates ?? false;
+    }
+
+    public event EventHandler? CloseRequested;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsPromptMode), nameof(IsProgressMode), nameof(WindowTitle), nameof(StageText),
+        nameof(IsIndeterminate), nameof(ShowCancel), nameof(CanCancel), nameof(ShowInstallAndRelaunch), nameof(ShowDismiss))]
+    private UpdateStage _stage = UpdateStage.Checking;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(NewVersion), nameof(UpdateTitleText), nameof(UpdateDescriptionText))]
     private ReleaseInfo _release = new();
 
     [ObservableProperty]
-    private bool _isDownloading = false;
+    private double _progress;
 
     [ObservableProperty]
-    private bool _isReadyToInstall = false;
-
-    [ObservableProperty]
-    private double _downloadProgress = 0;
-
-    [ObservableProperty]
-    private string _statusText = string.Empty;
-
-    [ObservableProperty]
-    private string _currentVersion = string.Empty;
+    private string _detailText = string.Empty;
 
     [ObservableProperty]
     private bool _autoInstallUpdates;
 
+    public string CurrentVersion { get; }
+
+    public string NewVersion => Release.TagName.TrimStart('v');
+
     public ObservableStringBuilder ReleaseNotesBuilder { get; } = new();
 
-    public string AppName => "Downio";
+    public bool IsPromptMode => Stage == UpdateStage.Available;
+    public bool IsProgressMode => !IsPromptMode;
+    public bool IsIndeterminate => Stage == UpdateStage.Checking;
+    public bool ShowCancel => Stage is UpdateStage.Checking or UpdateStage.Downloading or UpdateStage.Extracting;
+    public bool CanCancel => Stage != UpdateStage.Extracting;
+    public bool ShowInstallAndRelaunch => Stage == UpdateStage.ReadyToInstall;
+    public bool ShowDismiss => Stage is UpdateStage.UpToDate or UpdateStage.Failed;
 
-    public string WindowTitle => GetString("TitleUpdateAvailable", "Update Available");
+    public string WindowTitle => IsPromptMode
+        ? GetString("UpdateWindowTitlePrompt", "Software Update")
+        : Format("UpdateWindowTitleProgress", "Updating {0}", AppName);
 
-    public string VersionText => Release.TagName.StartsWith("v", StringComparison.OrdinalIgnoreCase) ? Release.TagName : $"v{Release.TagName}";
-    public string ReleaseNotes => Release.Body;
+    public string UpdateTitleText => Format("TitleNewVersionAvailable", "A new version of {0} is available!", AppName);
 
-    public string UpdateTitleText => string.Format(CultureInfo.CurrentCulture, GetString("TitleNewVersionAvailable", "A new version of {0} is available!"), AppName);
+    public string UpdateDescriptionText => Format("UpdateDescription",
+        "{0} {1} is now available—you have {2}. Would you like to download it now?", AppName, NewVersion, CurrentVersion);
 
-    public string UpdateDescriptionText => string.Format(CultureInfo.CurrentCulture, GetString("UpdateDescription", "{0} {1} is now available - you have {2}. Would you like to download it now?"), AppName, VersionText, CurrentVersion.StartsWith("v") ? CurrentVersion : $"v{CurrentVersion}");
-
-    public string UpdateFromToText
+    public string StageText => Stage switch
     {
-        get
-        {
-            var from = CurrentVersion.StartsWith("v") ? CurrentVersion : $"v{CurrentVersion}";
-            var to = VersionText;
-            return string.Format(CultureInfo.CurrentCulture, GetString("UpdateFromTo", "Update from {0} to {1}"), from, to);
-        }
-    }
-
-    public string ButtonSkipText => GetString("ButtonSkipVersion", "Skip This Version");
-    public string ButtonLaterText => GetString("ButtonRemindLater", "Remind Me Later");
-    public string ButtonInstallText => GetString("ButtonInstallUpdate", "Install Update");
-    public string ButtonInstallRelaunchText => GetString("ButtonInstallAndRelaunch", "Install and Relaunch");
-    public string AutoUpdateLabelText => GetString("LabelAutoUpdate", "Automatically download and install updates in the future");
+        UpdateStage.Checking => GetString("UpdateStageChecking", "Checking for updates…"),
+        UpdateStage.Downloading => GetString("UpdateStageDownloading", "Downloading update…"),
+        UpdateStage.Extracting => GetString("UpdateStageExtracting", "Extracting update…"),
+        UpdateStage.ReadyToInstall => GetString("UpdateStageReady", "Ready to Install"),
+        UpdateStage.UpToDate => GetString("UpdateStageUpToDate", "You're up to date!"),
+        UpdateStage.Failed => GetString("UpdateStageFailed", "Update Failed"),
+        _ => string.Empty
+    };
 
     partial void OnReleaseChanged(ReleaseInfo value)
     {
         ReleaseNotesBuilder.Clear();
-        ReleaseNotesBuilder.Append(Release.Body ?? string.Empty);
-
-        OnPropertyChanged(nameof(VersionText));
-        OnPropertyChanged(nameof(ReleaseNotes));
-        OnPropertyChanged(nameof(UpdateFromToText));
-        OnPropertyChanged(nameof(UpdateTitleText));
-        OnPropertyChanged(nameof(UpdateDescriptionText));
-        OnPropertyChanged(nameof(ButtonSkipText));
-        OnPropertyChanged(nameof(ButtonLaterText));
-        OnPropertyChanged(nameof(ButtonInstallText));
-        OnPropertyChanged(nameof(AutoUpdateLabelText));
+        ReleaseNotesBuilder.Append(value.Body ?? string.Empty);
     }
 
-    partial void OnCurrentVersionChanged(string value)
+    partial void OnAutoInstallUpdatesChanged(bool value)
     {
-        OnPropertyChanged(nameof(UpdateFromToText));
-        OnPropertyChanged(nameof(UpdateDescriptionText));
+        if (_settingsService == null) return;
+        _settingsService.Settings.AutoInstallUpdates = value;
+        _settingsService.Save();
     }
 
-    private string? _downloadedFilePath;
-
-    [RelayCommand]
-    public void SkipThisVersion()
+    /// <summary>Manual check: the window is already showing the "Checking" stage.</summary>
+    public async Task CheckAsync()
     {
-        if (SettingsService != null)
+        var cts = ResetCancellation();
+        Stage = UpdateStage.Checking;
+        try
         {
-            SettingsService.Settings.SkipVersion = Release.TagName;
-            SettingsService.Settings.AutoInstallUpdates = AutoInstallUpdates;
-            SettingsService.Save();
+            var release = await new UpdateService(_settingsService?.Settings)
+                .CheckForUpdatesAsync(CurrentVersion).WaitAsync(cts.Token);
+            if (release == null)
+            {
+                DetailText = Format("UpdateUpToDateDetail", "{0} {1} is currently the newest version available.", AppName, CurrentVersion);
+                Stage = UpdateStage.UpToDate;
+                return;
+            }
+
+            ShowAvailable(release);
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (Exception ex)
+        {
+            AppLog.Error(ex, "Update check failed");
+            Fail(ex);
+        }
+    }
+
+    public void ShowAvailable(ReleaseInfo release)
+    {
+        Release = release;
+        Stage = UpdateStage.Available;
+    }
+
+    /// <summary>Downloads and extracts the release; on success the stage is <see cref="UpdateStage.ReadyToInstall"/>.</summary>
+    public async Task<bool> DownloadAndPrepareAsync(ReleaseInfo release)
+    {
+        Release = release;
+        var cts = ResetCancellation();
+        try
+        {
+            var asset = UpdateAssetSelector.SelectPreferredAsset(release)
+                        ?? throw new InvalidOperationException(GetString("UpdateStatusNoPackage", "No compatible update package found."));
+
+            Stage = UpdateStage.Downloading;
+            Progress = 0;
+            DetailText = string.Empty;
+            var updateDir = Path.Combine(Path.GetTempPath(), "Downio", "updates", NewVersion);
+            Directory.CreateDirectory(updateDir);
+            var downloadPath = Path.Combine(updateDir, asset.Name);
+
+            var downloadProgress = new Progress<(long Received, long Total)>(p =>
+            {
+                Progress = p.Total > 0 ? (double)p.Received / p.Total : 0;
+                DetailText = p.Total > 0
+                    ? $"{FormatSize(p.Received)} / {FormatSize(p.Total)}"
+                    : FormatSize(p.Received);
+            });
+            await new UpdateService(_settingsService?.Settings).DownloadUpdateAsync(asset, downloadPath, downloadProgress, cts.Token);
+
+            Stage = UpdateStage.Extracting;
+            Progress = 0;
+            DetailText = string.Empty;
+            _stagedUpdatePath = await UpdateApplier.PrepareAsync(downloadPath, new Progress<double>(p => Progress = p), cts.Token);
+
+            Progress = 1;
+            Stage = UpdateStage.ReadyToInstall;
+            return true;
+        }
+        catch (OperationCanceledException)
+        {
+            return false;
+        }
+        catch (Exception ex)
+        {
+            AppLog.Error(ex, $"Preparing update {release.TagName} failed");
+            Fail(ex);
+            return false;
         }
     }
 
     [RelayCommand]
-    public void RemindMeLater()
+    private Task InstallUpdate() => DownloadAndPrepareAsync(Release);
+
+    [RelayCommand]
+    private void SkipThisVersion()
     {
-        if (SettingsService != null)
+        if (_settingsService != null)
         {
-            SettingsService.Settings.AutoInstallUpdates = AutoInstallUpdates;
-            SettingsService.Save();
+            _settingsService.Settings.SkipVersion = Release.TagName;
+            _settingsService.Save();
         }
+        CloseRequested?.Invoke(this, EventArgs.Empty);
     }
 
-    public void SaveSettings()
+    [RelayCommand]
+    private void RemindMeLater() => CloseRequested?.Invoke(this, EventArgs.Empty);
+
+    [RelayCommand]
+    private void Dismiss() => CloseRequested?.Invoke(this, EventArgs.Empty);
+
+    [RelayCommand]
+    private void CancelUpdate()
     {
-        if (SettingsService != null)
-        {
-            SettingsService.Settings.AutoInstallUpdates = AutoInstallUpdates;
-            SettingsService.Save();
-        }
+        Cancel();
+        CloseRequested?.Invoke(this, EventArgs.Empty);
     }
 
-    public async Task StartDownloadAsync(Window window)
+    [RelayCommand]
+    private void InstallAndRelaunch()
     {
-        if (IsDownloading) return;
-
-        IsDownloading = true;
-        StatusText = GetString("UpdateStatusPreparing", "Preparing...");
-        DownloadProgress = 0;
-
-        var updateService = new UpdateService(SettingsService?.Settings);
-        var asset = UpdateAssetSelector.SelectPreferredAsset(Release);
-        if (asset is null)
+        if (_stagedUpdatePath == null || !UpdateApplier.TryInstallAndRelaunch(_stagedUpdatePath))
         {
-            IsDownloading = false;
-            StatusText = GetString("UpdateStatusNoPackage", "No compatible update package found.");
+            DetailText = GetString("UpdateStatusFailed", "Update failed.");
+            Stage = UpdateStage.Failed;
             return;
         }
 
-        var version = Release.TagName.TrimStart('v');
-        var updateDir = Path.Combine(Path.GetTempPath(), "Downio", "updates", version);
-        Directory.CreateDirectory(updateDir);
-        _downloadedFilePath = Path.Combine(updateDir, asset.Name);
-
-        var progress = new Progress<double>(p =>
+        // Quit through the normal path so aria2 is stopped before the installer replaces files.
+        if (Application.Current is App app)
         {
-            DownloadProgress = p;
-            var percent = (int)(p * 100);
-            StatusText = string.Format(CultureInfo.CurrentCulture, GetString("UpdateStatusDownloading", "Downloading... {0}%"), percent);
-        });
-
-        try
-        {
-            await updateService.DownloadUpdateAsync(asset.BrowserDownloadUrl, _downloadedFilePath, progress);
-            IsReadyToInstall = true;
-            StatusText = GetString("LabelUpdateReady", "Update downloaded successfully");
+            app.RequestExplicitExit();
         }
-        catch (Exception ex)
+        else if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            Debug.WriteLine($"Download failed: {ex.Message}");
-            IsDownloading = false;
-            StatusText = GetString("UpdateStatusFailed", "Update failed.");
+            desktop.Shutdown();
         }
     }
 
-    public async Task ApplyUpdateAndRelaunchAsync()
+    public void Cancel() => _cts?.Cancel();
+
+    private CancellationTokenSource ResetCancellation()
     {
-        if (string.IsNullOrEmpty(_downloadedFilePath)) return;
-
-        try
-        {
-            StatusText = GetString("UpdateStatusApplying", "Applying update...");
-            var version = Release.TagName.TrimStart('v');
-            var applied = await UpdateApplier.TryApplyUpdateAsync(_downloadedFilePath, version);
-            if (!applied)
-            {
-                OpenDownloadedFile(_downloadedFilePath);
-            }
-
-            if (Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop)
-            {
-                desktop.Shutdown();
-            }
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"Apply update failed: {ex.Message}");
-            StatusText = GetString("UpdateStatusFailed", "Update failed.");
-        }
+        _cts?.Cancel();
+        _cts = new CancellationTokenSource();
+        return _cts;
     }
 
-    private static void OpenDownloadedFile(string path)
+    private void Fail(Exception ex)
     {
-        try
-        {
-            if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.OSX))
-            {
-                Process.Start("open", path);
-            }
-            else if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
-            {
-                Process.Start("explorer.exe", path);
-            }
-            else
-            {
-                Process.Start("xdg-open", path);
-            }
-        }
-        catch
-        {
-        }
+        DetailText = ex is InvalidOperationException ? ex.Message : $"{GetString("UpdateStatusFailed", "Update failed.")} {ex.Message}";
+        Stage = UpdateStage.Failed;
     }
+
+    private static string FormatSize(long bytes) => bytes switch
+    {
+        < 1024 * 1024 => $"{bytes / 1024.0:F0} KB",
+        < 1024L * 1024 * 1024 => $"{bytes / 1024.0 / 1024.0:F1} MB",
+        _ => $"{bytes / 1024.0 / 1024.0 / 1024.0:F2} GB"
+    };
+
+    private static string Format(string key, string fallback, params object[] args) =>
+        string.Format(CultureInfo.CurrentCulture, GetString(key, fallback), args);
 
     private static string GetString(string key, string fallback)
     {

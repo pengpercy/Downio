@@ -13,10 +13,28 @@ if [[ ! -f "Downio/aria2c" ]]; then
 fi
 chmod +x Downio/aria2c
 
+case "$RUNTIME" in
+    osx-arm64) arch=arm64;;
+    osx-x64) arch=x86_64;;
+    *) echo "Unknown runtime $RUNTIME"; exit 1;;
+esac
+
 mkdir -p Downio.app/Contents/MacOS
 mkdir -p Downio.app/Contents/Resources
-cp -r Downio/* Downio.app/Contents/MacOS/
+cp -R Downio/ Downio.app/Contents/MacOS/
 rm -rf Downio
+# Read-only data (CA bundle, ED2K lists, licenses) belongs in Contents/Resources, not next to the binary.
+if [[ -d Downio.app/Contents/MacOS/resources ]]; then
+    cp -R Downio.app/Contents/MacOS/resources/ Downio.app/Contents/Resources/
+    rm -rf Downio.app/Contents/MacOS/resources
+fi
+rm -rf Downio.app/Contents/MacOS/*.dSYM Downio.app/Contents/MacOS/*.dsym
+# SkiaSharp, HarfBuzz and Avalonia ship universal dylibs; keep only the slice this package is for.
+for lib in Downio.app/Contents/MacOS/*.dylib; do
+    if [[ "$(lipo -archs "$lib")" == *" "* ]]; then
+        lipo -thin "$arch" "$lib" -output "$lib.thin" && mv "$lib.thin" "$lib"
+    fi
+done
 ICON_SOURCE="../src/Downio/Assets/Branding/macOS/app_icon.png"
 ICONSET_DIR="App.iconset"
 rm -rf "$ICONSET_DIR"
@@ -35,7 +53,6 @@ iconutil -c icns "$ICONSET_DIR" -o Downio.app/Contents/Resources/App.icns
 rm -rf "$ICONSET_DIR"
 sed "s/Downio_VERSION/$VERSION/g" resources/app/App.plist > Downio.app/Contents/Info.plist
 find resources/app -maxdepth 1 -type d -name "*.lproj" -exec cp -R {} Downio.app/Contents/Resources/ \;
-rm -rf Downio.app/Contents/MacOS/Downio.dsym
 
 if [[ -n "${CODESIGN_IDENTITY:-}" ]]; then
     codesign --force --deep --options runtime --timestamp --sign "$CODESIGN_IDENTITY" Downio.app

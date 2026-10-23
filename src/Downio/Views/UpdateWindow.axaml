@@ -4,87 +4,73 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:views="using:Downio.Views"
         xmlns:controls="using:Downio.Controls"
-        xmlns:services="using:Downio.Services"
         xmlns:md="clr-namespace:LiveMarkdown.Avalonia;assembly=LiveMarkdown.Avalonia"
-        mc:Ignorable="d" d:DesignWidth="640" d:DesignHeight="520"
+        mc:Ignorable="d"
         x:Class="Downio.Views.UpdateWindow"
         x:DataType="views:UpdateViewModel"
         Classes="dialog"
-        Title="{Binding WindowTitle}"
-        Width="640"
-        Height="520"
-        SizeToContent="Manual"
-        >
+        Title="{Binding WindowTitle}">
 
-    <Design.DataContext>
-        <views:UpdateViewModel>
-            <views:UpdateViewModel.Release>
-                <services:ReleaseInfo TagName="v1.0.86" Body="🚀 版本发布 v1.0.64&#x0a;&#x0a;🐛 修复：&#x0a;- 修复 Windows 下启动阶段通知集成异常可能导致窗口未打开就退出的问题。&#x0a;- 优化单实例激活逻辑，避免已有后台实例无法激活时新进程静默退出。&#x0a;- 增加启动和未处理异常日志，便于诊断 Windows 启动失败。" />
-            </views:UpdateViewModel.Release>
-            <views:UpdateViewModel.CurrentVersion>1.0.85</views:UpdateViewModel.CurrentVersion>
-        </views:UpdateViewModel>
-    </Design.DataContext>
-
+    <!-- Sized by content: the prompt is a wide sheet with release notes, the progress stages a compact panel -->
     <controls:DialogHost Title="{Binding $parent[Window].Title}">
-        <Grid RowDefinitions="Auto, *, Auto" Margin="4">
-            <!-- Header: App Icon and Title -->
-            <Grid Grid.Row="0" ColumnDefinitions="Auto, *" Margin="0,0,0,16" IsVisible="{Binding !IsDownloading}">
-                <Image Grid.Column="0" Source="/Assets/Branding/app_icon.png" Width="48" Height="48" VerticalAlignment="Top" Margin="0,0,16,0"/>
-                <StackPanel Grid.Column="1" Spacing="4">
-                    <TextBlock Text="{Binding UpdateTitleText}" FontWeight="Bold" FontSize="16"/>
-                    <TextBlock Text="{Binding UpdateDescriptionText}" FontSize="13" TextWrapping="Wrap" Opacity="0.8"/>
-                </StackPanel>
+        <Panel>
+            <!-- New version available -->
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="20" Width="600" IsVisible="{Binding IsPromptMode}">
+                <Image Grid.Column="0" Source="/Assets/Branding/app_icon.png" Width="64" Height="64" VerticalAlignment="Top" />
+                <Grid Grid.Column="1" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto">
+                    <TextBlock Grid.Row="0" Text="{Binding UpdateTitleText}" FontWeight="SemiBold" FontSize="15" />
+                    <TextBlock Grid.Row="1" Text="{Binding UpdateDescriptionText}" FontSize="13" TextWrapping="Wrap"
+                               Opacity="0.85" Margin="0,6,0,0" />
+                    <TextBlock Grid.Row="2" Text="{DynamicResource LabelReleaseNotes}" FontSize="13" FontWeight="SemiBold"
+                               Margin="0,14,0,6" />
+                    <Border Grid.Row="3" Height="280" CornerRadius="6" Padding="14,10"
+                            Background="{DynamicResource CardBackgroundBrush}"
+                            BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="1">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                            <md:MarkdownRenderer MarkdownBuilder="{Binding ReleaseNotesBuilder}" />
+                        </ScrollViewer>
+                    </Border>
+                    <CheckBox Grid.Row="4" IsChecked="{Binding AutoInstallUpdates}" Margin="0,12,0,0">
+                        <TextBlock Text="{DynamicResource LabelAutoUpdate}" FontSize="13" />
+                    </CheckBox>
+                    <Grid Grid.Row="5" ColumnDefinitions="Auto,*,Auto" Margin="0,14,0,0">
+                        <Button Grid.Column="0" Classes="dialogButton" Content="{DynamicResource ButtonSkipVersion}"
+                                Command="{Binding SkipThisVersionCommand}" />
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="10">
+                            <Button Classes="dialogButton" Content="{DynamicResource ButtonRemindLater}"
+                                    Command="{Binding RemindMeLaterCommand}" />
+                            <Button Classes="dialogButton accent" Content="{DynamicResource ButtonInstallUpdate}"
+                                    Command="{Binding InstallUpdateCommand}" IsDefault="True" />
+                        </StackPanel>
+                    </Grid>
+                </Grid>
             </Grid>
 
-            <!-- Release Notes -->
-            <Border Grid.Row="1" 
-                    Background="{DynamicResource SystemControlBackgroundBaseLowBrush}" 
-                    CornerRadius="4" 
-                    Padding="12"
-                    IsVisible="{Binding !IsDownloading}">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                    <md:MarkdownRenderer MarkdownBuilder="{Binding ReleaseNotesBuilder}" />
-                </ScrollViewer>
-            </Border>
-
-            <!-- Progress & Install Status -->
-            <StackPanel Grid.Row="1" IsVisible="{Binding IsDownloading}" VerticalAlignment="Center" Margin="0,0,0,20">
-                <TextBlock Text="{Binding StatusText}" HorizontalAlignment="Center" Margin="0,0,0,10"
-                           FontWeight="SemiBold" IsVisible="{Binding !IsReadyToInstall}"/>
-                <ProgressBar Value="{Binding DownloadProgress}" Maximum="1.0" Height="6" CornerRadius="3"
-                             IsVisible="{Binding !IsReadyToInstall}"/>
-                <TextBlock Text="{Binding DownloadProgress, StringFormat={}{0:P0}}" HorizontalAlignment="Right" FontSize="12" Opacity="0.6" Margin="0,4,0,0"
-                           IsVisible="{Binding !IsReadyToInstall}"/>
-
-                <!-- Ready to Install Message -->
-                <TextBlock Text="{Binding StatusText}" HorizontalAlignment="Center" FontSize="16" FontWeight="SemiBold"
-                           IsVisible="{Binding IsReadyToInstall}" TextAlignment="Center"/>
-            </StackPanel>
-
-            <!-- Footer: Checkbox and Buttons -->
-            <StackPanel Grid.Row="2" Spacing="16" Margin="0,16,0,0" IsVisible="{Binding !IsDownloading}">
-                <!-- Checkbox line -->
-                <CheckBox IsChecked="{Binding AutoInstallUpdates}" VerticalAlignment="Center">
-                    <TextBlock Text="{Binding AutoUpdateLabelText}" FontSize="12" Opacity="0.8" TextWrapping="Wrap"/>
-                </CheckBox>
-                
-                <!-- Buttons line -->
-                <Grid ColumnDefinitions="Auto, *, Auto">
-                    <Button Grid.Column="0" Classes="dialogButton" Content="{Binding ButtonSkipText}" Command="{Binding SkipThisVersionCommand}" Click="OnLaterClick"/>
-                    
-                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
-                        <Button Classes="dialogButton" Content="{Binding ButtonLaterText}" Command="{Binding RemindMeLaterCommand}" Click="OnLaterClick"/>
-                        <Button Classes="dialogButton accent" Content="{Binding ButtonInstallText}" Click="OnUpdateClick" IsDefault="True"/>
-                    </StackPanel>
-                </Grid>
-            </StackPanel>
-
-            <!-- Buttons: Ready to Install State -->
-            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12" IsVisible="{Binding IsReadyToInstall}">
-                <Button Classes="dialogButton" Content="{Binding ButtonLaterText}" Click="OnLaterClick" IsCancel="True"/>
-                <Button Content="{Binding ButtonInstallRelaunchText}" Click="OnInstallClick" IsDefault="True"
-                        Classes="dialogButton accent"/>
-            </StackPanel>
-        </Grid>
+            <!-- Checking / downloading / extracting / ready / up to date / failed -->
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="20" Width="420" IsVisible="{Binding IsProgressMode}">
+                <Image Grid.Column="0" Source="/Assets/Branding/app_icon.png" Width="64" Height="64" VerticalAlignment="Top" />
+                <StackPanel Grid.Column="1" Spacing="12">
+                    <TextBlock Text="{Binding StageText}" FontWeight="SemiBold" FontSize="14" TextWrapping="Wrap" />
+                    <ProgressBar Height="6" MinHeight="6" CornerRadius="3" Minimum="0" Maximum="1"
+                                 Value="{Binding Progress}" IsIndeterminate="{Binding IsIndeterminate}"
+                                 IsVisible="{Binding !ShowDismiss}" />
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12" MinHeight="32">
+                        <TextBlock Grid.Column="0" Text="{Binding DetailText}" FontSize="12.5" Opacity="0.75"
+                                   TextWrapping="Wrap" VerticalAlignment="Center" />
+                        <Panel Grid.Column="1" VerticalAlignment="Bottom">
+                            <Button Classes="dialogButton" Content="{DynamicResource ButtonCancel}"
+                                    Command="{Binding CancelUpdateCommand}"
+                                    IsVisible="{Binding ShowCancel}" IsEnabled="{Binding CanCancel}" />
+                            <Button Classes="dialogButton accent" Content="{DynamicResource ButtonInstallAndRelaunch}"
+                                    Command="{Binding InstallAndRelaunchCommand}"
+                                    IsVisible="{Binding ShowInstallAndRelaunch}" IsDefault="{Binding ShowInstallAndRelaunch}" />
+                            <Button Classes="dialogButton accent" Content="{DynamicResource ButtonOK}"
+                                    Command="{Binding DismissCommand}"
+                                    IsVisible="{Binding ShowDismiss}" IsDefault="{Binding ShowDismiss}" />
+                        </Panel>
+                    </Grid>
+                </StackPanel>
+            </Grid>
+        </Panel>
     </controls:DialogHost>
 </views:DialogWindow>

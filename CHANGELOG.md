@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.0.92 - 2026-10-24
+
+- Moved the ED2K search field into the window toolbar, together with the file-type menu, sort menu, and view switch, so the page below shows only results. Selection actions and status sit in a slim bar at the bottom. The default save folder is now set only in Settings.
+- Large ED2K result lists stay smooth: a re-sorted list is applied in one update instead of one move per row, and “Select all” no longer recounts the list for every row.
+- Added a live download-speed graph above the Settings button in the sidebar, which scrolls smoothly instead of stepping once a second.
+- Fixed the taskbar / Dock download-speed badge. On macOS the red Dock badge (for example “3.2M/s”) now appears reliably; on Windows the overlay is drawn at the taskbar’s real size for the current DPI, survives hiding to the tray and Explorer restarts, and appears when the app starts in the tray. The value is smoothed so it no longer jumps every second, and brief stalls don’t make it blink. The option is hidden on Linux, which has no badge.
+- Rewrote the update flow: Check for Updates shows checking, “new version available” with release notes, Skip This Version / Remind Me Later / Install Update, then download progress (MB of MB), extraction, and Install and Relaunch. Downloads are verified against the release’s SHA-256 digest, and on macOS a failed install restores the previous app. With automatic updates on, the update is downloaded and prepared in the background.
+- Redesigned the native menus: the macOS menu bar and the tray menu follow the app language (including Hide, Hide Others, and Show All) and gain File, Tasks, View, Window, and Help menus with keyboard shortcuts.
+- Fixed system notifications on macOS (now using the User Notifications framework, with permission requested at launch) and made Windows toasts register the app properly so they show with Downio’s name and icon.
+- Task-list file tiles no longer use status colors; files with an unknown type show the system file icon. Cards and ED2K results have smaller corner radii, drop-down highlights are rounded, and drop-down backgrounds are lighter.
+- The sidebar uses the Mica material on Windows 11.
+- Fixed “StatusStopped” and “StatusWaiting” appearing untranslated in the task list.
+- Packaging: bundled data now lives in `Contents/Resources` on macOS and in a `resources` folder next to the executable on Windows and Linux. macOS packages keep only the target architecture of the native libraries, and oversized embedded images were shrunk and an unused component removed, making the macOS downloads about 25% smaller.
+
 ## 1.0.91 - 2026-10-23
 
 - Upgraded the bundled download engine to aria2-next 3.0.8 (from 2.5.5) on all six platforms. The rewritten 3.x core downloads ED2K, Metalink, and web-seeded torrents considerably faster, uses less CPU and memory on HTTP downloads, and keeps going when servers rate-limit or misreport ranges. ED2K searches are now stopped with the engine's dedicated `removeEd2kSearch` call, so finishing a search no longer logs spurious RPC errors.
