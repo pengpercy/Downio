@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Security.Authentication;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -58,6 +59,11 @@ internal static class ProxyEnvironment
         {
             AllowAutoRedirect = true
         };
+        // Windows 7 Schannel leaves TLS 1.2 off unless the client asks for it, and GitHub needs it.
+        if (OperatingSystem.IsWindows() && !OperatingSystem.IsWindowsVersionAtLeast(6, 2))
+        {
+            handler.SslProtocols = SslProtocols.Tls12;
+        }
 
         if (!string.IsNullOrWhiteSpace(taskProxy) && Uri.TryCreate(taskProxy, UriKind.Absolute, out var taskUri))
         {

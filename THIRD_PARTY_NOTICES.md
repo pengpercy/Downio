@@ -16,3 +16,13 @@ terms that apply to aria2-next.
 
 The bundled `server.met` and `nodes.dat` bootstrap files are sourced from the
 Motrix Next project: <https://github.com/AnInsomniacy/motrix-next>.
+
+## Windows 7 package only
+
+The `win7-x64` build statically links the following libraries into `Downio.exe`.
+
+- YY-Thunks 1.2.3: <https://github.com/Chuyu-Team/YY-Thunks>, MIT License
+- VC-LTL 5.3.1: <https://github.com/Chuyu-Team/VC-LTL5>, Eclipse Public License 2.0
+
+That package also carries Microsoft's redistributable Universal C Runtime DLLs
+from the Windows SDK, for the bundled `aria2c.exe`.

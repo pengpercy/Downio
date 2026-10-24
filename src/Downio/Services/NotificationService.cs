@@ -74,7 +74,7 @@ public class NotificationService
         return false;
     }
 
-// --- Windows 混合实现 (自动适配 Win7 和 Win10+) ---
+    // --- Windows：Win10+ 用 toast，Win7/8/8.1 或 toast 失败时用通知区域气泡 ---
     private static void ShowWindowsNotification(string title, string message)
     {
         try

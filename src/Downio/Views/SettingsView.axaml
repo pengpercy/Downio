@@ -36,7 +36,7 @@
     <ScrollViewer Margin="30,20,0,30">
         <StackPanel Spacing="20" Margin="0,0,30,0">
             <!-- General Settings -->
-            <Border Classes="taskCard" Padding="20" CornerRadius="8" Background="{DynamicResource CardBackgroundBrush}" BoxShadow="{DynamicResource CardShadow}">
+            <Border Classes="taskCard" Padding="20" CornerRadius="{DynamicResource ControlCornerRadius}" Background="{DynamicResource CardBackgroundBrush}" BoxShadow="{DynamicResource CardShadow}">
                 <StackPanel Spacing="15">
                     <TextBlock Text="{DynamicResource GroupGeneral}" Classes="settingsHeader"/>
                     
@@ -87,7 +87,7 @@
             </Border>
 
             <!-- Network Settings -->
-            <Border Classes="taskCard" Padding="20" CornerRadius="8" Background="{DynamicResource CardBackgroundBrush}" BoxShadow="{DynamicResource CardShadow}">
+            <Border Classes="taskCard" Padding="20" CornerRadius="{DynamicResource ControlCornerRadius}" Background="{DynamicResource CardBackgroundBrush}" BoxShadow="{DynamicResource CardShadow}">
                 <StackPanel Spacing="15">
                     <TextBlock Text="{DynamicResource GroupNetwork}" Classes="settingsHeader"/>
                     
@@ -112,7 +112,7 @@
             </Border>
 
             <!-- About -->
-            <Border Classes="taskCard" Padding="20" CornerRadius="8" Background="{DynamicResource CardBackgroundBrush}" BoxShadow="{DynamicResource CardShadow}">
+            <Border Classes="taskCard" Padding="20" CornerRadius="{DynamicResource ControlCornerRadius}" Background="{DynamicResource CardBackgroundBrush}" BoxShadow="{DynamicResource CardShadow}">
                 <StackPanel Spacing="15">
                     <TextBlock Text="{DynamicResource GroupAbout}" Classes="settingsHeader"/>
                     

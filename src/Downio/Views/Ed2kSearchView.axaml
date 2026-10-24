@@ -21,7 +21,7 @@
             <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}" />
             <Setter Property="BorderBrush" Value="{DynamicResource CardBorderBrush}" />
             <Setter Property="BorderThickness" Value="1.5" />
-            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
             <Setter Property="Margin" Value="0,0,0,6" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="Transitions">
@@ -34,11 +34,11 @@
             <Setter Property="BorderBrush" Value="{DynamicResource CardHoverBorderBrush}" />
         </Style>
         <Style Selector="Border.resultRow.checked">
-            <Setter Property="BorderBrush" Value="{DynamicResource SystemAccentColorBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SystemControlHighlightAccentBrush}" />
         </Style>
         <Style Selector="Border.rowTint">
             <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAccentBrush}" />
-            <Setter Property="CornerRadius" Value="4.5" />
+            <Setter Property="CornerRadius" Value="{DynamicResource CardInnerCornerRadius}" />
             <Setter Property="Opacity" Value="0" />
             <Setter Property="IsHitTestVisible" Value="False" />
         </Style>
@@ -62,7 +62,7 @@
             <Setter Property="Width" Value="30" />
             <Setter Property="Height" Value="30" />
             <Setter Property="Padding" Value="0" />
-            <Setter Property="CornerRadius" Value="7" />
+            <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="HorizontalContentAlignment" Value="Center" />
@@ -78,7 +78,7 @@
 
         <Style Selector="Button.downloadButton">
             <Setter Property="Padding" Value="12,6" />
-            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
             <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundBaseLowBrush}" />
             <Setter Property="BorderThickness" Value="0" />
         </Style>
@@ -110,7 +110,7 @@
 
         <Style Selector="Border.typeBadge">
             <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundBaseLowBrush}" />
-            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
             <Setter Property="Padding" Value="5,1" />
             <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
@@ -120,7 +120,7 @@
             <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}" />
             <Setter Property="BorderBrush" Value="{DynamicResource CardBorderBrush}" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
             <Setter Property="ClipToBounds" Value="True" />
         </Style>
         <Style Selector="Border.tableHeader">
@@ -133,7 +133,7 @@
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Padding" Value="4,2" />
             <Setter Property="MinHeight" Value="0" />
-            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
             <Setter Property="VerticalAlignment" Value="Center" />
             <Setter Property="Opacity" Value="0.6" />
         </Style>
@@ -181,7 +181,7 @@
         <Style Selector="Border.tableRow Button.rowAction">
             <Setter Property="Width" Value="26" />
             <Setter Property="Height" Value="26" />
-            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
         </Style>
         <Style Selector="Border.tableRow Button.rowDownload">
             <Setter Property="Opacity" Value="0.7" />
@@ -449,7 +449,7 @@
                               Width="24" Height="24" Opacity="0.5" />
                 </Panel>
                 <TextBlock Text="{DynamicResource Ed2kFilteredEmptyTitle}" FontSize="15" FontWeight="SemiBold" Margin="0,6,0,0" />
-                <Button Classes="accent" HorizontalAlignment="Center" Padding="16,7" CornerRadius="8" Margin="0,4,0,0"
+                <Button Classes="accent" HorizontalAlignment="Center" Padding="16,7" CornerRadius="{DynamicResource ControlCornerRadius}" Margin="0,4,0,0"
                         Command="{Binding StartEd2kSearchCommand}" IsVisible="{Binding !IsEd2kSearching}">
                     <StackPanel Orientation="Horizontal" Spacing="7">
                         <PathIcon Data="{StaticResource IconSearch}" Width="13" Height="13" />
@@ -475,7 +475,7 @@
                         <TextBlock Text="{DynamicResource Ed2kClearSelection}" FontSize="12" />
                     </Button>
                 </StackPanel>
-                <Button Grid.Column="1" Classes="accent" Height="28" MinHeight="0" Padding="12,0" CornerRadius="7"
+                <Button Grid.Column="1" Classes="accent" Height="28" MinHeight="0" Padding="12,0" CornerRadius="{DynamicResource ControlCornerRadius}"
                         VerticalAlignment="Center" VerticalContentAlignment="Center"
                         Command="{Binding DownloadSelectedEd2kResultsCommand}">
                     <StackPanel Orientation="Horizontal" Spacing="6">

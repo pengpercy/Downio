@@ -23,7 +23,7 @@
                                Opacity="0.85" Margin="0,6,0,0" />
                     <TextBlock Grid.Row="2" Text="{DynamicResource LabelReleaseNotes}" FontSize="13" FontWeight="SemiBold"
                                Margin="0,14,0,6" />
-                    <Border Grid.Row="3" Height="280" CornerRadius="6" Padding="14,10"
+                    <Border Grid.Row="3" Height="280" CornerRadius="{DynamicResource ControlCornerRadius}" Padding="14,10"
                             Background="{DynamicResource CardBackgroundBrush}"
                             BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="1">
                         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">

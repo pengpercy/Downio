@@ -24,7 +24,7 @@
     <Window.Styles>
         <Style Selector="Border.detailsCard">
             <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}" />
-            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
             <Setter Property="BoxShadow" Value="{DynamicResource CardShadow}" />
             <Setter Property="Padding" Value="18,16" />
         </Style>
@@ -53,7 +53,7 @@
 
         <Style Selector="Border.metricTile">
             <Setter Property="Background" Value="{DynamicResource WorkspaceBackgroundBrush}" />
-            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
             <Setter Property="Padding" Value="10" />
         </Style>
 
@@ -61,7 +61,7 @@
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Padding" Value="7" />
-            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
             <Setter Property="VerticalAlignment" Value="Top" />
         </Style>
         <Style Selector="Button.iconButton PathIcon">

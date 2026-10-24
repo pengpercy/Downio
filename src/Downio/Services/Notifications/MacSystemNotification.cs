@@ -161,7 +161,18 @@ public static unsafe class MacSystemNotification
     [UnmanagedCallersOnly]
     private static void OnAuthorizationResult(IntPtr block, byte granted, IntPtr error)
     {
-        if (granted == 0) AppLog.Warn("macOS notification permission was not granted; system notifications are off.");
+        if (granted != 0) return;
+        AppLog.Warn(error == IntPtr.Zero
+            ? "macOS notification permission was not granted; system notifications are off."
+            : $"macOS notification permission request failed: {Describe(error)}");
+    }
+
+    private static string Describe(IntPtr error)
+    {
+        var domain = Marshal.PtrToStringUTF8(Send(Send(error, Sel("domain")), Sel("UTF8String")));
+        var code = (long)Send(error, Sel("code"));
+        var text = Marshal.PtrToStringUTF8(Send(Send(error, Sel("localizedDescription")), Sel("UTF8String")));
+        return $"{domain} {code}: {text}";
     }
 
     [StructLayout(LayoutKind.Sequential)]

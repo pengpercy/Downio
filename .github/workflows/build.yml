@@ -14,6 +14,12 @@ jobs:
           - name: Windows ARM64
             os: windows-2022
             runtime: win-arm64
+          # Same win-x64 runtime, built separately so the regular package stays unchanged
+          - name: Windows 7 x64
+            os: windows-2022
+            runtime: win-x64
+            package: win7-x64
+            publish-args: -p:Win7Compat=true
           - name: macOS (Intel)
             os: macos-15-intel
             runtime: osx-x64
@@ -66,7 +72,7 @@ jobs:
         run: dotnet build -c Release
       - name: Publish
         run: |
-          dotnet publish src/Downio/Downio.csproj -c Release -o publish -r ${{ matrix.runtime }} --self-contained -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true
+          dotnet publish src/Downio/Downio.csproj -c Release -o publish -r ${{ matrix.runtime }} --self-contained -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true ${{ matrix.publish-args }}
 
       - name: Tar artifact
         if: startsWith(matrix.runtime, 'linux-') || startsWith(matrix.runtime, 'osx-')
@@ -78,6 +84,6 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v6
         with:
-          name: downio.${{ matrix.runtime }}
+          name: downio.${{ matrix.package || matrix.runtime }}
           path: publish/*
           retention-days: 1

@@ -15,17 +15,17 @@
     </UserControl.Resources>
 
     <UserControl.Styles>
-        <!-- One 30px field: type scope | keyword | search button, outlined in accent while typing -->
+        <!-- One 30px field: type scope | keyword | search button; the outline darkens a step while typing -->
         <Style Selector="Border.searchField">
             <Setter Property="Height" Value="30" />
             <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}" />
             <Setter Property="BorderBrush" Value="{DynamicResource CardBorderBrush}" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="7" />
+            <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
             <Setter Property="ClipToBounds" Value="True" />
         </Style>
         <Style Selector="Border.searchField:focus-within">
-            <Setter Property="BorderBrush" Value="{DynamicResource SystemAccentColorBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource CardHoverBorderBrush}" />
         </Style>
 
         <Style Selector="TextBox.searchInput">
@@ -51,7 +51,7 @@
             <Setter Property="Height" Value="24" />
             <Setter Property="Padding" Value="8,0,0,0" />
             <Setter Property="Margin" Value="3,0,0,0" />
-            <Setter Property="CornerRadius" Value="5" />
+            <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
             <Setter Property="FontSize" Value="12.5" />
             <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
@@ -68,7 +68,7 @@
             <Setter Property="Width" Value="22" />
             <Setter Property="Height" Value="22" />
             <Setter Property="Padding" Value="0" />
-            <Setter Property="CornerRadius" Value="5" />
+            <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="HorizontalContentAlignment" Value="Center" />
@@ -85,7 +85,7 @@
             <Setter Property="MinHeight" Value="0" />
             <Setter Property="Padding" Value="12,0" />
             <Setter Property="Margin" Value="0,0,3,0" />
-            <Setter Property="CornerRadius" Value="5" />
+            <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
             <Setter Property="FontSize" Value="12" />
             <Setter Property="VerticalAlignment" Value="Center" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
@@ -96,7 +96,7 @@
             <Setter Property="MinHeight" Value="0" />
             <Setter Property="MinWidth" Value="112" />
             <Setter Property="Padding" Value="10,0" />
-            <Setter Property="CornerRadius" Value="7" />
+            <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
             <Setter Property="FontSize" Value="12.5" />
             <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
@@ -104,7 +104,7 @@
         <!-- Card / table view switch -->
         <Style Selector="Border.viewSwitch">
             <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundBaseLowBrush}" />
-            <Setter Property="CornerRadius" Value="7" />
+            <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
             <Setter Property="Padding" Value="2" />
             <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
@@ -112,7 +112,7 @@
             <Setter Property="Width" Value="30" />
             <Setter Property="Height" Value="26" />
             <Setter Property="Padding" Value="0" />
-            <Setter Property="CornerRadius" Value="5" />
+            <Setter Property="CornerRadius" Value="3" />
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="HorizontalContentAlignment" Value="Center" />

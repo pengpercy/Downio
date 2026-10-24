@@ -134,7 +134,7 @@
             <Setter Property="HorizontalContentAlignment" Value="Left" />
             <Setter Property="Padding" Value="0" />
             <Setter Property="Height" Value="34" />
-            <Setter Property="CornerRadius" Value="5" />
+            <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
             <Setter Property="Margin" Value="12,2" />
             <Setter Property="Transitions">
                 <Transitions />
@@ -148,43 +148,35 @@
         <Style Selector="Button.sidebar TextBlock">
             <Setter Property="Foreground" Value="{DynamicResource SidebarTextForegroundBrush}" />
         </Style>
+        <!-- Fluent shrinks every Button to scale(0.98) while pressed; keep sidebar items still -->
+        <Style Selector="Button.sidebar:pressed">
+            <Setter Property="RenderTransform" Value="none" />
+        </Style>
         <Style Selector="Button.sidebar /template/ ContentPresenter">
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="Opacity" Value="1" />
-            <Setter Property="RenderTransformOrigin" Value="50%,50%" />
-            <Setter Property="RenderTransform" Value="scale(1)" />
         </Style>
         <Style Selector="Button.sidebar:pointerover /template/ ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource SidebarItemHoverBackgroundBrush}" />
             <Setter Property="Opacity" Value="1" />
-            <Setter Property="RenderTransformOrigin" Value="50%,50%" />
-            <Setter Property="RenderTransform" Value="scale(1)" />
         </Style>
         <Style Selector="Button.sidebar:pressed /template/ ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource SidebarItemHoverBackgroundBrush}" />
             <Setter Property="Opacity" Value="1" />
-            <Setter Property="RenderTransformOrigin" Value="50%,50%" />
-            <Setter Property="RenderTransform" Value="scale(1)" />
         </Style>
 
         <!-- Active State -->
         <Style Selector="Button.sidebar.active /template/ ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource SidebarItemSelectedBackgroundBrush}" />
             <Setter Property="Opacity" Value="1" />
-            <Setter Property="RenderTransformOrigin" Value="50%,50%" />
-            <Setter Property="RenderTransform" Value="scale(1)" />
         </Style>
         <Style Selector="Button.sidebar.active:pointerover /template/ ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource SidebarItemSelectedBackgroundBrush}" />
             <Setter Property="Opacity" Value="1" />
-            <Setter Property="RenderTransformOrigin" Value="50%,50%" />
-            <Setter Property="RenderTransform" Value="scale(1)" />
         </Style>
         <Style Selector="Button.sidebar.active:pressed /template/ ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource SidebarItemSelectedBackgroundBrush}" />
             <Setter Property="Opacity" Value="1" />
-            <Setter Property="RenderTransformOrigin" Value="50%,50%" />
-            <Setter Property="RenderTransform" Value="scale(1)" />
         </Style>
         <Style Selector="Button.sidebar.active TextBlock">
             <Setter Property="Foreground" Value="{DynamicResource SidebarTextForegroundBrush}" />
@@ -231,36 +223,6 @@
         <Style Selector="StackPanel.settingsGroup">
             <Setter Property="Spacing" Value="10" />
             <Setter Property="Margin" Value="0,0,0,20" />
-        </Style>
-
-        <!-- Compact Menu Styles -->
-        <Style Selector="MenuFlyoutPresenter">
-            <Setter Property="Padding" Value="4" />
-            <Setter Property="MinWidth" Value="140" />
-        </Style>
-        <Style Selector="MenuItem">
-            <Setter Property="FontSize" Value="12" />
-            <Setter Property="Padding" Value="8,6" />
-            <Setter Property="CornerRadius" Value="5" />
-            <Setter Property="Margin" Value="2,1" />
-            <Setter Property="Background" Value="Transparent" />
-        </Style>
-        <Style Selector="MenuItem:pointerover /template/ Border#PART_LayoutRoot">
-            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAccentBrush}" />
-            <Setter Property="CornerRadius" Value="5" />
-        </Style>
-        <Style Selector="MenuItem:pointerover /template/ ContentPresenter#PART_HeaderPresenter">
-            <Setter Property="Background" Value="Transparent" />
-        </Style>
-        <Style Selector="MenuItem:pointerover">
-            <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundChromeWhiteBrush}" />
-        </Style>
-        <!-- Ensure text color remains unchanged on hover -->
-        <Style Selector="MenuItem:pointerover TextBlock">
-            <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundChromeWhiteBrush}" />
-        </Style>
-        <Style Selector="MenuItem:pointerover /template/ TextBlock#PART_InputGestureText">
-            <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundChromeWhiteBrush}" />
         </Style>
 
         <!-- Settings Icon Hover Animation -->
@@ -383,7 +345,7 @@
 
                     <StackPanel Grid.Row="2" Spacing="4" Margin="0,0,0,20">
                         <!-- Live download bandwidth -->
-                        <Border Margin="12,0,12,6" Padding="10,8,10,6" CornerRadius="8"
+                        <Border Margin="12,0,12,6" Padding="10,8,10,6" CornerRadius="{DynamicResource ControlCornerRadius}"
                                 Background="{DynamicResource SidebarItemHoverBackgroundBrush}"
                                 IsVisible="{Binding IsPaneOpen}">
                             <StackPanel Spacing="6">
@@ -431,7 +393,7 @@
                     <Border Grid.Row="0"
                             Background="{DynamicResource TitleBarBackgroundBrush}"
                             BorderThickness="1,0,0,1"
-                            BorderBrush="{DynamicResource SystemControlHighlightBaseLowBrush}"
+                            BorderBrush="{DynamicResource DividerBrush}"
                             chrome:WindowDecorationProperties.ElementRole="TitleBar"
                             PointerPressed="TitleBar_PointerPressed">
                         <Grid ColumnDefinitions="Auto, *">
@@ -522,7 +484,7 @@
                     <Border Grid.Row="1"
                             Background="{DynamicResource WorkspaceBackgroundBrush}"
                             BorderThickness="1,0,0,0"
-                            BorderBrush="{DynamicResource SystemControlHighlightBaseLowBrush}">
+                            BorderBrush="{DynamicResource DividerBrush}">
                         <TransitioningContentControl Content="{Binding CurrentView}">
                             <TransitioningContentControl.PageTransition>
                                 <CrossFade Duration="0:00:00.050" />
@@ -551,7 +513,7 @@
         <ItemsControl ItemsSource="{Binding Toasts}" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,20,20">
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
-                    <Border Margin="0,10,0,0" Padding="12,10" CornerRadius="6"
+                    <Border Margin="0,10,0,0" Padding="12,10" CornerRadius="{DynamicResource ControlCornerRadius}"
                             Background="{DynamicResource CardBackgroundBrush}"
                             BoxShadow="0 4 12 0 #20000000"
                             MinWidth="260" MaxWidth="320">

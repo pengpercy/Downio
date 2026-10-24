@@ -60,6 +60,23 @@ sealed class Program
                 // English-only; App.axaml supplies localized replacements instead.
                 DisableDefaultApplicationMenuItems = true,
                 DisableSetProcessName = true,
-                DisableAvaloniaAppDelegate = false 
-            });
+                DisableAvaloniaAppDelegate = false
+            })
+#pragma warning disable AVALONIA_X11_CSD
+            // Without this, X11 ignores ExtendClientAreaToDecorationsHint and the window manager
+            // adds its own title bar above ours
+            .With(new X11PlatformOptions { EnableDrawnDecorations = LinuxDesktop.UsesDrawnDecorations })
+#pragma warning restore AVALONIA_X11_CSD
+            .With(Win32Options());
+
+    // Windows 7 has neither WaitOnAddress (needed by ANGLE's av_libglesv2.dll) nor DirectComposition,
+    // so the Win7 package renders in software into a plain redirection surface.
+    private static Win32PlatformOptions Win32Options() =>
+        OperatingSystem.IsWindows() && !OperatingSystem.IsWindowsVersionAtLeast(6, 2)
+            ? new Win32PlatformOptions
+            {
+                RenderingMode = [Win32RenderingMode.Software],
+                CompositionMode = [Win32CompositionMode.RedirectionSurface]
+            }
+            : new Win32PlatformOptions();
 }

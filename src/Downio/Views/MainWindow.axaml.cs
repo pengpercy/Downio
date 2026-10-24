@@ -17,6 +17,12 @@ public partial class MainWindow : Window
         InitializeComponent();
         Opened += (_, _) => UpdateMacTitleBarInsets();
         ScalingChanged += (_, _) => UpdateMacTitleBarInsets();
+        // AppKit puts the traffic lights back in its default spot on these
+        Resized += (_, _) => UpdateMacTitleBarInsets();
+        Activated += (_, _) => UpdateMacTitleBarInsets();
+        // The appearance change relays out the title bar after this event, so wait for it
+        ActualThemeVariantChanged += (_, _) =>
+            Dispatcher.UIThread.Post(UpdateMacTitleBarInsets, DispatcherPriority.Background);
         PropertyChanged += (_, e) =>
         {
             if (e.Property == WindowStateProperty)
@@ -86,6 +92,11 @@ public partial class MainWindow : Window
         if (vm.IsMacOS)
         {
             var handle = TryGetPlatformHandle()?.Handle ?? IntPtr.Zero;
+            // Full screen moves the title bar into its own window; leave AppKit's layout alone there
+            if (WindowState != WindowState.FullScreen)
+            {
+                MacTitleBarInsets.TryCenterTrafficLights(handle, titleBarHeight);
+            }
             if (MacTitleBarInsets.TryGetTrafficLightsRight(handle, out var right))
             {
                 trafficLightsRight = right;

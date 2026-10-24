@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.0.93 - 2026-10-24
+
+- Added a separate Windows 7 package (`win7-x64`, also for Windows 8 and 8.1). It uses YY-Thunks and VC-LTL to stand in for the newer Windows APIs and runtime library that .NET 10 needs, ships the UCRT for the bundled aria2c, renders in software, and turns on TLS 1.2 so update checks reach GitHub. Automatic updates on Windows 7/8/8.1 pick this package; the regular Windows packages are unchanged.
+- System notifications on Windows 7/8/8.1 now show as a tray balloon with Downio's icon, stay up long enough to be read, and log the reason when they can't be shown.
+- Redesigned the New Task window: a segmented Link / Torrent switch, a fixed-height input area (a torrent drop zone in torrent mode), file name, save folder, and chunk count in a settings-style card, and a collapsible Advanced section for User-Agent, Authorization, Referer, Cookie, and proxy.
+- Fixed a save folder picked for one new task carrying over to the next one; each new task starts from the folder set in Settings (#5).
+- Redesigned the Settings window with grouped cards (App, Downloads, Other, Reset) and dividers between rows.
+- On Linux, GNOME, KDE, and XFCE now get Downio's own title bar instead of the window manager's one stacked above it. Other desktops keep their native decorations; `DOWNIO_LINUX_CSD=0` or `1` overrides the choice.
+- On macOS the window buttons sit centred in the taller title bar, including after a theme switch. If notifications are switched off for Downio in System Settings, the reason is now written to the log.
+- Windows caption buttons, corner radii, and menus were refined; menu highlights have a margin and the ED2K search field uses a neutral focus border.
+
 ## 1.0.92 - 2026-10-24
 
 - Moved the ED2K search field into the window toolbar, together with the file-type menu, sort menu, and view switch, so the page below shows only results. Selection actions and status sit in a slim bar at the bottom. The default save folder is now set only in Settings.

@@ -3,6 +3,7 @@ using System;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Security;
+using System.Threading;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -17,15 +18,22 @@ namespace Downio.Services.Notifications;
 /// Windows 10 and 11 toasts for an unpackaged app. Toasts are attributed through the AppUserModelID,
 /// registered both on a Start menu shortcut (what Windows 10 requires) and under
 /// HKCU\Software\Classes\AppUserModelId (display name and icon, honoured by Windows 10 1903+ and 11).
-/// .NET 10 doesn't run on Windows 7/8/8.1, so the legacy balloon is only a fallback for when toasts fail.
+/// Windows 7/8/8.1 (reachable because the AOT build doesn't need an installed runtime) get a
+/// notification-area balloon instead; Windows 8 and later turn it into a toast on their own.
+/// Windows 10 also falls back to the balloon if a toast fails.
 /// </summary>
 internal static class WindowsSystemNotification
 {
     private const string AppUserModelId = "pengpercy.Downio";
     private const int LegacyBalloonId = 1001;
+    // Long enough for the default Windows 7 balloon time; removing the icon dismisses the balloon.
+    private const int LegacyBalloonLifetimeMs = 10000;
     private static readonly object SyncRoot = new();
     private static bool _initialized;
     private static string? _logoPath;
+    private static int _balloonGeneration;
+    private static IntPtr _largeIcon;
+    private static IntPtr _smallIcon;
 
     public static void Initialize()
     {
@@ -37,10 +45,14 @@ internal static class WindowsSystemNotification
             }
 
             Marshal.ThrowExceptionForHR(SetCurrentProcessExplicitAppUserModelID(AppUserModelId));
+            _initialized = true;
+
+            // The shortcut, logo file and registry entry only exist for toasts.
+            if (!OperatingSystem.IsWindowsVersionAtLeast(10)) return;
+
             _logoPath = ExtractLogo();
             TryRun(EnsureStartMenuShortcut, "Creating the Start menu shortcut for notifications failed");
             TryRun(RegisterAppUserModelId, "Registering the notification AppUserModelID failed");
-            _initialized = true;
         }
     }
 
@@ -49,31 +61,40 @@ internal static class WindowsSystemNotification
         try
         {
             var data = CreateLegacyNotifyIconData(title, message);
-            if (data.hWnd == IntPtr.Zero) return;
-            Shell_NotifyIcon(NIM_DELETE, ref data);
-
-            if (!Shell_NotifyIcon(NIM_ADD, ref data))
+            if (data.hWnd == IntPtr.Zero)
             {
+                AppLog.Warn("No main window handle for the notification balloon.");
                 return;
             }
 
-            Shell_NotifyIcon(NIM_MODIFY, ref data);
+            // A previous balloon's icon is still there for a while; replace it rather than stack a second one.
+            var cleanup = CreateLegacyNotifyIconData(string.Empty, string.Empty);
+            Shell_NotifyIcon(NIM_DELETE, ref cleanup);
+            if (!Shell_NotifyIcon(NIM_ADD, ref data))
+            {
+                AppLog.Warn($"Adding the notification balloon failed: {Marshal.GetLastWin32Error()}");
+                return;
+            }
 
+            var generation = Interlocked.Increment(ref _balloonGeneration);
             _ = Task.Run(async () =>
             {
-                await Task.Delay(6000).ConfigureAwait(false);
-                var cleanup = CreateLegacyNotifyIconData(string.Empty, string.Empty);
-                Shell_NotifyIcon(NIM_DELETE, ref cleanup);
+                await Task.Delay(LegacyBalloonLifetimeMs).ConfigureAwait(false);
+                // A newer balloon owns the icon now and removes it itself.
+                if (generation != Volatile.Read(ref _balloonGeneration)) return;
+                var expired = CreateLegacyNotifyIconData(string.Empty, string.Empty);
+                Shell_NotifyIcon(NIM_DELETE, ref expired);
             });
         }
-        catch
+        catch (Exception ex)
         {
+            AppLog.Error(ex, "Showing the notification balloon failed");
         }
     }
 
     public static bool TryShow(string title, string message)
     {
-        if (!OperatingSystem.IsWindowsVersionAtLeast(10))
+        if (!OperatingSystem.IsWindowsVersionAtLeast(10, 0, 10240))
         {
             return false;
         }
@@ -202,22 +223,35 @@ internal static class WindowsSystemNotification
 
     private static NotifyIconData CreateLegacyNotifyIconData(string title, string message)
     {
+        LoadAppIcons();
         var data = new NotifyIconData
         {
             cbSize = Marshal.SizeOf<NotifyIconData>(),
-            // Shell_NotifyIcon only accepts a window owned by this process.
+            // Shell_NotifyIcon only accepts a window owned by this process. The main window
+            // is only hidden when closed to the tray, so its handle stays valid.
             hWnd = MainWindowHandle(),
             uID = LegacyBalloonId,
             uFlags = NIF_ICON | NIF_TIP | NIF_INFO,
-            hIcon = LoadIcon(IntPtr.Zero, IDI_INFORMATION),
+            hIcon = _smallIcon != IntPtr.Zero ? _smallIcon : LoadIcon(IntPtr.Zero, IDI_INFORMATION),
             szTip = "Downio",
             szInfoTitle = Truncate(title, 63),
             szInfo = Truncate(message, 255),
-            dwInfoFlags = NIIF_INFO,
-            uTimeoutOrVersion = 5000
+            // The app icon in the balloon, like the logo on a toast; the stock info icon if it couldn't be loaded.
+            dwInfoFlags = _largeIcon != IntPtr.Zero ? NIIF_USER | NIIF_LARGE_ICON : NIIF_INFO,
+            hBalloonIcon = _largeIcon,
+            uTimeoutOrVersion = LegacyBalloonLifetimeMs
         };
 
         return data;
+    }
+
+    // Loaded once from the executable's embedded icon and kept for the life of the process.
+    private static void LoadAppIcons()
+    {
+        if (_largeIcon != IntPtr.Zero || _smallIcon != IntPtr.Zero) return;
+        var exePath = Environment.ProcessPath;
+        if (string.IsNullOrWhiteSpace(exePath)) return;
+        ExtractIconEx(exePath, 0, out _largeIcon, out _smallIcon, 1);
     }
 
     private static string Truncate(string value, int maxLength)
@@ -227,12 +261,13 @@ internal static class WindowsSystemNotification
     }
 
     private const uint NIM_ADD = 0x00000000;
-    private const uint NIM_MODIFY = 0x00000001;
     private const uint NIM_DELETE = 0x00000002;
     private const uint NIF_ICON = 0x00000002;
     private const uint NIF_TIP = 0x00000004;
     private const uint NIF_INFO = 0x00000010;
     private const uint NIIF_INFO = 0x00000001;
+    private const uint NIIF_USER = 0x00000004;
+    private const uint NIIF_LARGE_ICON = 0x00000020;
     private const int IDI_INFORMATION = 32516;
 
     [DllImport("shell32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
@@ -245,6 +280,9 @@ internal static class WindowsSystemNotification
 
     [DllImport("user32.dll", SetLastError = true)]
     private static extern IntPtr LoadIcon(IntPtr hInstance, int lpIconName);
+
+    [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
+    private static extern uint ExtractIconEx(string lpszFile, int nIconIndex, out IntPtr phiconLarge, out IntPtr phiconSmall, uint nIcons);
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
     private struct NotifyIconData

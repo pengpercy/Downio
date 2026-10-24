@@ -23,6 +23,10 @@
     <views:DialogWindow.Resources>
         <localConv:ResourceKeyToTextConverter x:Key="ResourceKeyToTextConverter" />
         <StreamGeometry x:Key="IconChevronDown">M7.41,8.59L12,13.17l4.59-4.58L18,10l-6,6l-6-6l1.41-1.41z</StreamGeometry>
+        <!-- Right-hand controls share two widths so their edges line up across rows;
+             rows with long values (URLs, paths, user agent) use a 180px label column instead -->
+        <x:Double x:Key="SettingsFieldWidth">200</x:Double>
+        <x:Double x:Key="SettingsWideFieldWidth">360</x:Double>
     </views:DialogWindow.Resources>
 
     <views:DialogWindow.Styles>
@@ -43,132 +47,178 @@
             <Setter Property="Padding" Value="0" />
         </Style>
 
-        <Style Selector="Button.trackerCopy">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="CornerRadius" Value="6" />
-            <Setter Property="Width" Value="26" />
-            <Setter Property="Height" Value="26" />
-            <Setter Property="Opacity" Value="0.65" />
-        </Style>
-        <Style Selector="Button.trackerCopy:pointerover">
-            <Setter Property="Opacity" Value="1" />
-            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundBaseLowBrush}" />
-        </Style>
-        <Style Selector="Button.trackerCopy:pressed">
-            <Setter Property="Opacity" Value="1" />
-        </Style>
-        <Style Selector="Button.trackerCopy PathIcon">
-            <Setter Property="Width" Value="14" />
-            <Setter Property="Height" Value="14" />
-            <Setter Property="Opacity" Value="0.85" />
-            <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundBaseHighBrush}" />
-        </Style>
-
-        <Style Selector="Button.trackerDropdown">
-            <Setter Property="Height" Value="32" />
-            <Setter Property="Padding" Value="10,0" />
-            <Setter Property="CornerRadius" Value="4" />
-            <Setter Property="HorizontalAlignment" Value="Stretch" />
-            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAltHighBrush}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource SystemControlForegroundBaseLowBrush}" />
-            <Setter Property="BorderThickness" Value="1" />
-        </Style>
-
-        <Style Selector="Button.trackerDropdown:pointerover">
-            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundBaseLowBrush}" />
-        </Style>
-
-        <Style Selector="FlyoutPresenter.trackerDropdownFlyout">
-            <Setter Property="Padding" Value="0" />
-            <Setter Property="CornerRadius" Value="6" />
-        </Style>
-
-        <Style Selector="Border.trackerDropdownHeader">
-            <Setter Property="Padding" Value="12,10,12,8" />
-            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundBaseLowBrush}" />
-        </Style>
-
-        <Style Selector="Grid.trackerSourceRow">
-            <Setter Property="MinHeight" Value="42" />
-            <Setter Property="Margin" Value="4,2" />
-        </Style>
-
+        <!-- Navigation: same metrics and fills as the main window sidebar -->
         <Style Selector="Button.settingsNav">
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="HorizontalAlignment" Value="Stretch" />
-            <Setter Property="CornerRadius" Value="8" />
-            <Setter Property="Padding" Value="16,8" />
-            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
+            <Setter Property="Height" Value="34" />
+            <Setter Property="Padding" Value="12,0" />
             <Setter Property="Transitions">
                 <Transitions />
             </Setter>
         </Style>
-        <Style Selector="Button.settingsNav /template/ ContentPresenter">
-            <Setter Property="RenderTransformOrigin" Value="50%,50%" />
-            <Setter Property="RenderTransform" Value="scale(1)" />
+        <!-- Fluent shrinks every Button to scale(0.98) while pressed; keep nav items still -->
+        <Style Selector="Button.settingsNav:pressed">
+            <Setter Property="RenderTransform" Value="none" />
         </Style>
-        <Style Selector="Button.settingsNav:pressed /template/ ContentPresenter">
-            <Setter Property="RenderTransformOrigin" Value="50%,50%" />
-            <Setter Property="RenderTransform" Value="scale(1)" />
+        <Style Selector="Button.settingsNav:pointerover /template/ ContentPresenter,
+                         Button.settingsNav:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SidebarItemHoverBackgroundBrush}" />
         </Style>
-        <Style Selector="Button.settingsNav:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundBaseLowBrush}" />
-        </Style>
-        <Style Selector="Button.settingsNav.active /template/ ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundBaseLowBrush}" />
+        <Style Selector="Button.settingsNav.active /template/ ContentPresenter,
+                         Button.settingsNav.active:pointerover /template/ ContentPresenter,
+                         Button.settingsNav.active:pressed /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SidebarItemSelectedBackgroundBrush}" />
         </Style>
         <Style Selector="Button.settingsNav TextBlock">
             <Setter Property="FontSize" Value="13" />
-            <Setter Property="Opacity" Value="0.9" />
-            <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundBaseHighBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource SidebarTextForegroundBrush}" />
         </Style>
         <Style Selector="Button.settingsNav PathIcon">
             <Setter Property="Width" Value="16" />
             <Setter Property="Height" Value="16" />
-            <Setter Property="Opacity" Value="0.85" />
             <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundAccentBrush}" />
         </Style>
-        <Style Selector="Button.settingsNav:pointerover TextBlock, Button.settingsNav.active TextBlock">
+        <Style Selector="Button.settingsNav.active TextBlock">
             <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Opacity" Value="1" />
-        </Style>
-        <Style Selector="Button.settingsNav:pointerover PathIcon, Button.settingsNav.active PathIcon">
-            <Setter Property="Opacity" Value="1" />
         </Style>
 
-        <Style Selector="Border.settingsCard">
+        <!-- Page layout: a title, then groups of rows inside cards -->
+        <Style Selector="TextBlock.pageTitle">
+            <Setter Property="FontSize" Value="20" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+        <Style Selector="StackPanel.settingsPage">
+            <Setter Property="Spacing" Value="24" />
+        </Style>
+        <Style Selector="TextBlock.groupHeader">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Margin" Value="2,0,0,8" />
+        </Style>
+        <Style Selector="Border.settingsGroup">
             <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}" />
-            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="BorderBrush" Value="{DynamicResource CardBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
             <Setter Property="BoxShadow" Value="{DynamicResource CardShadow}" />
-            <Setter Property="Padding" Value="20" />
+            <Setter Property="ClipToBounds" Value="True" />
+        </Style>
+        <!-- Rows draw their own top divider, so a hidden row takes its divider with it -->
+        <Style Selector="Border.settingsRow">
+            <Setter Property="MinHeight" Value="52" />
+            <Setter Property="Padding" Value="16,10" />
+            <Setter Property="BorderBrush" Value="{DynamicResource CardBorderBrush}" />
+            <Setter Property="BorderThickness" Value="0,1,0,0" />
+        </Style>
+        <Style Selector="Border.settingsRow:nth-child(1)">
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+        <Style Selector="TextBlock.rowLabel">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="TextBlock.rowHint">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Opacity" Value="0.6" />
+        </Style>
+        <Style Selector="Border.settingsRow TextBox, Border.settingsRow ComboBox">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Border.settingsRow NumericUpDown">
+            <Setter Property="Width" Value="{StaticResource SettingsFieldWidth}" />
+            <Setter Property="HorizontalAlignment" Value="Right" />
+            <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
 
-        <Style Selector="Border.settingsDivider">
-            <Setter Property="Height" Value="1" />
-            <Setter Property="Background" Value="{DynamicResource SystemControlHighlightBaseLowBrush}" />
-            <Setter Property="Opacity" Value="0.3" />
-            <Setter Property="Margin" Value="0,12" />
+        <Style Selector="Button.iconButton">
+            <Setter Property="Width" Value="32" />
+            <Setter Property="Height" Value="32" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
         </Style>
 
-        <Style Selector="Border.settingsRowDivider">
-            <Setter Property="Height" Value="1" />
-            <Setter Property="Background" Value="{DynamicResource SystemControlHighlightBaseLowBrush}" />
-            <Setter Property="Opacity" Value="0.18" />
-            <Setter Property="Margin" Value="0,2" />
+        <!-- Tracker source picker: looks and behaves like the ComboBoxes around it -->
+        <Style Selector="Button.trackerDropdown">
+            <Setter Property="Height" Value="32" />
+            <Setter Property="Padding" Value="11,0,8,0" />
+            <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Background" Value="{DynamicResource ComboBoxBackground}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource ComboBoxBorderBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource ComboBoxForeground}" />
+            <Setter Property="BorderThickness" Value="1" />
+        </Style>
+        <Style Selector="Button.trackerDropdown:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource ComboBoxBackgroundPointerOver}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource ComboBoxBorderBrushPointerOver}" />
+            <Setter Property="Foreground" Value="{DynamicResource ComboBoxForeground}" />
+        </Style>
+        <Style Selector="Button.trackerDropdown:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource ComboBoxBackgroundPressed}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource ComboBoxBorderBrushPressed}" />
+            <Setter Property="Foreground" Value="{DynamicResource ComboBoxForeground}" />
+        </Style>
+        <Style Selector="Button.trackerDropdown:pressed">
+            <Setter Property="RenderTransform" Value="none" />
+        </Style>
+
+        <Style Selector="FlyoutPresenter.trackerDropdownFlyout">
+            <Setter Property="Padding" Value="4" />
+            <Setter Property="MaxWidth" Value="640" />
+            <Setter Property="CornerRadius" Value="{DynamicResource OverlayCornerRadius}" />
+            <Setter Property="Background" Value="{DynamicResource ComboBoxDropDownBackground}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource ComboBoxDropDownBorderBrush}" />
+        </Style>
+        <Style Selector="Border.trackerSourceRow">
+            <Setter Property="Padding" Value="8,6" />
+            <Setter Property="Margin" Value="0,1" />
+            <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Border.trackerSourceRow:pointerover">
+            <Setter Property="Background" Value="{DynamicResource ComboBoxItemBackgroundPointerOver}" />
+        </Style>
+        <Style Selector="Button.flyoutIcon">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
+            <Setter Property="Width" Value="26" />
+            <Setter Property="Height" Value="26" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Opacity" Value="0.6" />
+        </Style>
+        <Style Selector="Button.flyoutIcon:pointerover">
+            <Setter Property="Opacity" Value="1" />
+        </Style>
+        <Style Selector="Button.flyoutIcon:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource ComboBoxItemBackgroundPressed}" />
+        </Style>
+        <Style Selector="Button.flyoutIcon PathIcon">
+            <Setter Property="Width" Value="14" />
+            <Setter Property="Height" Value="14" />
+            <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundBaseHighBrush}" />
         </Style>
     </views:DialogWindow.Styles>
 
-    <Grid ColumnDefinitions="180, 1, *">
-        <Border Grid.Column="1" Background="{DynamicResource SystemControlHighlightBaseLowBrush}" Opacity="0.55" />
+    <Grid ColumnDefinitions="200, 1, *">
+        <Border Grid.Column="1" Background="{DynamicResource DividerBrush}" />
 
-        <Grid Grid.Column="0" RowDefinitions="44, *" Background="{DynamicResource WorkspaceBackgroundBrush}">
+        <!-- Navigation -->
+        <Grid Grid.Column="0" RowDefinitions="44, *">
             <!-- Empty TitleBar area for dragging -->
             <Border Grid.Row="0" Background="Transparent" />
 
-            <StackPanel Grid.Row="1" Margin="10,10,10,12" Spacing="8">
+            <StackPanel Grid.Row="1" Margin="12,4,12,12" Spacing="2">
                 <Button Classes="settingsNav" Classes.active="{Binding IsSettingsGeneral}"
                         Command="{Binding SelectSettingsSectionCommand}"
                         CommandParameter="{x:Static vm:SettingsSection.General}">
@@ -225,266 +275,321 @@
             </StackPanel>
         </Grid>
 
-    <Grid Grid.Column="2" RowDefinitions="Auto, Auto, *" Margin="28,20,28,28">
-            <TextBlock Grid.Row="0"
-                       Text="{Binding CurrentSettingsTitleKey, Converter={StaticResource ResourceKeyToTextConverter}}"
-                       FontSize="18"
-                       FontWeight="SemiBold" />
+        <!-- Content -->
+        <Grid Grid.Column="2" RowDefinitions="Auto, *">
+            <TextBlock Grid.Row="0" Classes="pageTitle" Margin="32,22,32,18"
+                       Text="{Binding CurrentSettingsTitleKey, Converter={StaticResource ResourceKeyToTextConverter}}" />
 
-            <Border Grid.Row="1" Height="1" Background="{DynamicResource SystemControlHighlightBaseLowBrush}" Opacity="0.3" Margin="0,16,0,0" />
-
-            <ScrollViewer Grid.Row="2" Margin="0,20,0,0" VerticalScrollBarVisibility="Auto">
-                <StackPanel Spacing="18">
-                    <Border Classes="settingsCard" IsVisible="{Binding IsSettingsGeneral}">
-                        <StackPanel Spacing="14">
-                            <TextBlock Text="{DynamicResource SettingsGeneral}" FontSize="13" FontWeight="SemiBold" Opacity="0.85"/>
-
-                            <Border Classes="settingsDivider"/>
-
-                            <Grid ColumnDefinitions="200, *" RowDefinitions="Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto" RowSpacing="10">
-                                <TextBlock Grid.Row="0" Grid.Column="0" Text="{DynamicResource LabelLanguage}" VerticalAlignment="Center" Opacity="0.85" FontSize="13"/>
-                                <ComboBox Grid.Row="0" Grid.Column="1" Width="220" ItemsSource="{Binding LanguageOptions}" SelectedItem="{Binding SelectedLanguage}" HorizontalAlignment="Right">
-                                    <ComboBox.ItemTemplate>
-                                        <DataTemplate>
-                                            <TextBlock Text="{Binding Key, Converter={StaticResource ResourceKeyToTextConverter}}" FontSize="13"/>
-                                        </DataTemplate>
-                                    </ComboBox.ItemTemplate>
-                                </ComboBox>
-
-                                <Border Grid.Row="1" Grid.ColumnSpan="2" Grid.Column="0" Classes="settingsRowDivider"/>
-
-                                <TextBlock Grid.Row="2" Grid.Column="0" Text="{DynamicResource LabelAutoStart}" VerticalAlignment="Center" Opacity="0.85" FontSize="13"/>
-                                <ToggleSwitch Grid.Row="2" Grid.Column="1" IsChecked="{Binding IsAutoStartEnabled}" HorizontalAlignment="Right"/>
-
-                                <Border Grid.Row="3" Grid.ColumnSpan="2" Grid.Column="0" Classes="settingsRowDivider"/>
-
-                                <TextBlock Grid.Row="4" Grid.Column="0" Text="{DynamicResource LabelAutoUpdate}" VerticalAlignment="Center" Opacity="0.85" FontSize="13"/>
-                                <ToggleSwitch Grid.Row="4" Grid.Column="1" IsChecked="{Binding IsAutoInstallUpdatesEnabled}" HorizontalAlignment="Right"/>
-
-                                <Border Grid.Row="5" Grid.ColumnSpan="2" Grid.Column="0" Classes="settingsRowDivider"/>
-
-                                <TextBlock Grid.Row="6" Grid.Column="0" Text="{DynamicResource LabelCloseAction}" VerticalAlignment="Center" Opacity="0.85" FontSize="13"/>
-                                <ToggleSwitch Grid.Row="6" Grid.Column="1" IsChecked="{Binding IsExitOnClose}" HorizontalAlignment="Right"
-                                              OnContent="{DynamicResource LabelExitApp}" OffContent="{DynamicResource LabelKeepInBackground}"/>
-
-                                <!-- No taskbar badge on Linux, so the option is hidden there -->
-                                <Border Grid.Row="7" Grid.ColumnSpan="2" Grid.Column="0" Classes="settingsRowDivider" IsVisible="{Binding !IsLinux}"/>
-
-                                <TextBlock Grid.Row="8" Grid.Column="0" Text="{DynamicResource LabelDownloadSpeedBadge}" VerticalAlignment="Center" Opacity="0.85" FontSize="13" IsVisible="{Binding !IsLinux}"/>
-                                <ToggleSwitch Grid.Row="8" Grid.Column="1" IsChecked="{Binding IsDownloadSpeedBadgeVisible}" HorizontalAlignment="Right" IsVisible="{Binding !IsLinux}"/>
-
-                                <Border Grid.Row="9" Grid.ColumnSpan="2" Grid.Column="0" Classes="settingsRowDivider"/>
-
-                                <TextBlock Grid.Row="10" Grid.Column="0" Text="{DynamicResource LabelDefaultDownloadSplit}" VerticalAlignment="Center" Opacity="0.85" FontSize="13"/>
-                                <NumericUpDown Grid.Row="10" Grid.Column="1"
-                                               Value="{Binding DefaultDownloadSplit}"
-                                               Minimum="1"
-                                               Maximum="32"
-                                               FormatString="0"
-                                               Width="120"
-                                               HorizontalAlignment="Right"/>
-                            </Grid>
-
-                            <Border Classes="settingsDivider"/>
-
-                            <Grid ColumnDefinitions="200, *, Auto" RowDefinitions="Auto">
-                                <TextBlock Grid.Column="0" Text="{DynamicResource LabelDefaultSavePath}" VerticalAlignment="Center" Opacity="0.85" FontSize="13"/>
-                                <TextBox Grid.Column="1" Text="{Binding DefaultSavePath}" IsReadOnly="True" FontSize="13" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                                <Button Grid.Column="2" Command="{Binding ChooseDefaultSavePathCommand}" VerticalAlignment="Center">
-                                    <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <PathIcon Data="{StaticResource IconFolder}" Width="14" Height="14" Opacity="0.8"/>
-                                        <TextBlock Text="{DynamicResource BtnBrowse}" FontSize="13"/>
-                                    </StackPanel>
-                                </Button>
-                            </Grid>
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <Panel Margin="32,0,32,32">
+                    <!-- General -->
+                    <StackPanel Classes="settingsPage" IsVisible="{Binding IsSettingsGeneral}">
+                        <StackPanel>
+                            <TextBlock Classes="groupHeader" Text="{DynamicResource SettingsGroupApp}" />
+                            <Border Classes="settingsGroup">
+                                <StackPanel>
+                                    <Border Classes="settingsRow">
+                                        <Grid ColumnDefinitions="*, Auto">
+                                            <TextBlock Classes="rowLabel" Text="{DynamicResource LabelLanguage}" />
+                                            <ComboBox Grid.Column="1" Width="{StaticResource SettingsFieldWidth}"
+                                                      ItemsSource="{Binding LanguageOptions}" SelectedItem="{Binding SelectedLanguage}">
+                                                <ComboBox.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <TextBlock Text="{Binding Key, Converter={StaticResource ResourceKeyToTextConverter}}" FontSize="13" />
+                                                    </DataTemplate>
+                                                </ComboBox.ItemTemplate>
+                                            </ComboBox>
+                                        </Grid>
+                                    </Border>
+                                    <Border Classes="settingsRow">
+                                        <Grid ColumnDefinitions="*, Auto">
+                                            <TextBlock Classes="rowLabel" Text="{DynamicResource LabelAutoStart}" />
+                                            <ToggleSwitch Grid.Column="1" IsChecked="{Binding IsAutoStartEnabled}" />
+                                        </Grid>
+                                    </Border>
+                                    <Border Classes="settingsRow">
+                                        <Grid ColumnDefinitions="*, Auto">
+                                            <TextBlock Classes="rowLabel" Text="{DynamicResource LabelAutoUpdate}" />
+                                            <ToggleSwitch Grid.Column="1" IsChecked="{Binding IsAutoInstallUpdatesEnabled}" />
+                                        </Grid>
+                                    </Border>
+                                    <Border Classes="settingsRow">
+                                        <Grid ColumnDefinitions="*, Auto">
+                                            <TextBlock Classes="rowLabel" Text="{DynamicResource LabelCloseAction}" />
+                                            <ToggleSwitch Grid.Column="1" IsChecked="{Binding IsExitOnClose}"
+                                                          OnContent="{DynamicResource LabelExitApp}" OffContent="{DynamicResource LabelKeepInBackground}" />
+                                        </Grid>
+                                    </Border>
+                                    <!-- No taskbar badge on Linux, so the option is hidden there -->
+                                    <Border Classes="settingsRow" IsVisible="{Binding !IsLinux}">
+                                        <Grid ColumnDefinitions="*, Auto">
+                                            <TextBlock Classes="rowLabel" Text="{DynamicResource LabelDownloadSpeedBadge}" />
+                                            <ToggleSwitch Grid.Column="1" IsChecked="{Binding IsDownloadSpeedBadgeVisible}" />
+                                        </Grid>
+                                    </Border>
+                                </StackPanel>
+                            </Border>
                         </StackPanel>
-                    </Border>
 
+                        <StackPanel>
+                            <TextBlock Classes="groupHeader" Text="{DynamicResource SettingsGroupDownloads}" />
+                            <Border Classes="settingsGroup">
+                                <StackPanel>
+                                    <Border Classes="settingsRow">
+                                        <Grid ColumnDefinitions="180, *, Auto">
+                                            <TextBlock Classes="rowLabel" Text="{DynamicResource LabelDefaultSavePath}" />
+                                            <TextBox Grid.Column="1" Text="{Binding DefaultSavePath}" IsReadOnly="True" Margin="0,0,8,0" />
+                                            <Button Grid.Column="2" Command="{Binding ChooseDefaultSavePathCommand}" VerticalAlignment="Center">
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                    <PathIcon Data="{StaticResource IconFolder}" Width="14" Height="14" Opacity="0.8" />
+                                                    <TextBlock Text="{DynamicResource BtnBrowse}" FontSize="13" />
+                                                </StackPanel>
+                                            </Button>
+                                        </Grid>
+                                    </Border>
+                                    <Border Classes="settingsRow">
+                                        <Grid ColumnDefinitions="*, Auto">
+                                            <TextBlock Classes="rowLabel" Text="{DynamicResource LabelDefaultDownloadSplit}" />
+                                            <NumericUpDown Grid.Column="1" Value="{Binding DefaultDownloadSplit}"
+                                                           Minimum="1" Maximum="32" FormatString="0" />
+                                        </Grid>
+                                    </Border>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Appearance -->
                     <ContentControl Content="{Binding AppearanceSettingsContent}">
                         <ContentControl.ContentTemplate>
                             <DataTemplate x:DataType="vm:MainWindowViewModel">
-                                <Border Classes="settingsCard">
-                                    <StackPanel Spacing="14">
-                            <TextBlock Text="{DynamicResource SettingsAppearance}" FontSize="13" FontWeight="SemiBold" Opacity="0.85"/>
-
-                            <Border Classes="settingsDivider"/>
-
-                            <Grid ColumnDefinitions="200, *" RowDefinitions="Auto, Auto, Auto" RowSpacing="10">
-                                <TextBlock Grid.Row="0" Grid.Column="0" Text="{DynamicResource LabelTheme}" VerticalAlignment="Center" Opacity="0.85" FontSize="13"/>
-                                <ComboBox Grid.Row="0" Grid.Column="1" Width="220" ItemsSource="{Binding ThemeOptions}" SelectedItem="{Binding SelectedTheme}" HorizontalAlignment="Right">
-                                    <ComboBox.ItemTemplate>
-                                        <DataTemplate>
-                                            <TextBlock Text="{Binding Key, Converter={StaticResource ResourceKeyToTextConverter}}" FontSize="13"/>
-                                        </DataTemplate>
-                                    </ComboBox.ItemTemplate>
-                                </ComboBox>
-
-                                <Border Grid.Row="1" Grid.ColumnSpan="2" Grid.Column="0" Classes="settingsRowDivider"/>
-
-                                <TextBlock Grid.Row="2" Grid.Column="0" Text="{DynamicResource LabelAccentColor}" VerticalAlignment="Center" Opacity="0.85" FontSize="13"/>
-                                <ComboBox Grid.Row="2" Grid.Column="1" Width="220" ItemsSource="{Binding AccentModeOptions}" SelectedItem="{Binding SelectedAccentMode}" HorizontalAlignment="Right">
-                                    <ComboBox.ItemTemplate>
-                                        <DataTemplate>
-                                            <TextBlock Text="{Binding Key, Converter={StaticResource ResourceKeyToTextConverter}}" FontSize="13"/>
-                                        </DataTemplate>
-                                    </ComboBox.ItemTemplate>
-                                </ComboBox>
-                            </Grid>
-
-                            <StackPanel Spacing="14" IsVisible="{Binding !IsAccentFollowSystem}">
-                                <Border Classes="settingsDivider" Margin="0,8"/>
-                                <Grid ColumnDefinitions="200, *">
-                                    <TextBlock Grid.Column="0" Text="{DynamicResource LabelCustomAccent}" VerticalAlignment="Center" Opacity="0.85" FontSize="13"/>
-                                    <Button Grid.Column="1" HorizontalAlignment="Right" Padding="0" Background="Transparent" BorderThickness="0">
-                                        <Button.RenderTransform>
-                                            <ScaleTransform ScaleX="0.9" ScaleY="0.9" />
-                                        </Button.RenderTransform>
-                                        <StackPanel Orientation="Horizontal" Spacing="10">
-                                            <Border Width="28" Height="28" CornerRadius="6" Background="{Binding CustomAccentPreviewBrush}" />
-                                            <TextBlock Text="{Binding CustomAccentColorHex}" VerticalAlignment="Center" FontSize="13" Opacity="0.8"/>
+                                <StackPanel Classes="settingsPage">
+                                    <Border Classes="settingsGroup">
+                                        <StackPanel>
+                                            <Border Classes="settingsRow">
+                                                <Grid ColumnDefinitions="*, Auto">
+                                                    <TextBlock Classes="rowLabel" Text="{DynamicResource LabelTheme}" />
+                                                    <ComboBox Grid.Column="1" Width="{StaticResource SettingsFieldWidth}"
+                                                              ItemsSource="{Binding ThemeOptions}" SelectedItem="{Binding SelectedTheme}">
+                                                        <ComboBox.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <TextBlock Text="{Binding Key, Converter={StaticResource ResourceKeyToTextConverter}}" FontSize="13" />
+                                                            </DataTemplate>
+                                                        </ComboBox.ItemTemplate>
+                                                    </ComboBox>
+                                                </Grid>
+                                            </Border>
+                                            <Border Classes="settingsRow">
+                                                <Grid ColumnDefinitions="*, Auto">
+                                                    <TextBlock Classes="rowLabel" Text="{DynamicResource LabelAccentColor}" />
+                                                    <ComboBox Grid.Column="1" Width="{StaticResource SettingsFieldWidth}"
+                                                              ItemsSource="{Binding AccentModeOptions}" SelectedItem="{Binding SelectedAccentMode}">
+                                                        <ComboBox.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <TextBlock Text="{Binding Key, Converter={StaticResource ResourceKeyToTextConverter}}" FontSize="13" />
+                                                            </DataTemplate>
+                                                        </ComboBox.ItemTemplate>
+                                                    </ComboBox>
+                                                </Grid>
+                                            </Border>
+                                            <Border Classes="settingsRow" IsVisible="{Binding !IsAccentFollowSystem}">
+                                                <Grid ColumnDefinitions="*, Auto">
+                                                    <TextBlock Classes="rowLabel" Text="{DynamicResource LabelCustomAccent}" />
+                                                    <Button Grid.Column="1" Width="{StaticResource SettingsFieldWidth}" Height="32"
+                                                            Padding="6,0,11,0" HorizontalContentAlignment="Left" VerticalContentAlignment="Center">
+                                                        <StackPanel Orientation="Horizontal" Spacing="10">
+                                                            <Border Width="20" Height="20" CornerRadius="{DynamicResource CardInnerCornerRadius}"
+                                                                    Background="{Binding CustomAccentPreviewBrush}" />
+                                                            <TextBlock Text="{Binding CustomAccentColorHex}" VerticalAlignment="Center" FontSize="13" />
+                                                        </StackPanel>
+                                                        <Button.Flyout>
+                                                            <Flyout Placement="BottomEdgeAlignedRight" FlyoutPresenterClasses="colorPickerFlyout">
+                                                                <LayoutTransformControl>
+                                                                    <LayoutTransformControl.LayoutTransform>
+                                                                        <ScaleTransform ScaleX="0.9" ScaleY="0.9" />
+                                                                    </LayoutTransformControl.LayoutTransform>
+                                                                    <cp:ColorView Color="{Binding CustomAccentColor, Mode=TwoWay}" IsAlphaEnabled="False" />
+                                                                </LayoutTransformControl>
+                                                            </Flyout>
+                                                        </Button.Flyout>
+                                                    </Button>
+                                                </Grid>
+                                            </Border>
                                         </StackPanel>
-                                        <Button.Flyout>
-                                            <Flyout Placement="Bottom" FlyoutPresenterClasses="colorPickerFlyout">
-                                                <LayoutTransformControl>
-                                                    <LayoutTransformControl.LayoutTransform>
-                                                        <ScaleTransform ScaleX="0.9" ScaleY="0.9" />
-                                                    </LayoutTransformControl.LayoutTransform>
-                                                    <cp:ColorView Color="{Binding CustomAccentColor, Mode=TwoWay}" IsAlphaEnabled="False" />
-                                                </LayoutTransformControl>
-                                            </Flyout>
-                                        </Button.Flyout>
-                                    </Button>
-                                </Grid>
-                            </StackPanel>
-                                    </StackPanel>
-                                </Border>
+                                    </Border>
+                                </StackPanel>
                             </DataTemplate>
                         </ContentControl.ContentTemplate>
                     </ContentControl>
 
+                    <!-- Network -->
                     <ContentControl Content="{Binding NetworkSettingsContent}">
                         <ContentControl.ContentTemplate>
                             <DataTemplate x:DataType="vm:MainWindowViewModel">
-                                <Border Classes="settingsCard">
-                                    <StackPanel Spacing="14">
-                            <TextBlock Text="{DynamicResource SettingsNetwork}" FontSize="13" FontWeight="SemiBold" Opacity="0.85"/>
-                            <Border Classes="settingsDivider"/>
-
-                            <!-- Proxy -->
-                            <Grid ColumnDefinitions="200, 100, 12, *, 12, 80" RowDefinitions="Auto, Auto, Auto, Auto, Auto" RowSpacing="10">
-                                <TextBlock Grid.Row="0" Grid.Column="0" Text="{DynamicResource LabelProxy}" VerticalAlignment="Center" Opacity="0.85" FontSize="13"/>
-                                <ComboBox Grid.Row="0" Grid.Column="1" ItemsSource="{Binding ProxyTypes}" SelectedIndex="{Binding ProxyTypeIndex}" HorizontalAlignment="Stretch" FontSize="13"/>
-                                <TextBox Grid.Row="0" Grid.Column="3" Text="{Binding ProxyAddress}" PlaceholderText="127.0.0.1" FontSize="13"/>
-                                <TextBox Grid.Row="0" Grid.Column="5" Text="{Binding ProxyPort}" FontSize="13" TextAlignment="Right"/>
-
-                                <Border Grid.Row="1" Grid.ColumnSpan="6" Grid.Column="0" Classes="settingsRowDivider"/>
-
-                                <TextBlock Grid.Row="2" Grid.Column="0" Text="{DynamicResource LabelProxyUsername}" VerticalAlignment="Center" Opacity="0.85" FontSize="13"/>
-                                <TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="5" Text="{Binding ProxyUsername}" FontSize="13"/>
-
-                                <Border Grid.Row="3" Grid.ColumnSpan="6" Grid.Column="0" Classes="settingsRowDivider"/>
-
-                                <TextBlock Grid.Row="4" Grid.Column="0" Text="{DynamicResource LabelProxyPassword}" VerticalAlignment="Center" Opacity="0.85" FontSize="13"/>
-                                <TextBox Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="5" Text="{Binding ProxyPassword}" PasswordChar="•" FontSize="13"/>
-                            </Grid>
-                                    </StackPanel>
-                                </Border>
+                                <StackPanel Classes="settingsPage">
+                                    <Border Classes="settingsGroup">
+                                        <StackPanel>
+                                            <Border Classes="settingsRow">
+                                                <Grid ColumnDefinitions="*, Auto">
+                                                    <TextBlock Classes="rowLabel" Text="{DynamicResource LabelProxy}" />
+                                                    <Grid Grid.Column="1" Width="{StaticResource SettingsWideFieldWidth}" ColumnDefinitions="100, *, 72" ColumnSpacing="8">
+                                                        <ComboBox Grid.Column="0" HorizontalAlignment="Stretch"
+                                                                  ItemsSource="{Binding ProxyTypes}" SelectedIndex="{Binding ProxyTypeIndex}" />
+                                                        <TextBox Grid.Column="1" Text="{Binding ProxyAddress}" PlaceholderText="127.0.0.1" />
+                                                        <TextBox Grid.Column="2" Text="{Binding ProxyPort}" PlaceholderText="{DynamicResource LabelProxyPort}" />
+                                                    </Grid>
+                                                </Grid>
+                                            </Border>
+                                            <Border Classes="settingsRow">
+                                                <Grid ColumnDefinitions="*, Auto">
+                                                    <TextBlock Classes="rowLabel" Text="{DynamicResource LabelProxyUsername}" />
+                                                    <TextBox Grid.Column="1" Width="{StaticResource SettingsWideFieldWidth}" Text="{Binding ProxyUsername}" />
+                                                </Grid>
+                                            </Border>
+                                            <Border Classes="settingsRow">
+                                                <Grid ColumnDefinitions="*, Auto">
+                                                    <TextBlock Classes="rowLabel" Text="{DynamicResource LabelProxyPassword}" />
+                                                    <TextBox Grid.Column="1" Width="{StaticResource SettingsWideFieldWidth}" Text="{Binding ProxyPassword}" PasswordChar="•" />
+                                                </Grid>
+                                            </Border>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
                             </DataTemplate>
                         </ContentControl.ContentTemplate>
                     </ContentControl>
 
+                    <!-- ED2K -->
                     <ContentControl Content="{Binding Ed2kSettingsContent}">
                         <ContentControl.ContentTemplate>
                             <DataTemplate x:DataType="vm:MainWindowViewModel">
-                                <Border Classes="settingsCard">
-                                    <StackPanel Spacing="14">
-                            <TextBlock Text="{DynamicResource SettingsEd2k}" FontSize="13" FontWeight="SemiBold" Opacity="0.85"/>
-                            <TextBlock Text="{DynamicResource Ed2kSettingsDescription}" FontSize="12" Opacity="0.65" TextWrapping="Wrap"/>
+                                <StackPanel Classes="settingsPage">
+                                    <TextBlock Classes="rowHint" Text="{DynamicResource Ed2kSettingsDescription}" TextWrapping="Wrap" Margin="2,0,0,-8" />
 
-                            <Border Classes="settingsDivider"/>
-                            <TextBlock Text="{DynamicResource Ed2kEngineSettings}" FontSize="12" FontWeight="SemiBold" Opacity="0.7"/>
-                            <Grid ColumnDefinitions="220, *" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="10">
-                                <TextBlock Grid.Row="0" Grid.Column="0" Text="{DynamicResource Ed2kListenPort}" VerticalAlignment="Center" FontSize="13" Opacity="0.85"/>
-                                <NumericUpDown Grid.Row="0" Grid.Column="1" Value="{Binding Ed2kListenPort}" Minimum="0" Maximum="65535" FormatString="0" Width="150" HorizontalAlignment="Right"/>
-                                <Border Grid.Row="1" Grid.ColumnSpan="2" Classes="settingsRowDivider"/>
-                                <TextBlock Grid.Row="2" Grid.Column="0" Text="{DynamicResource Ed2kUdpListenPort}" VerticalAlignment="Center" FontSize="13" Opacity="0.85"/>
-                                <NumericUpDown Grid.Row="2" Grid.Column="1" Value="{Binding Ed2kUdpListenPort}" Minimum="0" Maximum="65535" FormatString="0" Width="150" HorizontalAlignment="Right"/>
-                                <Border Grid.Row="3" Grid.ColumnSpan="2" Classes="settingsRowDivider"/>
-                                <TextBlock Grid.Row="4" Grid.Column="0" Text="{DynamicResource Ed2kUploadSlots}" VerticalAlignment="Center" FontSize="13" Opacity="0.85"/>
-                                <NumericUpDown Grid.Row="4" Grid.Column="1" Value="{Binding Ed2kUploadSlots}" Minimum="1" Maximum="100" FormatString="0" Width="150" HorizontalAlignment="Right"/>
-                                <Border Grid.Row="5" Grid.ColumnSpan="2" Classes="settingsRowDivider"/>
-                                <TextBlock Grid.Row="6" Grid.Column="0" Text="{DynamicResource Ed2kStaticServers}" VerticalAlignment="Top" Margin="0,7,0,0" FontSize="13" Opacity="0.85"/>
-                                <TextBox Grid.Row="6" Grid.Column="1" Text="{Binding Ed2kServer}" AcceptsReturn="True" Height="80" TextWrapping="Wrap"
-                                         PlaceholderText="{DynamicResource Ed2kStaticServersPlaceholder}" FontSize="13"/>
-                            </Grid>
-
-                            <Border Classes="settingsDivider"/>
-                            <TextBlock Text="{DynamicResource Ed2kBootstrapSettings}" FontSize="12" FontWeight="SemiBold" Opacity="0.7"/>
-                            <Grid ColumnDefinitions="220, *" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="10">
-                                <TextBlock Grid.Row="0" Grid.Column="0" Text="{DynamicResource Ed2kServerMetUrl}" VerticalAlignment="Center" FontSize="13" Opacity="0.85"/>
-                                <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Ed2kServerMetUrl}" FontSize="13"/>
-                                <Border Grid.Row="1" Grid.ColumnSpan="2" Classes="settingsRowDivider"/>
-                                <TextBlock Grid.Row="2" Grid.Column="0" Text="{DynamicResource Ed2kNodesDatUrl}" VerticalAlignment="Center" FontSize="13" Opacity="0.85"/>
-                                <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding Ed2kNodesDatUrl}" FontSize="13"/>
-                                <Border Grid.Row="3" Grid.ColumnSpan="2" Classes="settingsRowDivider"/>
-                                <TextBlock Grid.Row="4" Grid.Column="0" Text="{DynamicResource Ed2kBootstrapAutoSync}" VerticalAlignment="Center" FontSize="13" Opacity="0.85"/>
-                                <ToggleSwitch Grid.Row="4" Grid.Column="1" IsChecked="{Binding Ed2kBootstrapAutoSync}" HorizontalAlignment="Right"/>
-                                <Border Grid.Row="5" Grid.ColumnSpan="2" Classes="settingsRowDivider"/>
-                                <TextBlock Grid.Row="6" Grid.Column="0" Text="{DynamicResource Ed2kBootstrapSyncInterval}" VerticalAlignment="Center" FontSize="13" Opacity="0.85"
-                                           IsVisible="{Binding Ed2kBootstrapAutoSync}"/>
-                                <ComboBox Grid.Row="6" Grid.Column="1" ItemsSource="{Binding Ed2kSyncIntervalOptions}" SelectedItem="{Binding SelectedEd2kSyncInterval}" Width="220" HorizontalAlignment="Right"
-                                          IsVisible="{Binding Ed2kBootstrapAutoSync}">
-                                    <ComboBox.ItemTemplate>
-                                        <DataTemplate x:DataType="vm:Ed2kSyncIntervalOption">
-                                            <TextBlock Text="{Binding ResourceKey, Converter={StaticResource ResourceKeyToTextConverter}}" FontSize="13"/>
-                                        </DataTemplate>
-                                    </ComboBox.ItemTemplate>
-                                </ComboBox>
-                            </Grid>
-
-                            <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,2,0,0">
-                                <Button Grid.Column="0" Command="{Binding SyncEd2kBootstrapCommand}" IsEnabled="{Binding !IsSyncingEd2kBootstrap}">
-                                    <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <Panel Width="15" Height="15">
-                                            <PathIcon Data="{StaticResource IconRefresh}" Width="15" Height="15" IsVisible="{Binding !IsSyncingEd2kBootstrap}"/>
-                                            <PathIcon Data="{StaticResource IconRefresh}" Width="15" Height="15" Classes="spin" IsVisible="{Binding IsSyncingEd2kBootstrap}"/>
-                                        </Panel>
-                                        <TextBlock Text="{DynamicResource Ed2kBootstrapSyncNow}" FontSize="13"/>
+                                    <StackPanel>
+                                        <TextBlock Classes="groupHeader" Text="{DynamicResource Ed2kEngineSettings}" />
+                                        <Border Classes="settingsGroup">
+                                            <StackPanel>
+                                                <Border Classes="settingsRow">
+                                                    <Grid ColumnDefinitions="*, Auto">
+                                                        <TextBlock Classes="rowLabel" Text="{DynamicResource Ed2kListenPort}" />
+                                                        <NumericUpDown Grid.Column="1" Value="{Binding Ed2kListenPort}" Minimum="0" Maximum="65535" FormatString="0" />
+                                                    </Grid>
+                                                </Border>
+                                                <Border Classes="settingsRow">
+                                                    <Grid ColumnDefinitions="*, Auto">
+                                                        <TextBlock Classes="rowLabel" Text="{DynamicResource Ed2kUdpListenPort}" />
+                                                        <NumericUpDown Grid.Column="1" Value="{Binding Ed2kUdpListenPort}" Minimum="0" Maximum="65535" FormatString="0" />
+                                                    </Grid>
+                                                </Border>
+                                                <Border Classes="settingsRow">
+                                                    <Grid ColumnDefinitions="*, Auto">
+                                                        <TextBlock Classes="rowLabel" Text="{DynamicResource Ed2kUploadSlots}" />
+                                                        <NumericUpDown Grid.Column="1" Value="{Binding Ed2kUploadSlots}" Minimum="1" Maximum="100" FormatString="0" />
+                                                    </Grid>
+                                                </Border>
+                                                <Border Classes="settingsRow">
+                                                    <StackPanel Spacing="8">
+                                                        <TextBlock Classes="rowLabel" Text="{DynamicResource Ed2kStaticServers}" />
+                                                        <TextBox Text="{Binding Ed2kServer}" AcceptsReturn="True" Height="80" TextWrapping="Wrap"
+                                                                 PlaceholderText="{DynamicResource Ed2kStaticServersPlaceholder}" />
+                                                    </StackPanel>
+                                                </Border>
+                                            </StackPanel>
+                                        </Border>
                                     </StackPanel>
-                                </Button>
-                                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" Opacity="0.65">
-                                    <TextBlock Text="{DynamicResource Ed2kBootstrapLastSync}" FontSize="12"/>
-                                    <TextBlock Text="{Binding Ed2kBootstrapLastSyncText}" FontSize="12"/>
+
+                                    <StackPanel>
+                                        <TextBlock Classes="groupHeader" Text="{DynamicResource Ed2kBootstrapSettings}" />
+                                        <Border Classes="settingsGroup">
+                                            <StackPanel>
+                                                <Border Classes="settingsRow">
+                                                    <Grid ColumnDefinitions="180, *">
+                                                        <TextBlock Classes="rowLabel" Text="{DynamicResource Ed2kServerMetUrl}" />
+                                                        <TextBox Grid.Column="1" Text="{Binding Ed2kServerMetUrl}" />
+                                                    </Grid>
+                                                </Border>
+                                                <Border Classes="settingsRow">
+                                                    <Grid ColumnDefinitions="180, *">
+                                                        <TextBlock Classes="rowLabel" Text="{DynamicResource Ed2kNodesDatUrl}" />
+                                                        <TextBox Grid.Column="1" Text="{Binding Ed2kNodesDatUrl}" />
+                                                    </Grid>
+                                                </Border>
+                                                <Border Classes="settingsRow">
+                                                    <Grid ColumnDefinitions="*, Auto">
+                                                        <TextBlock Classes="rowLabel" Text="{DynamicResource Ed2kBootstrapAutoSync}" />
+                                                        <ToggleSwitch Grid.Column="1" IsChecked="{Binding Ed2kBootstrapAutoSync}" />
+                                                    </Grid>
+                                                </Border>
+                                                <Border Classes="settingsRow" IsVisible="{Binding Ed2kBootstrapAutoSync}">
+                                                    <Grid ColumnDefinitions="*, Auto">
+                                                        <TextBlock Classes="rowLabel" Text="{DynamicResource Ed2kBootstrapSyncInterval}" />
+                                                        <ComboBox Grid.Column="1" Width="{StaticResource SettingsFieldWidth}"
+                                                                  ItemsSource="{Binding Ed2kSyncIntervalOptions}" SelectedItem="{Binding SelectedEd2kSyncInterval}">
+                                                            <ComboBox.ItemTemplate>
+                                                                <DataTemplate x:DataType="vm:Ed2kSyncIntervalOption">
+                                                                    <TextBlock Text="{Binding ResourceKey, Converter={StaticResource ResourceKeyToTextConverter}}" FontSize="13" />
+                                                                </DataTemplate>
+                                                            </ComboBox.ItemTemplate>
+                                                        </ComboBox>
+                                                    </Grid>
+                                                </Border>
+                                                <Border Classes="settingsRow">
+                                                    <Grid ColumnDefinitions="*, Auto">
+                                                        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                                            <TextBlock Classes="rowHint" Text="{DynamicResource Ed2kBootstrapLastSync}" />
+                                                            <TextBlock Classes="rowHint" Text="{Binding Ed2kBootstrapLastSyncText}" />
+                                                        </StackPanel>
+                                                        <Button Grid.Column="1" Command="{Binding SyncEd2kBootstrapCommand}" IsEnabled="{Binding !IsSyncingEd2kBootstrap}">
+                                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                                <Panel Width="14" Height="14">
+                                                                    <PathIcon Data="{StaticResource IconRefresh}" Width="14" Height="14" IsVisible="{Binding !IsSyncingEd2kBootstrap}" />
+                                                                    <PathIcon Data="{StaticResource IconRefresh}" Width="14" Height="14" Classes="spin" IsVisible="{Binding IsSyncingEd2kBootstrap}" />
+                                                                </Panel>
+                                                                <TextBlock Text="{DynamicResource Ed2kBootstrapSyncNow}" FontSize="13" />
+                                                            </StackPanel>
+                                                        </Button>
+                                                    </Grid>
+                                                </Border>
+                                            </StackPanel>
+                                        </Border>
+                                    </StackPanel>
+
+                                    <StackPanel>
+                                        <TextBlock Classes="groupHeader" Text="{DynamicResource Ed2kSearchSettings}" />
+                                        <Border Classes="settingsGroup">
+                                            <StackPanel>
+                                                <Border Classes="settingsRow">
+                                                    <Grid ColumnDefinitions="*, Auto">
+                                                        <TextBlock Classes="rowLabel" Text="{DynamicResource Ed2kMinSources}" />
+                                                        <NumericUpDown Grid.Column="1" Value="{Binding Ed2kMinSourceCount}" Minimum="0" Maximum="999999" FormatString="0" />
+                                                    </Grid>
+                                                </Border>
+                                                <Border Classes="settingsRow">
+                                                    <Grid ColumnDefinitions="*, Auto">
+                                                        <TextBlock Classes="rowLabel" Text="{DynamicResource Ed2kSearchTimeoutSetting}" />
+                                                        <NumericUpDown Grid.Column="1" Value="{Binding Ed2kSearchTimeoutSeconds}" Minimum="10" Maximum="600" FormatString="0" />
+                                                    </Grid>
+                                                </Border>
+                                            </StackPanel>
+                                        </Border>
+                                    </StackPanel>
+
+                                    <Grid ColumnDefinitions="*, Auto" Margin="0,-8,0,0">
+                                        <TextBlock Classes="rowHint" Text="{DynamicResource Ed2kRestartRequired}" IsVisible="{Binding Ed2kSettingsRestartRequired}"
+                                                   VerticalAlignment="Center" Margin="2,0,16,0" />
+                                        <Button Grid.Column="1" Command="{Binding ApplyEd2kSettingsCommand}"
+                                                IsEnabled="{Binding Ed2kSettingsRestartRequired}" Classes="accent">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <Panel Width="14" Height="14">
+                                                    <PathIcon Data="{StaticResource IconRefresh}" Width="14" Height="14" IsVisible="{Binding !IsApplyingEd2kSettings}" />
+                                                    <PathIcon Data="{StaticResource IconRefresh}" Width="14" Height="14" Classes="spin" IsVisible="{Binding IsApplyingEd2kSettings}" />
+                                                </Panel>
+                                                <TextBlock Text="{DynamicResource Ed2kApplyRestartEngine}" FontSize="13" />
+                                            </StackPanel>
+                                        </Button>
+                                    </Grid>
                                 </StackPanel>
-                            </Grid>
-
-                            <Border Classes="settingsDivider"/>
-                            <TextBlock Text="{DynamicResource Ed2kSearchSettings}" FontSize="12" FontWeight="SemiBold" Opacity="0.7"/>
-                            <Grid ColumnDefinitions="220,*" RowDefinitions="Auto,Auto,Auto" RowSpacing="10">
-                                <TextBlock Grid.Row="0" Grid.Column="0" Text="{DynamicResource Ed2kMinSources}" VerticalAlignment="Center" FontSize="13" Opacity="0.85"/>
-                                <NumericUpDown Grid.Row="0" Grid.Column="1" Value="{Binding Ed2kMinSourceCount}" Minimum="0" Maximum="999999" FormatString="0" Width="180" HorizontalAlignment="Right"/>
-                                <Border Grid.Row="1" Grid.ColumnSpan="2" Classes="settingsRowDivider"/>
-                                <TextBlock Grid.Row="2" Grid.Column="0" Text="{DynamicResource Ed2kSearchTimeoutSetting}" VerticalAlignment="Center" FontSize="13" Opacity="0.85"/>
-                                <NumericUpDown Grid.Row="2" Grid.Column="1" Value="{Binding Ed2kSearchTimeoutSeconds}" Minimum="10" Maximum="600" FormatString="0" Width="180" HorizontalAlignment="Right"/>
-                            </Grid>
-
-                            <Border Classes="settingsDivider"/>
-                            <Grid ColumnDefinitions="*,Auto">
-                                <TextBlock Grid.Column="0" Text="{DynamicResource Ed2kRestartRequired}" IsVisible="{Binding Ed2kSettingsRestartRequired}"
-                                           VerticalAlignment="Center" FontSize="12" Opacity="0.7"/>
-                                <Button Grid.Column="1" Command="{Binding ApplyEd2kSettingsCommand}"
-                                        IsEnabled="{Binding Ed2kSettingsRestartRequired}" Classes="accent">
-                                    <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <Panel Width="15" Height="15">
-                                            <PathIcon Data="{StaticResource IconRefresh}" Width="15" Height="15" IsVisible="{Binding !IsApplyingEd2kSettings}"/>
-                                            <PathIcon Data="{StaticResource IconRefresh}" Width="15" Height="15" Classes="spin" IsVisible="{Binding IsApplyingEd2kSettings}"/>
-                                        </Panel>
-                                        <TextBlock Text="{DynamicResource Ed2kApplyRestartEngine}" FontSize="13"/>
-                                    </StackPanel>
-                                </Button>
-                            </Grid>
-                                    </StackPanel>
-                                </Border>
                             </DataTemplate>
                         </ContentControl.ContentTemplate>
                     </ContentControl>
@@ -495,274 +600,305 @@
                     <ContentControl Content="{Binding AdvancedSettingsContent}">
                         <ContentControl.ContentTemplate>
                             <DataTemplate x:DataType="vm:MainWindowViewModel">
-                                <Border Classes="settingsCard">
-                                    <StackPanel Spacing="14">
-                            <TextBlock Text="{DynamicResource SettingsAdvanced}" FontSize="13" FontWeight="SemiBold" Opacity="0.85"/>
-                            <Border Classes="settingsDivider"/>
-                            
-                            <!-- Trackers -->
-                            <TextBlock Text="{DynamicResource LabelBtTrackers}" FontSize="12" FontWeight="SemiBold" Opacity="0.7"/>
-                            <Grid ColumnDefinitions="200, *, 12, Auto" RowDefinitions="Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto" RowSpacing="8">
-                                <TextBlock Grid.Row="0" Grid.Column="0" Text="{DynamicResource LabelTrackerServers}" VerticalAlignment="Center" Opacity="0.85" FontSize="13"/>
-                                <Button x:Name="TrackerSourceSelector" Grid.Row="0" Grid.Column="1" Classes="trackerDropdown">
-                                    <Button.Flyout>
-                                        <Flyout Placement="Bottom" FlyoutPresenterClasses="trackerDropdownFlyout">
-                                            <StackPanel Width="{Binding #TrackerSourceSelector.Bounds.Width}">
-                                                <Border Classes="trackerDropdownHeader">
-                                                    <Grid ColumnDefinitions="*, 10, Auto">
-                                                        <TextBox Grid.Column="0"
-                                                                 Text="{Binding NewTrackerSourceUrl}"
-                                                                 PlaceholderText="{DynamicResource PlaceholderTrackerSourceUrl}"
-                                                                 FontSize="13"/>
-                                                        <Button Grid.Column="2" Command="{Binding AddTrackerSourceCommand}" MinWidth="56">
-                                                            <TextBlock Text="{DynamicResource BtnAdd}" FontSize="13"/>
+                                <StackPanel Classes="settingsPage">
+                                    <!-- Trackers -->
+                                    <StackPanel>
+                                        <TextBlock Classes="groupHeader" Text="{DynamicResource LabelBtTrackers}" />
+                                        <Border Classes="settingsGroup">
+                                            <StackPanel>
+                                                <Border Classes="settingsRow">
+                                                    <Grid ColumnDefinitions="*, Auto, Auto">
+                                                        <TextBlock Classes="rowLabel" Text="{DynamicResource LabelTrackerSources}" />
+                                                        <Button x:Name="TrackerSourceSelector" Grid.Column="1" Classes="trackerDropdown"
+                                                                Width="{StaticResource SettingsWideFieldWidth}">
+                                                            <Button.Flyout>
+                                                                <Flyout Placement="BottomEdgeAlignedRight" FlyoutPresenterClasses="trackerDropdownFlyout">
+                                                                    <!-- Selector width (SettingsWideFieldWidth, 360) minus the presenter's
+                                                                         4px padding and 1px border on each side, so the panel matches the box -->
+                                                                    <StackPanel Width="350">
+                                                                        <Grid ColumnDefinitions="*, Auto" ColumnSpacing="8" Margin="4">
+                                                                            <TextBox Grid.Column="0" FontSize="13"
+                                                                                     Text="{Binding NewTrackerSourceUrl}"
+                                                                                     PlaceholderText="{DynamicResource PlaceholderTrackerSourceUrl}" />
+                                                                            <Button Grid.Column="1" Command="{Binding AddTrackerSourceCommand}" MinWidth="60"
+                                                                                    HorizontalContentAlignment="Center">
+                                                                                <TextBlock Text="{DynamicResource BtnAdd}" FontSize="13" />
+                                                                            </Button>
+                                                                        </Grid>
+
+                                                                        <Border Height="1" Margin="-4,4" Background="{DynamicResource ComboBoxDropDownBorderBrush}" />
+
+                                                                        <ScrollViewer MaxHeight="300" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                                                            <ItemsControl ItemsSource="{Binding TrackerSourceOptions}">
+                                                                                <ItemsControl.ItemTemplate>
+                                                                                    <DataTemplate x:DataType="models:TrackerSourceOption">
+                                                                                        <Border Classes="trackerSourceRow">
+                                                                                            <Grid ColumnDefinitions="*, Auto, Auto, Auto">
+                                                                                                <CheckBox Grid.Column="0" IsChecked="{Binding IsSelected}"
+                                                                                                          MinWidth="0" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
+                                                                                                    <StackPanel Spacing="1" Margin="2,0,0,0">
+                                                                                                        <TextBlock Text="{Binding Name}" FontSize="13"
+                                                                                                                   TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
+                                                                                                        <TextBlock Text="{Binding Url}" FontSize="11" Opacity="0.6"
+                                                                                                                   TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"
+                                                                                                                   ToolTip.Tip="{Binding Url}" />
+                                                                                                    </StackPanel>
+                                                                                                </CheckBox>
+                                                                                                <Border Grid.Column="1" Background="{DynamicResource ComboBoxItemBackgroundPressed}" CornerRadius="10"
+                                                                                                        Padding="7,1" Margin="8,0,4,0" VerticalAlignment="Center" IsVisible="{Binding IsCdn}">
+                                                                                                    <TextBlock Text="CDN" FontSize="10" Opacity="0.75" />
+                                                                                                </Border>
+                                                                                                <Button Grid.Column="2" Classes="flyoutIcon" Margin="4,0,0,0"
+                                                                                                        Click="OnCopyTrackerSource"
+                                                                                                        ToolTip.Tip="{DynamicResource ToolTipCopyLink}">
+                                                                                                    <PathIcon Data="{StaticResource IconCopy}" />
+                                                                                                </Button>
+                                                                                                <Button Grid.Column="3" Classes="flyoutIcon" Margin="2,0,0,0"
+                                                                                                        IsVisible="{Binding IsCustom}"
+                                                                                                        Click="OnRemoveTrackerSource">
+                                                                                                    <PathIcon Data="{StaticResource IconTrash}" />
+                                                                                                </Button>
+                                                                                            </Grid>
+                                                                                        </Border>
+                                                                                    </DataTemplate>
+                                                                                </ItemsControl.ItemTemplate>
+                                                                            </ItemsControl>
+                                                                        </ScrollViewer>
+                                                                    </StackPanel>
+                                                                </Flyout>
+                                                            </Button.Flyout>
+
+                                                            <Grid ColumnDefinitions="*, Auto">
+                                                                <TextBlock Grid.Column="0"
+                                                                           Text="{Binding SelectedTrackerSourceSummary}"
+                                                                           FontSize="13"
+                                                                           VerticalAlignment="Center"
+                                                                           TextWrapping="NoWrap"
+                                                                           TextTrimming="CharacterEllipsis" />
+                                                                <PathIcon Grid.Column="1"
+                                                                          Data="{StaticResource IconChevronDown}"
+                                                                          Width="14" Height="14"
+                                                                          Margin="8,0,0,0"
+                                                                          VerticalAlignment="Center"
+                                                                          Opacity="0.7" />
+                                                            </Grid>
+                                                        </Button>
+                                                        <Button Grid.Column="2" Classes="iconButton" Margin="8,0,0,0" VerticalAlignment="Center"
+                                                                Command="{Binding SyncTrackersCommand}"
+                                                                ToolTip.Tip="{DynamicResource ToolTipSyncTrackers}">
+                                                            <Panel Width="15" Height="15">
+                                                                <PathIcon Data="{StaticResource IconRefresh}" Width="15" Height="15" IsVisible="{Binding !IsSyncingTrackers}" />
+                                                                <PathIcon Data="{StaticResource IconRefresh}" Width="15" Height="15" Classes="spin" IsVisible="{Binding IsSyncingTrackers}" />
+                                                            </Panel>
                                                         </Button>
                                                     </Grid>
                                                 </Border>
-
-                                                <ScrollViewer MaxHeight="280" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="4,4,4,6">
-                                                    <ItemsControl ItemsSource="{Binding TrackerSourceOptions}">
-                                                        <ItemsControl.ItemTemplate>
-                                                            <DataTemplate x:DataType="models:TrackerSourceOption">
-                                                                <Grid Classes="trackerSourceRow" ColumnDefinitions="Auto, *, Auto, Auto, Auto">
-                                                                    <CheckBox Grid.Column="0" IsChecked="{Binding IsSelected}" VerticalAlignment="Center" Margin="8,0,6,0"/>
-                                                                    <StackPanel Grid.Column="1" Spacing="2" MinWidth="0" VerticalAlignment="Center">
-                                                                        <TextBlock Text="{Binding Name}" FontSize="12" Opacity="0.86"/>
-                                                                        <TextBlock Text="{Binding Url}"
-                                                                                   FontSize="12"
-                                                                                   TextWrapping="NoWrap"
-                                                                                   MaxLines="1"
-                                                                                   TextTrimming="CharacterEllipsis"
-                                                                                   ToolTip.Tip="{Binding Url}"/>
-                                                                    </StackPanel>
-                                                                    <Button Grid.Column="2"
-                                                                            Classes="trackerCopy"
-                                                                            VerticalAlignment="Center"
-                                                                            Click="OnCopyTrackerSource"
-                                                                            ToolTip.Tip="{DynamicResource ToolTipCopyLink}">
-                                                                        <PathIcon Data="{StaticResource IconCopy}" />
-                                                                    </Button>
-                                                                    <Border Grid.Column="3" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}" CornerRadius="10"
-                                                                            Padding="8,2" VerticalAlignment="Center" IsVisible="{Binding IsCdn}" Margin="8,0,0,0">
-                                                                        <TextBlock Text="CDN" FontSize="11" Opacity="0.75"/>
-                                                                    </Border>
-                                                                    <Button Grid.Column="4"
-                                                                            Background="Transparent"
-                                                                            BorderThickness="0"
-                                                                            Padding="6,2"
-                                                                            IsVisible="{Binding IsCustom}"
-                                                                            Click="OnRemoveTrackerSource">
-                                                                        <TextBlock Text="×" FontSize="14" Opacity="0.8"/>
-                                                                    </Button>
-                                                                </Grid>
-                                                            </DataTemplate>
-                                                        </ItemsControl.ItemTemplate>
-                                                    </ItemsControl>
-                                                </ScrollViewer>
+                                                <Border Classes="settingsRow">
+                                                    <Grid ColumnDefinitions="*, Auto">
+                                                        <StackPanel Spacing="2" VerticalAlignment="Center">
+                                                            <TextBlock Classes="rowLabel" Text="{DynamicResource LabelAutoSyncTracker}" />
+                                                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                                                <TextBlock Classes="rowHint" Text="{DynamicResource LabelTrackerLastSync}" />
+                                                                <TextBlock Classes="rowHint" Text="{Binding LastSyncTrackerTimeText}" />
+                                                            </StackPanel>
+                                                        </StackPanel>
+                                                        <ToggleSwitch Grid.Column="1" IsChecked="{Binding AutoSyncTracker}" />
+                                                    </Grid>
+                                                </Border>
+                                                <Border Classes="settingsRow">
+                                                    <StackPanel Spacing="8">
+                                                        <TextBlock Classes="rowLabel" Text="{DynamicResource LabelTrackerList}" />
+                                                        <TextBox Text="{Binding BtTrackers}"
+                                                                 Height="110"
+                                                                 AcceptsReturn="True"
+                                                                 TextWrapping="Wrap"
+                                                                 PlaceholderText="udp://..." />
+                                                        <StackPanel Orientation="Horizontal" Spacing="10">
+                                                            <TextBlock Classes="rowHint" Text="{DynamicResource LabelTrackerRecommended}" VerticalAlignment="Center" />
+                                                            <Button Classes="linkButton" Command="{Binding OpenExternalUrlCommand}" CommandParameter="https://github.com/ngosang/trackerslist">
+                                                                <TextBlock Text="ngosang/trackerslist" FontSize="12" />
+                                                            </Button>
+                                                            <Button Classes="linkButton" Command="{Binding OpenExternalUrlCommand}" CommandParameter="https://github.com/XIU2/TrackersListCollection">
+                                                                <TextBlock Text="XIU2/TrackersListCollection" FontSize="12" />
+                                                            </Button>
+                                                        </StackPanel>
+                                                    </StackPanel>
+                                                </Border>
                                             </StackPanel>
-                                        </Flyout>
-                                    </Button.Flyout>
-
-                                    <Grid ColumnDefinitions="*, Auto">
-                                        <TextBlock Grid.Column="0"
-                                                   Text="{Binding SelectedTrackerSourceSummary}"
-                                                   FontSize="13"
-                                                   VerticalAlignment="Center"
-                                                   TextWrapping="NoWrap"
-                                                   TextTrimming="CharacterEllipsis"
-                                                   Opacity="0.86"/>
-                                        <PathIcon Grid.Column="1"
-                                                  Data="{StaticResource IconChevronDown}"
-                                                  Width="16"
-                                                  Height="16"
-                                                  Margin="10,0,0,0"
-                                                  VerticalAlignment="Center"
-                                                  Opacity="0.65"/>
-                                    </Grid>
-                                </Button>
-                                <Button Grid.Row="0" Grid.Column="3" Command="{Binding SyncTrackersCommand}" VerticalAlignment="Center" Width="40" Height="32">
-                                    <Panel Width="16" Height="16">
-                                        <PathIcon Data="{StaticResource IconRefresh}" Width="16" Height="16" IsVisible="{Binding !IsSyncingTrackers}"/>
-                                        <PathIcon Data="{StaticResource IconRefresh}" Width="16" Height="16" Classes="spin" IsVisible="{Binding IsSyncingTrackers}"/>
-                                    </Panel>
-                                </Button>
-
-                                <Border Grid.Row="1" Grid.ColumnSpan="4" Grid.Column="0" Classes="settingsRowDivider"/>
-
-                                <TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3"
-                                         Text="{Binding BtTrackers}"
-                                         Height="100"
-                                         AcceptsReturn="True"
-                                         TextWrapping="Wrap"
-                                         FontSize="13"
-                                         PlaceholderText="udp://..."/>
-
-                                <Border Grid.Row="3" Grid.ColumnSpan="4" Grid.Column="0" Classes="settingsRowDivider"/>
-
-                                <StackPanel Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="3" Orientation="Horizontal" Spacing="8" Opacity="0.75">
-                                    <TextBlock Text="{DynamicResource LabelTrackerRecommended}" FontSize="12" VerticalAlignment="Center"/>
-                                    <Button Classes="linkButton" Command="{Binding OpenExternalUrlCommand}" CommandParameter="https://github.com/ngosang/trackerslist">
-                                        <TextBlock Text="ngosang/trackerslist" FontSize="12"/>
-                                    </Button>
-                                    <Button Classes="linkButton" Command="{Binding OpenExternalUrlCommand}" CommandParameter="https://github.com/XIU2/TrackersListCollection">
-                                        <TextBlock Text="XIU2/TrackersListCollection" FontSize="12"/>
-                                    </Button>
-                                </StackPanel>
-
-                                <Border Grid.Row="5" Grid.ColumnSpan="4" Grid.Column="0" Classes="settingsRowDivider"/>
-
-                                <CheckBox Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="3"
-                                          Content="{DynamicResource LabelAutoSyncTracker}"
-                                          IsChecked="{Binding AutoSyncTracker}"
-                                          FontSize="13"/>
-
-                                <Border Grid.Row="7" Grid.ColumnSpan="4" Grid.Column="0" Classes="settingsRowDivider"/>
-
-                                <StackPanel Grid.Row="8" Grid.Column="1" Grid.ColumnSpan="3" Orientation="Horizontal" Spacing="8" Opacity="0.7">
-                                    <TextBlock Text="{DynamicResource LabelTrackerLastSync}" FontSize="12"/>
-                                    <TextBlock Text="{Binding LastSyncTrackerTimeText}" FontSize="12"/>
-                                </StackPanel>
-                            </Grid>
-
-                            <Border Classes="settingsDivider"/>
-
-                            <!-- RPC -->
-                            <TextBlock Text="{DynamicResource LabelRpcSettings}" FontSize="12" FontWeight="SemiBold" Opacity="0.7"/>
-                            <Grid ColumnDefinitions="200, *" RowDefinitions="Auto, Auto, Auto" RowSpacing="10">
-                                <TextBlock Grid.Row="0" Grid.Column="0" Text="{DynamicResource LabelRpcPort}" VerticalAlignment="Center" Opacity="0.85" FontSize="13"/>
-                                <TextBox Grid.Row="0" Grid.Column="1" Width="220" HorizontalAlignment="Right" TextAlignment="Right" Text="{Binding RpcPort}" FontSize="13"/>
-
-                                <Border Grid.Row="1" Grid.ColumnSpan="2" Grid.Column="0" Classes="settingsRowDivider"/>
-
-                                <TextBlock Grid.Row="2" Grid.Column="0" Text="{DynamicResource LabelRpcSecret}" VerticalAlignment="Center" Opacity="0.85" FontSize="13"/>
-                                <TextBox Grid.Row="2" Grid.Column="1" Width="220" HorizontalAlignment="Right" Text="{Binding RpcSecret}" PasswordChar="•" PlaceholderText="" FontSize="13"/>
-                            </Grid>
-
-                            <Border Classes="settingsDivider"/>
-
-                            <!-- Listen Ports -->
-                            <TextBlock Text="{DynamicResource LabelListenPorts}" FontSize="12" FontWeight="SemiBold" Opacity="0.7"/>
-                            <Grid ColumnDefinitions="200, *" RowDefinitions="Auto, Auto, Auto, Auto, Auto" RowSpacing="10">
-                                <TextBlock Grid.Row="0" Grid.Column="0" Text="{DynamicResource LabelEnableUpnp}" VerticalAlignment="Center" Opacity="0.85" FontSize="13"/>
-                                <ToggleSwitch Grid.Row="0" Grid.Column="1" IsChecked="{Binding EnableUpnp}" HorizontalAlignment="Right"/>
-
-                                <Border Grid.Row="1" Grid.ColumnSpan="2" Grid.Column="0" Classes="settingsRowDivider"/>
-
-                                <TextBlock Grid.Row="2" Grid.Column="0" Text="{DynamicResource LabelBtListenPort}" VerticalAlignment="Center" Opacity="0.85" FontSize="13"/>
-                                <TextBox Grid.Row="2" Grid.Column="1" Width="220" HorizontalAlignment="Right" TextAlignment="Right" Text="{Binding BtListenPort}" FontSize="13"/>
-
-                                <Border Grid.Row="3" Grid.ColumnSpan="2" Grid.Column="0" Classes="settingsRowDivider"/>
-
-                                <TextBlock Grid.Row="4" Grid.Column="0" Text="{DynamicResource LabelDhtListenPort}" VerticalAlignment="Center" Opacity="0.85" FontSize="13"/>
-                                <TextBox Grid.Row="4" Grid.Column="1" Width="220" HorizontalAlignment="Right" TextAlignment="Right" Text="{Binding DhtListenPort}" FontSize="13"/>
-                            </Grid>
-
-                            <Border Classes="settingsDivider"/>
-
-                            <!-- User Agent -->
-                            <TextBlock Text="{DynamicResource LabelUserAgent}" FontSize="12" FontWeight="SemiBold" Opacity="0.7"/>
-                            <TextBox Text="{Binding GlobalUserAgent}" FontSize="13" PlaceholderText="Mozilla/5.0..."/>
-
-                            <Border Classes="settingsDivider"/>
-
-                            <!-- Protocols -->
-                            <Grid ColumnDefinitions="200, *" RowDefinitions="Auto">
-                                <TextBlock Grid.Column="0" Text="{DynamicResource LabelProtocols}" VerticalAlignment="Center" Opacity="0.85" FontSize="13"/>
-                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="14" HorizontalAlignment="Right" VerticalAlignment="Center">
-                                    <CheckBox Content="{DynamicResource LabelProtocolMagnet}" IsChecked="{Binding IsDefaultClientMagnet}" FontSize="13"/>
-                                    <CheckBox Content="{DynamicResource LabelProtocolThunder}" IsChecked="{Binding IsDefaultClientThunder}" FontSize="13"/>
-                                </StackPanel>
-                            </Grid>
-
-                            <Border Classes="settingsDivider"/>
-
-                            <!-- Developer -->
-                            <TextBlock Text="{DynamicResource LabelDeveloper}" FontSize="12" FontWeight="SemiBold" Opacity="0.7"/>
-                            <Grid ColumnDefinitions="200, *" RowDefinitions="Auto, Auto, Auto, Auto, Auto" RowSpacing="10">
-                                <TextBlock Grid.Row="0" Grid.Column="0" Text="{DynamicResource LabelAria2Conf}" VerticalAlignment="Center" Opacity="0.85" FontSize="13"/>
-                                <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Aria2ConfPath}" IsReadOnly="True" FontSize="13"/>
-
-                                <Border Grid.Row="1" Grid.ColumnSpan="2" Grid.Column="0" Classes="settingsRowDivider"/>
-
-                                <TextBlock Grid.Row="2" Grid.Column="0" Text="{DynamicResource LabelAria2Session}" VerticalAlignment="Center" Opacity="0.85" FontSize="13"/>
-                                <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding Aria2SessionPath}" IsReadOnly="True" FontSize="13"/>
-
-                                <Border Grid.Row="3" Grid.ColumnSpan="2" Grid.Column="0" Classes="settingsRowDivider"/>
-
-                                <TextBlock Grid.Row="4" Grid.Column="0" Text="{DynamicResource LabelAria2Log}" VerticalAlignment="Center" Opacity="0.85" FontSize="13"/>
-                                <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding Aria2LogPath}" IsReadOnly="True" FontSize="13"/>
-                            </Grid>
-
-                            <Border Classes="settingsDivider"/>
-
-                            <!-- Reset -->
-                            <StackPanel Orientation="Horizontal" Spacing="12" HorizontalAlignment="Right">
-                                <Button Content="{DynamicResource BtnResetSettings}" Command="{Binding ResetSettingsCommand}" />
-                                <Button Content="{DynamicResource BtnResetSession}" Command="{Binding ResetSessionCommand}" />
-                            </StackPanel>
+                                        </Border>
                                     </StackPanel>
-                                </Border>
+
+                                    <!-- RPC -->
+                                    <StackPanel>
+                                        <TextBlock Classes="groupHeader" Text="{DynamicResource LabelRpcSettings}" />
+                                        <Border Classes="settingsGroup">
+                                            <StackPanel>
+                                                <Border Classes="settingsRow">
+                                                    <Grid ColumnDefinitions="*, Auto">
+                                                        <TextBlock Classes="rowLabel" Text="{DynamicResource LabelRpcPort}" />
+                                                        <TextBox Grid.Column="1" Width="{StaticResource SettingsFieldWidth}" Text="{Binding RpcPort}" />
+                                                    </Grid>
+                                                </Border>
+                                                <Border Classes="settingsRow">
+                                                    <Grid ColumnDefinitions="*, Auto">
+                                                        <TextBlock Classes="rowLabel" Text="{DynamicResource LabelRpcSecret}" />
+                                                        <TextBox Grid.Column="1" Width="{StaticResource SettingsFieldWidth}" Text="{Binding RpcSecret}" PasswordChar="•" />
+                                                    </Grid>
+                                                </Border>
+                                            </StackPanel>
+                                        </Border>
+                                    </StackPanel>
+
+                                    <!-- Listen Ports -->
+                                    <StackPanel>
+                                        <TextBlock Classes="groupHeader" Text="{DynamicResource LabelListenPorts}" />
+                                        <Border Classes="settingsGroup">
+                                            <StackPanel>
+                                                <Border Classes="settingsRow">
+                                                    <Grid ColumnDefinitions="*, Auto">
+                                                        <TextBlock Classes="rowLabel" Text="{DynamicResource LabelEnableUpnp}" />
+                                                        <ToggleSwitch Grid.Column="1" IsChecked="{Binding EnableUpnp}" />
+                                                    </Grid>
+                                                </Border>
+                                                <Border Classes="settingsRow">
+                                                    <Grid ColumnDefinitions="*, Auto">
+                                                        <TextBlock Classes="rowLabel" Text="{DynamicResource LabelBtListenPort}" />
+                                                        <TextBox Grid.Column="1" Width="{StaticResource SettingsFieldWidth}" Text="{Binding BtListenPort}" />
+                                                    </Grid>
+                                                </Border>
+                                                <Border Classes="settingsRow">
+                                                    <Grid ColumnDefinitions="*, Auto">
+                                                        <TextBlock Classes="rowLabel" Text="{DynamicResource LabelDhtListenPort}" />
+                                                        <TextBox Grid.Column="1" Width="{StaticResource SettingsFieldWidth}" Text="{Binding DhtListenPort}" />
+                                                    </Grid>
+                                                </Border>
+                                            </StackPanel>
+                                        </Border>
+                                    </StackPanel>
+
+                                    <!-- User agent and protocol handlers -->
+                                    <StackPanel>
+                                        <TextBlock Classes="groupHeader" Text="{DynamicResource SettingsGroupOther}" />
+                                        <Border Classes="settingsGroup">
+                                            <StackPanel>
+                                                <Border Classes="settingsRow">
+                                                    <Grid ColumnDefinitions="180, *">
+                                                        <TextBlock Classes="rowLabel" Text="{DynamicResource LabelUserAgent}" />
+                                                        <TextBox Grid.Column="1" Text="{Binding GlobalUserAgent}" PlaceholderText="Mozilla/5.0..." />
+                                                    </Grid>
+                                                </Border>
+                                                <Border Classes="settingsRow">
+                                                    <Grid ColumnDefinitions="*, Auto">
+                                                        <TextBlock Classes="rowLabel" Text="{DynamicResource LabelProtocols}" />
+                                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="16" VerticalAlignment="Center">
+                                                            <CheckBox Content="{DynamicResource LabelProtocolMagnet}" IsChecked="{Binding IsDefaultClientMagnet}" FontSize="13" />
+                                                            <CheckBox Content="{DynamicResource LabelProtocolThunder}" IsChecked="{Binding IsDefaultClientThunder}" FontSize="13" />
+                                                        </StackPanel>
+                                                    </Grid>
+                                                </Border>
+                                            </StackPanel>
+                                        </Border>
+                                    </StackPanel>
+
+                                    <!-- Developer -->
+                                    <StackPanel>
+                                        <TextBlock Classes="groupHeader" Text="{DynamicResource LabelDeveloper}" />
+                                        <Border Classes="settingsGroup">
+                                            <StackPanel>
+                                                <Border Classes="settingsRow">
+                                                    <Grid ColumnDefinitions="180, *">
+                                                        <TextBlock Classes="rowLabel" Text="{DynamicResource LabelAria2Conf}" />
+                                                        <TextBox Grid.Column="1" Text="{Binding Aria2ConfPath}" IsReadOnly="True" />
+                                                    </Grid>
+                                                </Border>
+                                                <Border Classes="settingsRow">
+                                                    <Grid ColumnDefinitions="180, *">
+                                                        <TextBlock Classes="rowLabel" Text="{DynamicResource LabelAria2Session}" />
+                                                        <TextBox Grid.Column="1" Text="{Binding Aria2SessionPath}" IsReadOnly="True" />
+                                                    </Grid>
+                                                </Border>
+                                                <Border Classes="settingsRow">
+                                                    <Grid ColumnDefinitions="180, *">
+                                                        <TextBlock Classes="rowLabel" Text="{DynamicResource LabelAria2Log}" />
+                                                        <TextBox Grid.Column="1" Text="{Binding Aria2LogPath}" IsReadOnly="True" />
+                                                    </Grid>
+                                                </Border>
+                                            </StackPanel>
+                                        </Border>
+                                    </StackPanel>
+
+                                    <!-- Reset -->
+                                    <StackPanel>
+                                        <TextBlock Classes="groupHeader" Text="{DynamicResource SettingsGroupReset}" />
+                                        <Border Classes="settingsGroup">
+                                            <StackPanel>
+                                                <Border Classes="settingsRow">
+                                                    <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                                        <Button Content="{DynamicResource BtnResetSettings}" Command="{Binding ResetSettingsCommand}" />
+                                                        <Button Content="{DynamicResource BtnResetSession}" Command="{Binding ResetSessionCommand}" />
+                                                    </StackPanel>
+                                                </Border>
+                                            </StackPanel>
+                                        </Border>
+                                    </StackPanel>
+                                </StackPanel>
                             </DataTemplate>
                         </ContentControl.ContentTemplate>
                     </ContentControl>
 
+                    <!-- About -->
                     <ContentControl Content="{Binding AboutSettingsContent}">
                         <ContentControl.ContentTemplate>
                             <DataTemplate x:DataType="vm:MainWindowViewModel">
-                                <Border Classes="settingsCard">
-                                    <StackPanel Spacing="14">
-                            <TextBlock Text="{DynamicResource SettingsAbout}" FontSize="13" FontWeight="SemiBold" Opacity="0.85"/>
-                            <Border Classes="settingsDivider"/>
-                            <StackPanel Orientation="Horizontal" Spacing="20">
-                                <Image Source="/Assets/Branding/app_icon.png" Width="64" Height="64" VerticalAlignment="Top"/>
-                                <StackPanel Spacing="8">
-                                    <TextBlock Text="Downio" FontWeight="Bold" FontSize="18"/>
-                                    <StackPanel Orientation="Horizontal" Spacing="6" Opacity="0.7">
-                                        <TextBlock Text="{DynamicResource LabelVersion}" FontSize="13"/>
-                                        <TextBlock Text="{Binding AppVersion}" FontSize="13"/>
-                                    </StackPanel>
-                                    <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,4,0,0">
-                                        <PathIcon Data="{StaticResource IconGitHub}" Width="18" Height="18" Opacity="0.75"/>
-                                        <Button Classes="linkButton" Command="{Binding OpenRepoUrlCommand}">
-                                            <TextBlock Text="{Binding RepositoryUrl}" FontSize="13"/>
-                                        </Button>
-                                    </StackPanel>
-                                    
-                                    <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,10,0,0">
-                                        <Button IsEnabled="{Binding !IsCheckingForUpdates}" 
-                                                Command="{Binding CheckForUpdatesCommand}" 
-                                                CommandParameter="About"
-                                                HorizontalAlignment="Left">
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <Panel Width="16" Height="16">
-                                                    <!-- Static Icon (Visible when NOT checking) -->
-                                                    <PathIcon Data="{StaticResource IconRefresh}" Width="16" Height="16" 
-                                                              IsVisible="{Binding !IsCheckingForUpdates}"/>
-                                                    <!-- Spinning Icon (Visible when checking) -->
-                                                    <PathIcon Data="{StaticResource IconRefresh}" Width="16" Height="16" 
-                                                              Classes="spin"
-                                                              IsVisible="{Binding IsCheckingForUpdates}"/>
-                                                </Panel>
-                                                <TextBlock Text="{Binding CheckUpdateButtonKey, Converter={StaticResource ResourceKeyToTextConverter}}" FontSize="13"/>
-                                            </StackPanel>
-                                        </Button>
+                                <StackPanel Classes="settingsPage">
+                                    <Border Classes="settingsGroup" Padding="20">
+                                        <Grid ColumnDefinitions="Auto, *" ColumnSpacing="20">
+                                            <Image Source="/Assets/Branding/app_icon.png" Width="64" Height="64" VerticalAlignment="Top" />
+                                            <StackPanel Grid.Column="1" Spacing="6">
+                                                <TextBlock Text="Downio" FontWeight="SemiBold" FontSize="18" />
+                                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                                    <TextBlock Classes="rowHint" FontSize="13" Text="{DynamicResource LabelVersion}" />
+                                                    <TextBlock Classes="rowHint" FontSize="13" Text="{Binding AppVersion}" />
+                                                </StackPanel>
+                                                <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,2,0,0">
+                                                    <PathIcon Data="{StaticResource IconGitHub}" Width="16" Height="16" Opacity="0.75" />
+                                                    <Button Classes="linkButton" Command="{Binding OpenRepoUrlCommand}">
+                                                        <TextBlock Text="{Binding RepositoryUrl}" FontSize="13" />
+                                                    </Button>
+                                                </StackPanel>
 
-                                        <!-- Update check status label -->
-                                        <TextBlock Text="{Binding UpdateCheckStatusText}" 
-                                                   Foreground="{Binding UpdateCheckStatusBrush}"
-                                                   FontSize="12"
-                                                   VerticalAlignment="Center"
-                                                   IsVisible="{Binding IsUpdateCheckStatusVisible}"
-                                                   Opacity="0.8"/>
-                                    </StackPanel>
+                                                <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,10,0,0">
+                                                    <Button IsEnabled="{Binding !IsCheckingForUpdates}"
+                                                            Command="{Binding CheckForUpdatesCommand}"
+                                                            CommandParameter="About">
+                                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                                            <Panel Width="14" Height="14">
+                                                                <PathIcon Data="{StaticResource IconRefresh}" Width="14" Height="14"
+                                                                          IsVisible="{Binding !IsCheckingForUpdates}" />
+                                                                <PathIcon Data="{StaticResource IconRefresh}" Width="14" Height="14"
+                                                                          Classes="spin"
+                                                                          IsVisible="{Binding IsCheckingForUpdates}" />
+                                                            </Panel>
+                                                            <TextBlock Text="{Binding CheckUpdateButtonKey, Converter={StaticResource ResourceKeyToTextConverter}}" FontSize="13" />
+                                                        </StackPanel>
+                                                    </Button>
+
+                                                    <!-- Update check status label -->
+                                                    <TextBlock Text="{Binding UpdateCheckStatusText}"
+                                                               Foreground="{Binding UpdateCheckStatusBrush}"
+                                                               FontSize="12"
+                                                               VerticalAlignment="Center"
+                                                               IsVisible="{Binding IsUpdateCheckStatusVisible}"
+                                                               Opacity="0.8" />
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
                                 </StackPanel>
-                            </StackPanel>
-                                    </StackPanel>
-                                </Border>
                             </DataTemplate>
                         </ContentControl.ContentTemplate>
                     </ContentControl>
-                </StackPanel>
+                </Panel>
             </ScrollViewer>
         </Grid>
     </Grid>

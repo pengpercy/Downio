@@ -1401,6 +1401,8 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         if (IsMacOS) return true;
         if (!IsLinux) return false;
+        // Avalonia's drawn title bar always puts its caption buttons on the right
+        if (LinuxDesktop.UsesDrawnDecorations) return false;
 
         try
         {

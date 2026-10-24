@@ -111,6 +111,13 @@
     <x:String x:Key="LabelAria2Log">Log path</x:String>
     <x:String x:Key="BtnResetSettings">Restore initial settings</x:String>
     <x:String x:Key="BtnResetSession">Reset download session</x:String>
+    <x:String x:Key="SettingsGroupApp">Application</x:String>
+    <x:String x:Key="SettingsGroupDownloads">Downloads</x:String>
+    <x:String x:Key="SettingsGroupOther">Other</x:String>
+    <x:String x:Key="SettingsGroupReset">Reset</x:String>
+    <x:String x:Key="LabelTrackerSources">Tracker sources</x:String>
+    <x:String x:Key="LabelTrackerList">Tracker list</x:String>
+    <x:String x:Key="ToolTipSyncTrackers">Sync now</x:String>
     <x:String x:Key="MessageConfirmResetSettings">Are you sure you want to reset all settings to defaults?</x:String>
     <x:String x:Key="MessageConfirmResetSession">Are you sure you want to reset the download session? This will remove all tasks from the list (but not your files).</x:String>
     <x:String x:Key="NotificationSessionResetTitle">Session reset</x:String>

@@ -20,17 +20,12 @@
     </UserControl.Resources>
 
     <UserControl.Styles>
-        <Style Selector="MenuItem">
-            <Setter Property="FontSize" Value="12" />
-            <Setter Property="CornerRadius" Value="4" />
-        </Style>
-
         <!-- Task card: hairline border and a soft shadow that lifts on hover -->
         <Style Selector="Border.taskCard">
             <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}" />
             <Setter Property="BorderBrush" Value="{DynamicResource CardBorderBrush}" />
             <Setter Property="BorderThickness" Value="1.5" />
-            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
             <Setter Property="BoxShadow" Value="{DynamicResource CardShadow}" />
             <Setter Property="Padding" Value="0" />
             <Setter Property="Margin" Value="0,4" />
@@ -46,13 +41,13 @@
             <Setter Property="BoxShadow" Value="{DynamicResource CardHoverShadow}" />
         </Style>
         <Style Selector="ListBoxItem:selected Border.taskCard">
-            <Setter Property="BorderBrush" Value="{DynamicResource SystemAccentColorBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SystemControlHighlightAccentBrush}" />
         </Style>
 
         <!-- Selected cards get an accent wash behind the content plus a check badge on the file tile -->
         <Style Selector="Border.selectionTint">
             <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundAccentBrush}" />
-            <Setter Property="CornerRadius" Value="4.5" />
+            <Setter Property="CornerRadius" Value="{DynamicResource CardInnerCornerRadius}" />
             <Setter Property="Opacity" Value="0" />
             <Setter Property="IsHitTestVisible" Value="False" />
             <Setter Property="Transitions">
@@ -90,7 +85,7 @@
             <Setter Property="Width" Value="28" />
             <Setter Property="Height" Value="28" />
             <Setter Property="Padding" Value="0" />
-            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="HorizontalContentAlignment" Value="Center" />
@@ -320,7 +315,7 @@
                 Background="Transparent"
                 IsVisible="{Binding Tasks.Count, Converter={StaticResource CollectionIsEmptyConverter}}">
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="14" Width="420">
-                <Border Background="{DynamicResource CardBackgroundBrush}" CornerRadius="12"
+                <Border Background="{DynamicResource CardBackgroundBrush}" CornerRadius="{DynamicResource ControlCornerRadius}"
                         BorderThickness="1" BorderBrush="{DynamicResource CardBorderBrush}"
                         Padding="28"
                         BoxShadow="{DynamicResource CardShadow}">
@@ -357,7 +352,7 @@
                         <Button Content="{DynamicResource BtnNewTask}"
                                 Command="{Binding ShowAddTaskCommand}"
                                 Classes="accent"
-                                CornerRadius="5"
+                                CornerRadius="{DynamicResource ControlCornerRadius}"
                                 HorizontalAlignment="Center"
                                 Padding="16,8"
                                 Margin="0,4,0,0"

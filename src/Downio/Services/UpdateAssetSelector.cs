@@ -13,7 +13,10 @@ public static class UpdateAssetSelector
 
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
-            var runtime = arch == Architecture.Arm64 ? "win-arm64" : "win-x64";
+            // Windows 7/8/8.1 can only run the separate Win7 package; Windows 10+ moves back to the regular one.
+            var runtime = arch == Architecture.Arm64 ? "win-arm64"
+                : OperatingSystem.IsWindowsVersionAtLeast(10) ? "win-x64"
+                : "win7-x64";
             var exact = $"Downio_{version}.{runtime}.zip";
             return release.Assets.FirstOrDefault(a => a.Name.Equals(exact, StringComparison.OrdinalIgnoreCase))
                    ?? release.Assets.FirstOrDefault(a => a.Name.EndsWith($".{runtime}.zip", StringComparison.OrdinalIgnoreCase));

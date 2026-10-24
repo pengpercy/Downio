@@ -164,10 +164,8 @@ public partial class MainWindowViewModel
         NewTaskTorrentFilePath = string.Empty;
         NewTaskName = string.Empty;
         NewTaskChunks = DefaultDownloadSplit;
-        if (string.IsNullOrEmpty(NewTaskSavePath))
-        {
-            NewTaskSavePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
-        }
+        // A folder picked for one task applies to that task only; each new one starts from the setting
+        NewTaskSavePath = DefaultSavePath;
         
         if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime { MainWindow: { } mainWindow })
         {

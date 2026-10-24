@@ -111,6 +111,13 @@
     <x:String x:Key="LabelAria2Log">应用日志路径</x:String>
     <x:String x:Key="BtnResetSettings">恢复初始设置</x:String>
     <x:String x:Key="BtnResetSession">重置下载会话</x:String>
+    <x:String x:Key="SettingsGroupApp">应用</x:String>
+    <x:String x:Key="SettingsGroupDownloads">下载</x:String>
+    <x:String x:Key="SettingsGroupOther">其他</x:String>
+    <x:String x:Key="SettingsGroupReset">重置</x:String>
+    <x:String x:Key="LabelTrackerSources">Tracker 源</x:String>
+    <x:String x:Key="LabelTrackerList">Tracker 列表</x:String>
+    <x:String x:Key="ToolTipSyncTrackers">立即同步</x:String>
     <x:String x:Key="MessageConfirmResetSettings">确定要恢复所有初始设置吗？</x:String>
     <x:String x:Key="MessageConfirmResetSession">确定要重置下载会话吗？这将会清空所有下载任务（但不会删除您的本地文件）。</x:String>
     <x:String x:Key="NotificationSessionResetTitle">会话已重置</x:String>
