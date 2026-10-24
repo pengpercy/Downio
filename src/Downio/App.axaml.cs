@@ -25,8 +25,8 @@ public partial class App : Application
         AvaloniaXamlLoader.Load(this);
 
         // Fluent's drawn decorations template sets Spacing="2" on the caption button panel, which beats
-        // any style setter. StackPanel also measures that spacing next to the hidden full screen button
-        // but skips it when arranging, so the close button ends 2px short of the window edge.
+        // any style setter. With it the panel came out 2px wider than its buttons on Windows, so the
+        // close button ended short of the window edge.
         Control.LoadedEvent.AddClassHandler<StackPanel>((panel, _) =>
         {
             if (panel.Name == "PART_OverlayPanel" && panel.TemplatedParent is WindowDrawnDecorations)
