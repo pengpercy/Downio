@@ -959,6 +959,7 @@ public partial class MainWindowViewModel : ViewModelBase
             IsAutoInstallUpdatesEnabled = _settingsService.Settings.AutoInstallUpdates;
             IsExitOnClose = _settingsService.Settings.ExitOnClose;
             IsDownloadSpeedBadgeVisible = _settingsService.Settings.ShowDownloadSpeedBadge;
+            IsLinuxDrawnTitleBar = _settingsService.Settings.LinuxDrawnTitleBar;
 
             var savedAccentMode = _settingsService.Settings.AccentMode;
             SelectedAccentMode = AccentModeOptions.FirstOrDefault(a => a.Value == savedAccentMode) ?? AccentModeOptions[0];
@@ -1092,6 +1093,19 @@ public partial class MainWindowViewModel : ViewModelBase
     partial void OnIsExitOnCloseChanged(bool value)
     {
         _settingsService.Settings.ExitOnClose = value;
+        _settingsService.Save();
+    }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsLinuxTitleBarRestartRequired))]
+    private bool _isLinuxDrawnTitleBar;
+
+    // The X11 decorations mode is fixed when Avalonia starts
+    public bool IsLinuxTitleBarRestartRequired => IsLinuxDrawnTitleBar != LinuxDesktop.UsesDrawnDecorations;
+
+    partial void OnIsLinuxDrawnTitleBarChanged(bool value)
+    {
+        _settingsService.Settings.LinuxDrawnTitleBar = value;
         _settingsService.Save();
     }
 
@@ -1318,6 +1332,7 @@ public partial class MainWindowViewModel : ViewModelBase
         IsAutoInstallUpdatesEnabled = _settingsService.Settings.AutoInstallUpdates;
         IsExitOnClose = _settingsService.Settings.ExitOnClose;
         IsDownloadSpeedBadgeVisible = _settingsService.Settings.ShowDownloadSpeedBadge;
+        IsLinuxDrawnTitleBar = _settingsService.Settings.LinuxDrawnTitleBar;
 
         var savedAccentMode = _settingsService.Settings.AccentMode;
         SelectedAccentMode = AccentModeOptions.FirstOrDefault(a => a.Value == savedAccentMode) ?? AccentModeOptions[0];

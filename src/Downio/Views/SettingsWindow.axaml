@@ -320,6 +320,16 @@
                                                           OnContent="{DynamicResource LabelExitApp}" OffContent="{DynamicResource LabelKeepInBackground}" />
                                         </Grid>
                                     </Border>
+                                    <Border Classes="settingsRow" IsVisible="{Binding IsLinux}">
+                                        <Grid ColumnDefinitions="*, Auto">
+                                            <StackPanel VerticalAlignment="Center" Spacing="2">
+                                                <TextBlock Classes="rowLabel" Text="{DynamicResource LabelLinuxDrawnTitleBar}" />
+                                                <TextBlock Classes="rowHint" Text="{DynamicResource HintRestartToApply}"
+                                                           IsVisible="{Binding IsLinuxTitleBarRestartRequired}" />
+                                            </StackPanel>
+                                            <ToggleSwitch Grid.Column="1" IsChecked="{Binding IsLinuxDrawnTitleBar}" />
+                                        </Grid>
+                                    </Border>
                                     <!-- No taskbar badge on Linux, so the option is hidden there -->
                                     <Border Classes="settingsRow" IsVisible="{Binding !IsLinux}">
                                         <Grid ColumnDefinitions="*, Auto">

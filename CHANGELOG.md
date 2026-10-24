@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.97 - 2026-10-25
+
+- On Linux the caption buttons now sit in the window's top-right corner, so their highlights reach the edges; they were inset by the space Avalonia reserves for its drawn shadow and frame.
+- On Linux, launching Downio while it is already running now brings the existing window forward instead of starting a second copy.
+- The main window is titled "Downio" again, so taskbars and window lists no longer show it as "Untitled window".
+- On Linux, Settings has a new "Use custom title bar" switch to choose between Downio's own title bar (the default) and the window manager's. It takes effect after restarting Downio.
+
 ## 1.0.96 - 2026-10-24
 
 - On Windows the red close-button highlight now reaches the window edge in the main and Settings windows, and the minimize, maximize, and close buttons sit flush against each other. The caption buttons kept a 2px spacing from the theme that left a gap at the right.

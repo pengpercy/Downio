@@ -1,13 +1,14 @@
 using System;
+using Downio.Services;
 
 namespace Downio.Helpers;
 
 public static class LinuxDesktop
 {
     /// <summary>
-    /// Whether Avalonia should draw the title bar itself on Linux. Its X11 client-side decorations
-    /// are experimental, so they are only enabled on the mainstream desktops; elsewhere the window
-    /// manager keeps drawing the title bar. DOWNIO_LINUX_CSD=0/1 overrides the detection.
+    /// Whether Avalonia draws the title bar itself on Linux instead of the window manager. Follows the
+    /// "custom title bar" setting (on by default); DOWNIO_LINUX_CSD=0/1 overrides it. Read once, as
+    /// Avalonia's X11 options are fixed at startup.
     /// </summary>
     public static bool UsesDrawnDecorations { get; } = DetectDrawnDecorations();
 
@@ -21,12 +22,6 @@ public static class LinuxDesktop
             case "1": return true;
         }
 
-        // e.g. "GNOME", "ubuntu:GNOME", "KDE", "XFCE"
-        var desktop = Environment.GetEnvironmentVariable("XDG_CURRENT_DESKTOP")?.ToUpperInvariant() ?? "";
-        foreach (var name in desktop.Split(':'))
-        {
-            if (name is "GNOME" or "KDE" or "XFCE") return true;
-        }
-        return false;
+        return new SettingsService().Settings.LinuxDrawnTitleBar;
     }
 }

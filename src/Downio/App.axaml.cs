@@ -4,6 +4,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Controls.Chrome;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
+using Avalonia.VisualTree;
 using System;
 using System.Linq;
 using Avalonia.Markup.Xaml;
@@ -24,13 +25,17 @@ public partial class App : Application
     {
         AvaloniaXamlLoader.Load(this);
 
-        // Fluent's drawn decorations template sets Spacing="2" on the caption button panel, which beats
-        // any style setter. With it the panel came out 2px wider than its buttons on Windows, so the
-        // close button ended short of the window edge.
+        // Fluent's drawn decorations template sets Spacing="2" on the caption button panel, and its
+        // :has-border / :has-shadow styles inset the panel by the 1px frame and (on X11) the 8px shadow;
+        // all of these beat our App.axaml styles. Our content ignores WindowDecorationMargin and fills
+        // the whole window, so the buttons have to sit flush against its top-right edge.
         Control.LoadedEvent.AddClassHandler<StackPanel>((panel, _) =>
         {
-            if (panel.Name == "PART_OverlayPanel" && panel.TemplatedParent is WindowDrawnDecorations)
-                panel.Spacing = 0;
+            if (panel.Name != "PART_OverlayPanel" || panel.TemplatedParent is not WindowDrawnDecorations) return;
+            panel.Spacing = 0;
+            panel.Margin = default;
+            if (panel.GetVisualParent() is Panel { Name: "PART_OverlayWrapper" } wrapper)
+                wrapper.Margin = default;
         });
 
         var settings = new SettingsService();

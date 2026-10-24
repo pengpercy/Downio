@@ -11,6 +11,7 @@ public class AppSettings
     public string CustomAccentColor { get; set; } = string.Empty;
     public bool ExitOnClose { get; set; } = false;
     public bool ShowDownloadSpeedBadge { get; set; } = true;
+    public bool LinuxDrawnTitleBar { get; set; } = true;
     public string ProxyType { get; set; } = "HTTP";
     public string ProxyAddress { get; set; } = string.Empty;
     public int ProxyPort { get; set; } = 8080;
