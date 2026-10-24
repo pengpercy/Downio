@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.96 - 2026-10-24
+
+- On Windows the red close-button highlight now reaches the window edge in the main and Settings windows, and the minimize, maximize, and close buttons sit flush against each other. The caption buttons kept a 2px spacing from the theme that left a gap at the right.
+- Fixed creating the Start menu shortcut that Windows 10 needs to attribute Downio's notifications; it failed in the released (NativeAOT) builds.
+- Opening Downio while it is already running now just brings the existing window forward, without logging a startup error from the second copy.
+- The log now starts each session with the Downio version and Windows version.
+
 ## 1.0.95 - 2026-10-24
 
 - Updated dependencies to their latest stable versions: LiveMarkdown.Avalonia 2.5.1 (release notes in the update window), System.Drawing.Common 10.0.13 on Windows, and Roslyn 5.9.0 for the build-time source generator.

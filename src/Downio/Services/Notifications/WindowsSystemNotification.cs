@@ -175,7 +175,7 @@ internal static class WindowsSystemNotification
         if (_logoPath != null) key.SetValue("IconUri", _logoPath);
     }
 
-    private static void EnsureStartMenuShortcut()
+    private static unsafe void EnsureStartMenuShortcut()
     {
         var programsPath = Environment.GetFolderPath(Environment.SpecialFolder.Programs);
         if (string.IsNullOrWhiteSpace(programsPath))
@@ -190,28 +190,45 @@ internal static class WindowsSystemNotification
             return;
         }
 
-        var shellLink = (IShellLinkW)new ShellLink();
+        // Plain vtable calls: NativeAOT can't activate [ComImport] coclasses (see TaskbarBadgeService).
+        var classId = ShellLinkClassId;
+        var shellLinkId = IShellLinkWId;
+        Marshal.ThrowExceptionForHR(CoCreateInstance(&classId, IntPtr.Zero, 0x1 /* CLSCTX_INPROC_SERVER */,
+            &shellLinkId, out var shellLink));
+        var propertyStore = IntPtr.Zero;
+        var persistFile = IntPtr.Zero;
+        var appId = new PropVariant { ValueType = 31 /* VT_LPWSTR */, Pointer = Marshal.StringToCoTaskMemUni(AppUserModelId) };
         try
         {
-            Marshal.ThrowExceptionForHR(shellLink.SetPath(exePath));
-            Marshal.ThrowExceptionForHR(shellLink.SetArguments(string.Empty));
-            Marshal.ThrowExceptionForHR(shellLink.SetWorkingDirectory(Path.GetDirectoryName(exePath)));
+            CallString(shellLink, 20, exePath); // IShellLinkW::SetPath
+            CallString(shellLink, 11, string.Empty); // SetArguments
+            CallString(shellLink, 9, Path.GetDirectoryName(exePath)); // SetWorkingDirectory
 
             // The application icon is embedded in the executable.
-            Marshal.ThrowExceptionForHR(shellLink.SetIconLocation(exePath, 0));
+            fixed (char* iconPath = exePath)
+                Marshal.ThrowExceptionForHR(
+                    ((delegate* unmanaged[Stdcall]<IntPtr, char*, int, int>)VTable(shellLink, 17))(shellLink, iconPath, 0));
 
-            var propertyStore = (IPropertyStore)shellLink;
-            using var appId = new PropVariant(AppUserModelId);
+            var propertyStoreId = IPropertyStoreId;
+            Marshal.ThrowExceptionForHR(QueryInterface(shellLink, &propertyStoreId, out propertyStore));
             var appUserModelIdKey = PropertyKeys.AppUserModelId;
-            Marshal.ThrowExceptionForHR(propertyStore.SetValue(ref appUserModelIdKey, appId));
-            Marshal.ThrowExceptionForHR(propertyStore.Commit());
+            Marshal.ThrowExceptionForHR( // IPropertyStore::SetValue, then Commit
+                ((delegate* unmanaged[Stdcall]<IntPtr, PropertyKey*, PropVariant*, int>)VTable(propertyStore, 6))(
+                    propertyStore, &appUserModelIdKey, &appId));
+            Marshal.ThrowExceptionForHR(((delegate* unmanaged[Stdcall]<IntPtr, int>)VTable(propertyStore, 7))(propertyStore));
 
-            var persistFile = (IPersistFile)shellLink;
-            persistFile.Save(shortcutPath, true);
+            var persistFileId = IPersistFileId;
+            Marshal.ThrowExceptionForHR(QueryInterface(shellLink, &persistFileId, out persistFile));
+            fixed (char* path = shortcutPath)
+                Marshal.ThrowExceptionForHR( // IPersistFile::Save
+                    ((delegate* unmanaged[Stdcall]<IntPtr, char*, int, int>)VTable(persistFile, 6))(persistFile, path, 1));
         }
         finally
         {
-            Marshal.ReleaseComObject(shellLink);
+            Marshal.FreeCoTaskMem(appId.Pointer);
+            if (persistFile != IntPtr.Zero) Release(persistFile);
+            if (propertyStore != IntPtr.Zero) Release(propertyStore);
+            Release(shellLink);
         }
     }
 
@@ -319,105 +336,39 @@ internal static class WindowsSystemNotification
         public static PropertyKey AppUserModelId => new(new Guid("9F4C2855-9F79-4B39-A8D0-E1D42DE1D5F3"), 5);
     }
 
-    [ComImport]
-    [Guid("00021401-0000-0000-C000-000000000046")]
-    private class ShellLink;
+    private static readonly Guid ShellLinkClassId = new("00021401-0000-0000-C000-000000000046");
+    private static readonly Guid IShellLinkWId = new("000214F9-0000-0000-C000-000000000046");
+    private static readonly Guid IPropertyStoreId = new("886D8EEB-8CF2-4446-8D02-CDBA1DBDCF99");
+    private static readonly Guid IPersistFileId = new("0000010B-0000-0000-C000-000000000046");
 
-    [ComImport]
-    [Guid("000214F9-0000-0000-C000-000000000046")]
-    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-    private interface IShellLinkW
+    // Only the VT_LPWSTR case is used; 24 bytes covers the x64 layout (16 on x86).
+    [StructLayout(LayoutKind.Explicit, Size = 24)]
+    private struct PropVariant
     {
-        int GetPath([Out] char[] pszFile, int cch, out WIN32_FIND_DATAW pfd, uint fFlags);
-        int GetIDList(out IntPtr ppidl);
-        int SetIDList(IntPtr pidl);
-        int GetDescription([Out] char[] pszName, int cch);
-        int SetDescription([MarshalAs(UnmanagedType.LPWStr)] string pszName);
-        int GetWorkingDirectory([Out] char[] pszDir, int cch);
-        int SetWorkingDirectory([MarshalAs(UnmanagedType.LPWStr)] string? pszDir);
-        int GetArguments([Out] char[] pszArgs, int cch);
-        int SetArguments([MarshalAs(UnmanagedType.LPWStr)] string pszArgs);
-        int GetHotkey(out short pwHotkey);
-        int SetHotkey(short wHotkey);
-        int GetShowCmd(out int piShowCmd);
-        int SetShowCmd(int iShowCmd);
-        int GetIconLocation([Out] char[] pszIconPath, int cch, out int piIcon);
-        int SetIconLocation([MarshalAs(UnmanagedType.LPWStr)] string pszIconPath, int iIcon);
-        int SetRelativePath([MarshalAs(UnmanagedType.LPWStr)] string pszPathRel, uint dwReserved);
-        int Resolve(IntPtr hwnd, uint fFlags);
-        int SetPath([MarshalAs(UnmanagedType.LPWStr)] string pszFile);
+        [FieldOffset(0)] public ushort ValueType;
+        [FieldOffset(8)] public IntPtr Pointer;
     }
 
-    [ComImport]
-    [Guid("886D8EEB-8CF2-4446-8D02-CDBA1DBDCF99")]
-    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-    private interface IPropertyStore
+    private static unsafe void* VTable(IntPtr instance, int slot) => (*(void***)instance)[slot];
+
+    private static unsafe int QueryInterface(IntPtr instance, Guid* interfaceId, out IntPtr result)
     {
-        int GetCount(out uint cProps);
-        int GetAt(uint iProp, out PropertyKey pkey);
-        int GetValue(ref PropertyKey key, out PropVariant pv);
-        int SetValue(ref PropertyKey key, PropVariant pv);
-        int Commit();
+        IntPtr value;
+        var hr = ((delegate* unmanaged[Stdcall]<IntPtr, Guid*, IntPtr*, int>)VTable(instance, 0))(instance, interfaceId, &value);
+        result = hr < 0 ? IntPtr.Zero : value;
+        return hr;
     }
 
-    [ComImport]
-    [Guid("0000010B-0000-0000-C000-000000000046")]
-    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-    private interface IPersistFile
+    private static unsafe void Release(IntPtr instance) =>
+        ((delegate* unmanaged[Stdcall]<IntPtr, uint>)VTable(instance, 2))(instance);
+
+    private static unsafe void CallString(IntPtr instance, int slot, string? value)
     {
-        void GetClassID(out Guid pClassID);
-        [PreserveSig]
-        int IsDirty();
-        void Load([MarshalAs(UnmanagedType.LPWStr)] string pszFileName, uint dwMode);
-        void Save([MarshalAs(UnmanagedType.LPWStr)] string pszFileName, bool fRemember);
-        void SaveCompleted([MarshalAs(UnmanagedType.LPWStr)] string pszFileName);
-        void GetCurFile([MarshalAs(UnmanagedType.LPWStr)] out string ppszFileName);
+        fixed (char* text = value)
+            Marshal.ThrowExceptionForHR(((delegate* unmanaged[Stdcall]<IntPtr, char*, int>)VTable(instance, slot))(instance, text));
     }
 
-    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-    private struct WIN32_FIND_DATAW
-    {
-        public uint dwFileAttributes;
-        public System.Runtime.InteropServices.ComTypes.FILETIME ftCreationTime;
-        public System.Runtime.InteropServices.ComTypes.FILETIME ftLastAccessTime;
-        public System.Runtime.InteropServices.ComTypes.FILETIME ftLastWriteTime;
-        public uint nFileSizeHigh;
-        public uint nFileSizeLow;
-        public uint dwReserved0;
-        public uint dwReserved1;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)]
-        public string cFileName;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 14)]
-        public string cAlternateFileName;
-    }
-
-    [StructLayout(LayoutKind.Explicit)]
-    private sealed class PropVariant : IDisposable
-    {
-        [FieldOffset(0)]
-        private ushort valueType;
-        [FieldOffset(8)]
-        private IntPtr pointerValue;
-
-        public PropVariant(string value)
-        {
-            valueType = 31;
-            pointerValue = Marshal.StringToCoTaskMemUni(value);
-        }
-
-        public void Dispose()
-        {
-            PropVariantClear(this);
-            GC.SuppressFinalize(this);
-        }
-
-        ~PropVariant()
-        {
-            Dispose();
-        }
-
-        [DllImport("ole32.dll")]
-        private static extern int PropVariantClear([In, Out] PropVariant pvar);
-    }
+    [DllImport("ole32.dll")]
+    private static extern unsafe int CoCreateInstance(Guid* classId, IntPtr outer, uint context, Guid* interfaceId, out IntPtr instance);
 }
 #endif

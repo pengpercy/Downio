@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Controls.Chrome;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using System;
@@ -15,12 +16,22 @@ namespace Downio;
 
 public partial class App : Application
 {
-    private SingleInstanceService? _singleInstance;
+    // Acquired in Program.Main before Avalonia starts, so a second launch can exit cleanly.
+    internal static SingleInstanceService? SingleInstance { get; set; }
     private bool _isExplicitExitRequested;
 
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
+
+        // Fluent's drawn decorations template sets Spacing="2" on the caption button panel, which beats
+        // any style setter. StackPanel also measures that spacing next to the hidden full screen button
+        // but skips it when arranging, so the close button ends 2px short of the window edge.
+        Control.LoadedEvent.AddClassHandler<StackPanel>((panel, _) =>
+        {
+            if (panel.Name == "PART_OverlayPanel" && panel.TemplatedParent is WindowDrawnDecorations)
+                panel.Spacing = 0;
+        });
 
         var settings = new SettingsService();
         LocalizationService.Initialize(settings.Settings.Language);
@@ -39,22 +50,6 @@ public partial class App : Application
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            if (!SingleInstanceService.TryCreate("Downio", out _singleInstance))
-            {
-                if (SingleInstanceService.NotifyExisting("Downio"))
-                {
-                    desktop.Shutdown();
-                    return;
-                }
-
-                AppLog.Warn("Existing Downio instance was detected but could not be activated; continuing startup.");
-                _singleInstance = null;
-            }
-            else
-            {
-                AppLog.Info("Single instance lock acquired.");
-            }
-
             try
             {
                 InitializeDesktopApplication(desktop);
@@ -84,7 +79,7 @@ public partial class App : Application
         // Before the window is shown, so the first TaskbarButtonCreated message is not missed.
         taskbarBadgeService.Attach(mainWindow);
 
-        _singleInstance?.SetActivateHandler(viewModel.ToggleMainWindow);
+        SingleInstance?.SetActivateHandler(viewModel.ToggleMainWindow);
 
         var trayIcons = TrayIcon.GetIcons(this);
         if (trayIcons is { Count: > 0 })
@@ -117,7 +112,7 @@ public partial class App : Application
         desktop.Exit += (_, _) =>
         {
             _ = viewModel.ShutdownServicesAsync();
-            _singleInstance?.Dispose();
+            SingleInstance?.Dispose();
         };
 
         var updateChecked = false;

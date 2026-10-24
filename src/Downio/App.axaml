@@ -48,10 +48,10 @@
         </Style>
 
         <!-- Fluent's drawn decorations inset the caption buttons by 1px (Margin="0,1,1,0") when
-             the window has a frame and space them 2px apart, which leaves gaps in the hover fills -->
+             the window has a frame, which leaves gaps in the hover fills. The template's Spacing="2"
+             can't be styled away; App.axaml.cs clears it. -->
         <Style Selector="WindowDrawnDecorations /template/ StackPanel#PART_OverlayPanel">
             <Setter Property="Margin" Value="0" />
-            <Setter Property="Spacing" Value="0" />
         </Style>
 
         <!-- Every window draws its own title (DialogHost, the settings sidebar), so drop the

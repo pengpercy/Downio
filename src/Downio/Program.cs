@@ -1,5 +1,6 @@
 using Avalonia;
 using System;
+using System.Reflection;
 using System.Threading.Tasks;
 using Downio.Helpers;
 using Downio.Services;
@@ -15,6 +16,25 @@ sealed class Program
     public static void Main(string[] args)
     {
         // MacProcessName.TrySet("Downio");
+
+        var version = typeof(Program).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+        AppLog.Info($"Downio {version} starting on {Environment.OSVersion} ({System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture})");
+
+        // Checked before Avalonia starts: shutting the lifetime down from OnFrameworkInitializationCompleted
+        // leaves it entering a dispatcher loop that has already stopped.
+        if (SingleInstanceService.TryCreate("Downio", out var singleInstance))
+        {
+            AppLog.Info("Single instance lock acquired.");
+            App.SingleInstance = singleInstance;
+        }
+        else if (SingleInstanceService.NotifyExisting("Downio"))
+        {
+            return;
+        }
+        else
+        {
+            AppLog.Warn("Existing Downio instance was detected but could not be activated; continuing startup.");
+        }
 
         // Must run before Avalonia brings up AppKit so native panels pick up the app language.
         MacAppLanguage.Apply(new SettingsService().Settings.Language);
