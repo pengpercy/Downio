@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.95 - 2026-10-24
+
+- Updated dependencies to their latest stable versions: LiveMarkdown.Avalonia 2.5.1 (release notes in the update window), System.Drawing.Common 10.0.13 on Windows, and Roslyn 5.9.0 for the build-time source generator.
+
 ## 1.0.94 - 2026-10-24
 
 - On Windows 11 the main and Settings windows no longer leave a thin strip between the window content and the border, so the red close-button highlight reaches the window edge.
