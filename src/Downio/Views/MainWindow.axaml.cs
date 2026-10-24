@@ -15,6 +15,7 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        WindowsResizeFrame.Attach(this);
         Opened += (_, _) => UpdateMacTitleBarInsets();
         ScalingChanged += (_, _) => UpdateMacTitleBarInsets();
         // AppKit puts the traffic lights back in its default spot on these

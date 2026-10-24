@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.94 - 2026-10-24
+
+- On Windows 11 the main and Settings windows no longer leave a thin strip between the window content and the border, so the red close-button highlight reaches the window edge.
+- Windows no longer shows the window title twice in the update windows and dialogs; the small left-aligned copy in the title bar is gone.
+
 ## 1.0.93 - 2026-10-24
 
 - Added a separate Windows 7 package (`win7-x64`, also for Windows 8 and 8.1). It uses YY-Thunks and VC-LTL to stand in for the newer Windows APIs and runtime library that .NET 10 needs, ships the UCRT for the bundled aria2c, renders in software, and turns on TLS 1.2 so update checks reach GitHub. Automatic updates on Windows 7/8/8.1 pick this package; the regular Windows packages are unchanged.

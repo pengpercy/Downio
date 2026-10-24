@@ -54,6 +54,12 @@
             <Setter Property="Spacing" Value="0" />
         </Style>
 
+        <!-- Every window draws its own title (DialogHost, the settings sidebar), so drop the
+             decorations' left-aligned copy instead of showing the title twice -->
+        <Style Selector="WindowDrawnDecorations /template/ Panel#PART_TitleTextPanel > TextBlock">
+            <Setter Property="IsVisible" Value="False" />
+        </Style>
+
         <Style Selector="Button#PART_FullScreenButton">
             <Setter Property="IsVisible" Value="False" />
             <Setter Property="Width" Value="0" />

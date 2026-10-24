@@ -2,6 +2,7 @@ namespace Downio.Views;
 
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Downio.Helpers;
 using Downio.Models;
 using Downio.ViewModels;
 
@@ -10,6 +11,7 @@ public partial class SettingsWindow : DialogWindow
     public SettingsWindow()
     {
         InitializeComponent();
+        WindowsResizeFrame.Attach(this);
     }
 
     private async void OnCopyTrackerSource(object? sender, RoutedEventArgs e)
