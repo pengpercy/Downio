@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.99 - 2026-10-25
+
+- On macOS every binary in the app bundle (aria2c, the bundled libraries, then the app itself) is now signed individually from the inside out instead of with the deprecated `codesign --deep`. Without a Developer ID the app gets a valid ad-hoc signature, so Gatekeeper's "damaged app" check no longer trips on a bundle with unsigned parts.
+- The Linux arm64 build now compiles on a native arm64 runner inside an Ubuntu 20.04 container instead of cross-compiling, so it keeps the same glibc 2.31 baseline as the x64 build and builds faster.
+
 ## 1.0.98 - 2026-10-25
 
 - Smaller downloads: the macOS DMG is now LZMA-compressed (about a third smaller), and the Linux deb and rpm packages use xz instead of gzip (about 30% smaller). The macOS zip is created with `ditto`, so the app bundle keeps its symlinks and attributes. The minimum macOS version listed by the app is now 12, matching what .NET 10 requires.
