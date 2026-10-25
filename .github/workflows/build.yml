@@ -31,8 +31,9 @@ jobs:
             os: ubuntu-latest
             runtime: linux-x64
             container: ubuntu:20.04
+          # Native arm64 runner instead of cross-compiling on x64; the 20.04 container keeps the glibc 2.31 baseline
           - name: Linux (arm64)
-            os: ubuntu-latest
+            os: ubuntu-24.04-arm
             runtime: linux-arm64
             container: ubuntu:20.04
     name: Build ${{ matrix.name }}
@@ -65,21 +66,6 @@ jobs:
           key: nuget-${{ matrix.runtime }}-${{ hashFiles('src/**/*.csproj') }}
           restore-keys: nuget-${{ matrix.runtime }}-
 
-      - name: Configure arm64 packages
-        if: matrix.runtime == 'linux-arm64'
-        run: |
-          sudo dpkg --add-architecture arm64
-          echo 'deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ focal main restricted
-          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ focal-updates main restricted
-          deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ focal-backports main restricted' \
-          | sudo tee /etc/apt/sources.list.d/arm64.list
-          sudo sed -i -e 's/^deb http/deb [arch=amd64] http/g' /etc/apt/sources.list
-          sudo sed -i -e 's/^deb mirror/deb [arch=amd64] mirror/g' /etc/apt/sources.list
-      - name: Install cross-compiling dependencies
-        if: matrix.runtime == 'linux-arm64'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y llvm gcc-aarch64-linux-gnu libc6-dev-arm64-cross
       # No separate `dotnet build`: publish compiles the app and its generator project anyway
       - name: Publish
         run: |

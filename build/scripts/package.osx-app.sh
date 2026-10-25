@@ -54,9 +54,21 @@ rm -rf "$ICONSET_DIR"
 sed "s/Downio_VERSION/$VERSION/g" resources/app/App.plist > Downio.app/Contents/Info.plist
 find resources/app -maxdepth 1 -type d -name "*.lproj" -exec cp -R {} Downio.app/Contents/Resources/ \;
 
+# Sign inside-out: every nested Mach-O first (deepest paths first), then the bundle, which seals the
+# main executable and resources. Apple deprecated --deep for signing: it applies one set of options
+# to everything and skips code it does not recognise. Without a Developer ID the bundle still gets an
+# ad-hoc seal, so its resources are covered and the thinned dylibs carry a signature.
+sign_args=(--force --sign "${CODESIGN_IDENTITY:--}")
 if [[ -n "${CODESIGN_IDENTITY:-}" ]]; then
-    codesign --force --deep --options runtime --timestamp --sign "$CODESIGN_IDENTITY" Downio.app
+    sign_args+=(--options runtime --timestamp)
 fi
+while IFS= read -r file; do
+    if [[ "$file" != "Downio.app/Contents/MacOS/Downio" ]] && file -b "$file" | grep -q '^Mach-O'; then
+        codesign "${sign_args[@]}" "$file"
+    fi
+done < <(find Downio.app/Contents -type f | awk '{ print gsub("/", "/"), $0 }' | sort -rn | cut -d' ' -f2-)
+codesign "${sign_args[@]}" Downio.app
+codesign --verify --deep --strict Downio.app
 
 # ditto keeps the bundle's symlinks, extended attributes and resource forks, which zip -r flattens.
 ditto -c -k --sequesterRsrc --keepParent Downio.app "Downio_$VERSION.$RUNTIME.zip"
