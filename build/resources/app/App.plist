@@ -20,7 +20,7 @@
 		<string>zh-Hans</string>
 	</array>
 	<key>LSMinimumSystemVersion</key>
-	<string>10.13</string>
+	<string>12.0</string>
 	<key>CFBundleExecutable</key>
 	<string>Downio</string>
 	<key>CFBundleInfoDictionaryVersion</key>

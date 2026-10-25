@@ -47,6 +47,8 @@ jobs:
         with:
           name: package.${{ matrix.runtime }}
           path: build/Downio_*.zip
+          # Zip, DMG, AppImage, deb and rpm are already compressed; recompressing only slows the upload
+          compression-level: 0
           retention-days: 1
 
   osx-app:
@@ -111,6 +113,8 @@ jobs:
           path: |
             build/Downio_*.zip
             build/Downio_*.dmg
+          # Zip, DMG, AppImage, deb and rpm are already compressed; recompressing only slows the upload
+          compression-level: 0
           retention-days: 1
 
   linux:
@@ -151,4 +155,6 @@ jobs:
             build/Downio-*.AppImage
             build/Downio_*.deb
             build/Downio-*.rpm
+          # Zip, DMG, AppImage, deb and rpm are already compressed; recompressing only slows the upload
+          compression-level: 0
           retention-days: 1

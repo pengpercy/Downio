@@ -3,13 +3,29 @@ name: Continuous Integration
 on:
   push:
     branches: [master]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'screenshots/**'
   pull_request:
     branches: [master]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'screenshots/**'
   workflow_dispatch:
   workflow_call:
 
+# A newer push supersedes a running CI of the same branch
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
+    # A "release: vX" commit is pushed together with its tag, and the tag's Release run builds and
+    # packages the same tree; building it here too only doubles the macOS runner demand.
+    if: github.event_name != 'push' || !startsWith(github.event.head_commit.message, 'release:')
     name: Build
     uses: ./.github/workflows/build.yml
 

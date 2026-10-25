@@ -83,8 +83,8 @@ sed -i -e "s/^Version:.*/Version: $VERSION/" \
     -e "s/^Architecture:.*/Architecture: $arch/" \
     -e "s/^Installed-Size:.*/Installed-Size: $installed_size/" \
     resources/deb/DEBIAN/control
-# Build deb package with gzip compression
-dpkg-deb -Zgzip --root-owner-group --build resources/deb "Downio_$VERSION-1_$arch.deb"
+# xz packs the AOT binaries and aria2c about 30% smaller than gzip
+dpkg-deb -Zxz --root-owner-group --build resources/deb "Downio_$VERSION-1_$arch.deb"
 
 rpmbuild -bb --target="$target" resources/rpm/SPECS/build.spec --define "_topdir $(pwd)/resources/rpm" --define "_version $VERSION"
 mv "resources/rpm/RPMS/$target/Downio-$VERSION-1.$target.rpm" ./

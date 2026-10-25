@@ -58,7 +58,8 @@ if [[ -n "${CODESIGN_IDENTITY:-}" ]]; then
     codesign --force --deep --options runtime --timestamp --sign "$CODESIGN_IDENTITY" Downio.app
 fi
 
-zip "Downio_$VERSION.$RUNTIME.zip" -r Downio.app
+# ditto keeps the bundle's symlinks, extended attributes and resource forks, which zip -r flattens.
+ditto -c -k --sequesterRsrc --keepParent Downio.app "Downio_$VERSION.$RUNTIME.zip"
 
 # Create DMG
 DMG_NAME="Downio_$VERSION.$RUNTIME.dmg"
@@ -75,10 +76,12 @@ trap cleanup EXIT
 cp -R "Downio.app" "$DMG_SOURCE/"
 ln -s /Applications "$DMG_SOURCE/Applications"
 
+# ULMO (LZMA) is about a third smaller than UDZO (zlib) for this app and needs macOS 10.15+,
+# below what .NET 10 itself requires.
 create_dmg() {
     hdiutil create -volname "Downio" \
         -srcfolder "$DMG_SOURCE" \
-        -ov -format UDZO \
+        -ov -format ULMO \
         "$DMG_NAME"
 }
 

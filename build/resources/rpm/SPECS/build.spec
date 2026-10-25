@@ -11,6 +11,8 @@ Requires: libicu
 Requires: xdg-utils
 
 %define _build_id_links none
+# xz payload: about 30% smaller than the gzip default
+%define _binary_payload w9.xzdio
 
 %description
 Open-source Downloader

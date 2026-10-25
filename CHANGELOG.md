@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.98 - 2026-10-25
+
+- Smaller downloads: the macOS DMG is now LZMA-compressed (about a third smaller), and the Linux deb and rpm packages use xz instead of gzip (about 30% smaller). The macOS zip is created with `ditto`, so the app bundle keeps its symlinks and attributes. The minimum macOS version listed by the app is now 12, matching what .NET 10 requires.
+- Faster releases: the Intel Mac build is now compiled on Apple Silicon runners instead of waiting for the scarce Intel ones; NuGet packages are cached between runs; the redundant build before publishing is gone; debug symbols are uploaded separately instead of travelling with the build to the packaging jobs; and already-compressed packages are no longer recompressed on upload. CI skips release commits (the tag's Release run builds them), ignores documentation-only changes, and cancels a superseded run on the same branch.
+
 ## 1.0.97 - 2026-10-25
 
 - On Linux the caption buttons now sit in the window's top-right corner, so their highlights reach the edges; they were inset by the space Avalonia reserves for its drawn shadow and frame.
