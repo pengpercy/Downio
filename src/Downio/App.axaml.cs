@@ -8,6 +8,7 @@ using Avalonia.VisualTree;
 using System;
 using System.Linq;
 using Avalonia.Markup.Xaml;
+using Downio.Helpers;
 using Downio.Services;
 using Downio.Services.TaskbarBadge;
 using Downio.ViewModels;
@@ -94,6 +95,7 @@ public partial class App : Application
                 ? new Uri("avares://Downio/Assets/Branding/Tray/macos.png")
                 : new Uri("avares://Downio/Assets/Branding/Tray/windows.png");
             trayIcon.Icon = new WindowIcon(new Bitmap(AssetLoader.Open(iconUri)));
+            TrayMenuIcons.Attach(this, trayIcon.Menu);
         }
 
         mainWindow.Closing += (_, e) =>

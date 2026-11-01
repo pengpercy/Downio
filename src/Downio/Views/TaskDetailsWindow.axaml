@@ -7,6 +7,7 @@
         xmlns:aconv="using:Avalonia.Data.Converters"
         xmlns:views="using:Downio.Views"
         xmlns:controls="using:Downio.Controls"
+        xmlns:helpers="using:Downio.Helpers"
         mc:Ignorable="d" d:DesignWidth="520" d:DesignHeight="560"
         x:Class="Downio.Views.TaskDetailsWindow"
         x:DataType="models:DownloadTask"
@@ -16,7 +17,6 @@
 
     <Window.Resources>
         <conv:StatusToIconConverter x:Key="StatusToIconConverter" />
-        <conv:StatusColorConverter x:Key="StatusColorConverter" />
         <conv:ResourceKeyToTextConverter x:Key="ResourceKeyToTextConverter" />
         <conv:Ed2kFileTypeIconConverter x:Key="FileTypeIconConverter" />
     </Window.Resources>
@@ -94,16 +94,14 @@
                                                  TextWrapping="Wrap" />
                             <StackPanel Orientation="Horizontal" Spacing="10">
                                 <!-- Status pill tinted with the status color -->
-                                <Panel>
-                                    <Border CornerRadius="10" Opacity="0.14"
-                                            Background="{Binding Status, Converter={StaticResource StatusColorConverter}}" />
+                                <Panel helpers:TaskStatusClasses.Status="{Binding Status}">
+                                    <Border CornerRadius="10" Opacity="0.12"
+                                            Background="{Binding $parent[Panel].(TextElement.Foreground)}" />
                                     <StackPanel Orientation="Horizontal" Spacing="5" Margin="8,3,10,3">
                                         <PathIcon Data="{Binding Status, Converter={StaticResource StatusToIconConverter}}"
-                                                  Width="10" Height="10"
-                                                  Foreground="{Binding Status, Converter={StaticResource StatusColorConverter}}" />
+                                                  Width="10" Height="10" />
                                         <TextBlock Text="{Binding Status, Converter={StaticResource ResourceKeyToTextConverter}}"
-                                                   FontSize="12" FontWeight="Medium" VerticalAlignment="Center"
-                                                   Foreground="{Binding Status, Converter={StaticResource StatusColorConverter}}" />
+                                                   FontSize="12" FontWeight="Medium" VerticalAlignment="Center" />
                                     </StackPanel>
                                 </Panel>
                                 <TextBlock Text="{Binding SizeInfo}" FontSize="12" Opacity="0.6"

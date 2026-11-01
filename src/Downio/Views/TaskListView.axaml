@@ -6,13 +6,13 @@
              xmlns:models="using:Downio.Models"
              xmlns:conv="using:Avalonia.Data.Converters"
              xmlns:localConv="using:Downio.Converters"
+             xmlns:helpers="using:Downio.Helpers"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="Downio.Views.TaskListView"
              x:DataType="vm:MainWindowViewModel">
 
     <UserControl.Resources>
         <localConv:ResourceKeyToTextConverter x:Key="ResourceKeyToTextConverter" />
-        <localConv:StatusColorConverter x:Key="StatusColorConverter" />
         <localConv:StatusToIconConverter x:Key="StatusToIconConverter" />
         <localConv:CollectionIsEmptyConverter x:Key="CollectionIsEmptyConverter" />
         <localConv:Ed2kFileTypeIconConverter x:Key="FileTypeIconConverter" />
@@ -230,13 +230,13 @@
                                              IsVisible="{Binding !IsCompleted}" />
 
                                 <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <StackPanel Orientation="Horizontal" Spacing="5">
+                                    <StackPanel Orientation="Horizontal" Spacing="6"
+                                                helpers:TaskStatusClasses.Status="{Binding Status}">
                                         <Ellipse Width="6" Height="6" VerticalAlignment="Center"
-                                                 Fill="{Binding Status, Converter={StaticResource StatusColorConverter}}" />
+                                                 Fill="{Binding $parent[StackPanel].(TextElement.Foreground)}" />
                                         <TextBlock Text="{Binding Status, Converter={StaticResource ResourceKeyToTextConverter}}"
                                                    FontSize="12" FontWeight="Medium" TextWrapping="NoWrap"
-                                                   VerticalAlignment="Center"
-                                                   Foreground="{Binding Status, Converter={StaticResource StatusColorConverter}}" />
+                                                   VerticalAlignment="Center" />
                                     </StackPanel>
 
                                     <TextBlock Classes="meta" Text="·" />

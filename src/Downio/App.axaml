@@ -218,6 +218,19 @@
                     <!-- Menus and the tray menu: neutral hover instead of the accent color -->
                     <SolidColorBrush x:Key="MenuFlyoutItemBackgroundPointerOver" Color="#0F000000" />
                     <SolidColorBrush x:Key="MenuFlyoutItemBackgroundPressed" Color="#17000000" />
+                    <!-- Task status: muted tones that sit with the neutral cards instead of signal colors.
+                         Downloading uses the accent, waiting/stopped stay neutral. -->
+                    <SolidColorBrush x:Key="StatusCompletedBrush" Color="#2E8B57" />
+                    <SolidColorBrush x:Key="StatusPausedBrush" Color="#B07A24" />
+                    <SolidColorBrush x:Key="StatusErrorBrush" Color="#C24D47" />
+                    <SolidColorBrush x:Key="StatusNeutralBrush" Color="#8C000000" />
+                    <!-- Windows tray menu surface -->
+                    <SolidColorBrush x:Key="TrayMenuBackgroundBrush" Color="#FFF9F9FA" />
+                    <SolidColorBrush x:Key="TrayMenuBorderBrush" Color="#1A000000" />
+                    <SolidColorBrush x:Key="TrayMenuSeparatorBrush" Color="#12000000" />
+                    <SolidColorBrush x:Key="TrayMenuHeaderBackgroundBrush" Color="#08000000" />
+                    <SolidColorBrush x:Key="TrayMenuIconBrush" Color="#C7000000" />
+                    <BoxShadows x:Key="TrayMenuShadow">0 8 20 0 #24000000, 0 2 5 0 #12000000</BoxShadows>
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Dark">
                     <SolidColorBrush x:Key="TitleBarBackgroundBrush" Color="#242424" />
@@ -261,6 +274,19 @@
                     <!-- Menus and the tray menu: neutral hover instead of the accent color -->
                     <SolidColorBrush x:Key="MenuFlyoutItemBackgroundPointerOver" Color="#14FFFFFF" />
                     <SolidColorBrush x:Key="MenuFlyoutItemBackgroundPressed" Color="#1FFFFFFF" />
+                    <!-- Task status: muted tones that sit with the neutral cards instead of signal colors.
+                         Downloading uses the accent, waiting/stopped stay neutral. -->
+                    <SolidColorBrush x:Key="StatusCompletedBrush" Color="#7DBF94" />
+                    <SolidColorBrush x:Key="StatusPausedBrush" Color="#D4A65E" />
+                    <SolidColorBrush x:Key="StatusErrorBrush" Color="#E07B74" />
+                    <SolidColorBrush x:Key="StatusNeutralBrush" Color="#8CFFFFFF" />
+                    <!-- Windows tray menu surface -->
+                    <SolidColorBrush x:Key="TrayMenuBackgroundBrush" Color="#FF2B2B2D" />
+                    <SolidColorBrush x:Key="TrayMenuBorderBrush" Color="#1FFFFFFF" />
+                    <SolidColorBrush x:Key="TrayMenuSeparatorBrush" Color="#14FFFFFF" />
+                    <SolidColorBrush x:Key="TrayMenuHeaderBackgroundBrush" Color="#0AFFFFFF" />
+                    <SolidColorBrush x:Key="TrayMenuIconBrush" Color="#E0FFFFFF" />
+                    <BoxShadows x:Key="TrayMenuShadow">0 8 20 0 #66000000, 0 2 5 0 #40000000</BoxShadows>
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
 
@@ -305,6 +331,8 @@
             <StreamGeometry x:Key="IconViewList">M3,5h18v2H3V5z M3,11h18v2H3V11z M3,17h18v2H3V17z</StreamGeometry>
             <StreamGeometry x:Key="IconViewCards">M3,4h18v7H3V4z M5,6v3h14V6H5z M3,13h18v7H3V13z M5,15v3h14v-3H5z</StreamGeometry>
             <StreamGeometry x:Key="IconCheck">M9,16.17L4.83,12l-1.42,1.41L9,19L21,7l-1.41-1.41L9,16.17z</StreamGeometry>
+            <StreamGeometry x:Key="IconWindow">M19,4H5C3.89,4,3,4.9,3,6v12c0,1.1,0.89,2,2,2h14c1.1,0,2-0.9,2-2V6C21,4.9,20.11,4,19,4z M19,18H5V8h14V18z</StreamGeometry>
+            <StreamGeometry x:Key="IconPower">M13,3h-2v10h2V3z M17.83,5.17l-1.42,1.42C17.99,7.86,19,9.81,19,12c0,3.87-3.13,7-7,7s-7-3.13-7-7c0-2.19,1.01-4.14,2.58-5.42L6.17,5.17C4.23,6.82,3,9.26,3,12c0,4.97,4.03,9,9,9s9-4.03,9-9C21,9.26,19.77,6.82,17.83,5.17z</StreamGeometry>
             <StreamGeometry x:Key="IconCopy">M16,1H4C2.9,1,2,1.9,2,3v14h2V3h12V1z M20,5H8C6.9,5,6,5.9,6,7v14c0,1.1,0.9,2,2,2h12c1.1,0,2-0.9,2-2V7C22,5.9,21.1,5,20,5z M20,21H8V7h12V21z</StreamGeometry>
         </ResourceDictionary>
     </Application.Resources>
@@ -326,6 +354,102 @@
             <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
             <Setter Property="Margin" Value="4,1" />
         </Style>
+        <!-- Task status tint, set with helpers:TaskStatusClasses.Status. The color is applied as the
+             inherited foreground, so dots and pill backgrounds bind to it and follow theme changes. -->
+        <Style Selector=":is(Control).status-downloading">
+            <Setter Property="TextElement.Foreground" Value="{DynamicResource SystemControlForegroundAccentBrush}" />
+        </Style>
+        <Style Selector=":is(Control).status-completed">
+            <Setter Property="TextElement.Foreground" Value="{DynamicResource StatusCompletedBrush}" />
+        </Style>
+        <Style Selector=":is(Control).status-paused">
+            <Setter Property="TextElement.Foreground" Value="{DynamicResource StatusPausedBrush}" />
+        </Style>
+        <Style Selector=":is(Control).status-error">
+            <Setter Property="TextElement.Foreground" Value="{DynamicResource StatusErrorBrush}" />
+        </Style>
+        <Style Selector=":is(Control).status-waiting, :is(Control).status-stopped">
+            <Setter Property="TextElement.Foreground" Value="{DynamicResource StatusNeutralBrush}" />
+        </Style>
+
+        <!-- Windows tray menu. Avalonia shows it in a transparent borderless window named
+             "AvaloniaTrayPopupRoot_" + the tray tooltip, so everything below is scoped to it and
+             leaves the app's own context menus alone. The presenter's margin is room for the shadow. -->
+        <Style Selector=":is(Window)#AvaloniaTrayPopupRoot_Downio MenuFlyoutPresenter">
+            <Setter Property="Margin" Value="12,8,12,16" />
+            <Setter Property="Padding" Value="4" />
+            <Setter Property="MinWidth" Value="220" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Background" Value="{DynamicResource TrayMenuBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource TrayMenuBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="RenderTransform">
+                <TranslateTransform />
+            </Setter>
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Border Name="LayoutRoot"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="{TemplateBinding CornerRadius}"
+                            BoxShadow="{DynamicResource TrayMenuShadow}"
+                            Padding="{TemplateBinding Padding}">
+                        <ItemsPresenter Name="PART_ItemsPresenter"
+                                        ItemsPanel="{TemplateBinding ItemsPanel}"
+                                        KeyboardNavigation.TabNavigation="Continue"
+                                        Grid.IsSharedSizeScope="True" />
+                    </Border>
+                </ControlTemplate>
+            </Setter>
+            <Style.Animations>
+                <Animation Duration="0:0:0.16" Easing="CubicEaseOut" FillMode="Forward">
+                    <KeyFrame Cue="0%">
+                        <Setter Property="Opacity" Value="0" />
+                        <Setter Property="TranslateTransform.Y" Value="6" />
+                    </KeyFrame>
+                    <KeyFrame Cue="100%">
+                        <Setter Property="Opacity" Value="1" />
+                        <Setter Property="TranslateTransform.Y" Value="0" />
+                    </KeyFrame>
+                </Animation>
+            </Style.Animations>
+        </Style>
+        <Style Selector=":is(Window)#AvaloniaTrayPopupRoot_Downio MenuItem">
+            <Setter Property="Padding" Value="10,7" />
+            <Setter Property="Margin" Value="0,1" />
+            <Setter Property="CornerRadius" Value="4" />
+        </Style>
+        <Style Selector=":is(Window)#AvaloniaTrayPopupRoot_Downio MenuItem /template/ ContentControl#PART_IconPresenter">
+            <Setter Property="Margin" Value="0,0,12,0" />
+        </Style>
+        <!-- Shortcuts only work in the main window, so the tray menu doesn't list them -->
+        <Style Selector=":is(Window)#AvaloniaTrayPopupRoot_Downio MenuItem /template/ TextBlock#PART_InputGestureText">
+            <Setter Property="IsVisible" Value="False" />
+        </Style>
+        <Style Selector=":is(Window)#AvaloniaTrayPopupRoot_Downio MenuItem:disabled /template/ ContentControl#PART_IconPresenter">
+            <Setter Property="Opacity" Value="0.4" />
+        </Style>
+        <!-- First row: the app logo and live speed, shown as a status header rather than a greyed-out item -->
+        <Style Selector=":is(Window)#AvaloniaTrayPopupRoot_Downio MenuItem:nth-child(1)">
+            <Setter Property="Padding" Value="10,9" />
+            <Setter Property="Margin" Value="0,0,0,1" />
+            <Setter Property="Background" Value="{DynamicResource TrayMenuHeaderBackgroundBrush}" />
+        </Style>
+        <Style Selector=":is(Window)#AvaloniaTrayPopupRoot_Downio MenuItem:nth-child(1):disabled /template/ Border#PART_LayoutRoot">
+            <Setter Property="Background" Value="{DynamicResource TrayMenuHeaderBackgroundBrush}" />
+        </Style>
+        <Style Selector=":is(Window)#AvaloniaTrayPopupRoot_Downio MenuItem:nth-child(1):disabled /template/ ContentPresenter#PART_HeaderPresenter">
+            <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundBaseHighBrush}" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+        <Style Selector=":is(Window)#AvaloniaTrayPopupRoot_Downio MenuItem:nth-child(1):disabled /template/ ContentControl#PART_IconPresenter">
+            <Setter Property="Opacity" Value="1" />
+        </Style>
+        <Style Selector=":is(Window)#AvaloniaTrayPopupRoot_Downio Separator">
+            <Setter Property="Margin" Value="-4,4" />
+            <Setter Property="Background" Value="{DynamicResource TrayMenuSeparatorBrush}" />
+        </Style>
         <!-- Dropdown items: rounded highlight, inset from the popup edge -->
         <Style Selector="ComboBoxItem">
             <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
@@ -338,24 +462,26 @@
                 <TrayIcon.Menu>
                     <NativeMenu>
                         <!-- Live total, refreshed with the task list -->
-                        <NativeMenuItem Header="{Binding TotalDownloadSpeedText, StringFormat='↓ {0}'}" IsEnabled="False" />
+                        <NativeMenuItem Header="{Binding TotalDownloadSpeedText, StringFormat='↓ {0}'}" IsEnabled="False"
+                                        helpers:TrayMenuIcons.IsLogo="True" />
                         <NativeMenuItemSeparator />
-                        <NativeMenuItem Header="{DynamicResource MenuOpenDownio}" Command="{Binding ToggleMainWindowCommand}" />
-                        <NativeMenuItem Header="{DynamicResource MenuNewTask}" Gesture="{x:Static helpers:MenuGestures.NewTask}"
+                        <NativeMenuItem Header="{DynamicResource MenuOpenDownio}" helpers:TrayMenuIcons.Glyph="IconWindow"
+                                        Command="{Binding ToggleMainWindowCommand}" />
+                        <NativeMenuItem Header="{DynamicResource MenuNewTask}" helpers:TrayMenuIcons.Glyph="IconAdd" Gesture="{x:Static helpers:MenuGestures.NewTask}"
                                         Command="{Binding ShowAddTaskCommand}" />
-                        <NativeMenuItem Header="{DynamicResource MenuOpenDownloadFolder}" Gesture="{x:Static helpers:MenuGestures.OpenDownloadFolder}"
+                        <NativeMenuItem Header="{DynamicResource MenuOpenDownloadFolder}" helpers:TrayMenuIcons.Glyph="IconFolder" Gesture="{x:Static helpers:MenuGestures.OpenDownloadFolder}"
                                         Command="{Binding OpenDownloadFolderCommand}" />
                         <NativeMenuItemSeparator />
-                        <NativeMenuItem Header="{DynamicResource MenuResumeAll}" Gesture="{x:Static helpers:MenuGestures.ResumeAll}"
+                        <NativeMenuItem Header="{DynamicResource MenuResumeAll}" helpers:TrayMenuIcons.Glyph="IconPlay" Gesture="{x:Static helpers:MenuGestures.ResumeAll}"
                                         Command="{Binding ResumeAllCommand}" />
-                        <NativeMenuItem Header="{DynamicResource MenuPauseAll}" Gesture="{x:Static helpers:MenuGestures.PauseAll}"
+                        <NativeMenuItem Header="{DynamicResource MenuPauseAll}" helpers:TrayMenuIcons.Glyph="IconPause" Gesture="{x:Static helpers:MenuGestures.PauseAll}"
                                         Command="{Binding PauseAllCommand}" />
                         <NativeMenuItemSeparator />
-                        <NativeMenuItem Header="{DynamicResource MenuSettingsEllipsis}" Gesture="{x:Static helpers:MenuGestures.Settings}"
+                        <NativeMenuItem Header="{DynamicResource MenuSettingsEllipsis}" helpers:TrayMenuIcons.Glyph="IconSettings" Gesture="{x:Static helpers:MenuGestures.Settings}"
                                         Command="{Binding ShowSettingsCommand}" />
-                        <NativeMenuItem Header="{DynamicResource MenuCheckForUpdates}" Command="{Binding CheckForUpdatesCommand}" />
+                        <NativeMenuItem Header="{DynamicResource MenuCheckForUpdates}" helpers:TrayMenuIcons.Glyph="IconRefresh" Command="{Binding CheckForUpdatesCommand}" />
                         <NativeMenuItemSeparator />
-                        <NativeMenuItem Header="{DynamicResource MenuQuitApp}" Gesture="{x:Static helpers:MenuGestures.Quit}"
+                        <NativeMenuItem Header="{DynamicResource MenuQuitApp}" helpers:TrayMenuIcons.Glyph="IconPower" Gesture="{x:Static helpers:MenuGestures.Quit}"
                                         Command="{Binding QuitAppCommand}" />
                     </NativeMenu>
                 </TrayIcon.Menu>
