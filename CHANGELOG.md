@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.100 - 2026-11-01
+
+- On Windows the tray icon's right-click menu has been redesigned: a rounded surface with a soft shadow and a short fade-in, the app logo and current speed as a header, and an icon for every item that follows the light or dark theme.
+- Task status colors in the task list and task details are softer and match the light and dark themes, instead of the bright green and red used before.
+
 ## 1.0.99 - 2026-10-25
 
 - On macOS every binary in the app bundle (aria2c, the bundled libraries, then the app itself) is now signed individually from the inside out instead of with the deprecated `codesign --deep`. Without a Developer ID the app gets a valid ad-hoc signature, so Gatekeeper's "damaged app" check no longer trips on a bundle with unsigned parts.
